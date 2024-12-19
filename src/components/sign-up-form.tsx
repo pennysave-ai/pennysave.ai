@@ -10,6 +10,7 @@ import { SubmitButton, PasswordInput } from "@/components/common";
 export default function SignUpForm() {
   const [formState, action] = useFormState(actions.signUp, {
     errors: {},
+    success: {},
   });
   return (
     <form className="flex flex-col gap-3" action={action}>
@@ -47,6 +48,11 @@ export default function SignUpForm() {
         isInvalid={!!formState?.errors.password2}
         errorMessage={formState?.errors.password2?.join(", ")}
       />
+      {formState?.success?._form && (
+        <div className="rounded-xl text-sm px-3 py-2 bg-green-400 dark:bg-green-800">
+          {formState.success._form.join(", ")}
+        </div>
+      )}
       {formState?.errors._form && (
         <div className="rounded-xl text-sm px-3 py-2 bg-red-200 dark:bg-red-800">
           {formState.errors._form.join(", ")}

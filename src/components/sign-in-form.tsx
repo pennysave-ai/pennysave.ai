@@ -12,6 +12,7 @@ import { SubmitButton, PasswordInput } from "@/components/common";
 export default function SignInForm() {
   const [formState, action] = useFormState(actions.emailSignIn, {
     errors: {},
+    success: {},
   });
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error") === "OAuthAccountNotLinked";
@@ -24,6 +25,13 @@ export default function SignInForm() {
       return (
         <div className="rounded-xl text-sm px-3 py-2 bg-red-200 dark:bg-red-800">
           {formState?.errors?._form.join(", ")}
+        </div>
+      );
+    }
+    if (formState?.success?._form) {
+      return (
+        <div className="rounded-xl text-sm px-3 py-2 bg-green-400 dark:bg-green-800">
+          {formState?.success._form?.join(", ")}
         </div>
       );
     }

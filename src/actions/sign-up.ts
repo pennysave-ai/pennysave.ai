@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { signIn } from "@/auth";
 import bcrypt from "bcryptjs";
 import { signUpSchema } from "@/schemas";
-import { DEFAULT_LOGGED_IN_REDIRECT } from "@/routes";
+import { generateVerificationToken } from "@/data";
+import { sendVerificationEmail } from "@/lib/mail";
 
 interface SignUserUpErrors {
   errors: {
@@ -12,6 +12,9 @@ interface SignUserUpErrors {
     email?: string[];
     password?: string[];
     password2?: string[];
+    _form?: string[];
+  };
+  success?: {
     _form?: string[];
   };
 }
@@ -60,6 +63,21 @@ export async function signUp(
         password: hashedPassword,
       },
     });
+    const verificationToken = await generateVerificationToken(email as string);
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    );
+
+    return {
+      errors: {},
+      success: {
+        _form: [
+          "User created successfully, please check your email for verification",
+        ],
+      },
+    };
+
     // eslint-disable-next-line
   } catch (error: unknown) {
     return {
@@ -67,20 +85,5 @@ export async function signUp(
         _form: ["Failed to create a new user"],
       },
     };
-  }
-  try {
-    // Sign in the user with the provided credentials
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: DEFAULT_LOGGED_IN_REDIRECT,
-    });
-
-    return {
-      errors: {},
-    };
-    // eslint-disable-next-line
-  } catch (error: unknown) {
-    throw error;
   }
 }

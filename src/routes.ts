@@ -2,7 +2,7 @@
  * List of public routes (without authentication)
  * @type {string[]}
  */
-export const publicRoutes = [""];
+export const publicRoutes = ["/auth/verify-email"];
 
 /**
  * List of routes for user authentication

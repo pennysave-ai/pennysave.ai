@@ -3,6 +3,7 @@ import authConfig from "@/auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import { db } from "@/db";
+import { getUserById } from "@/data";
 
 export type ExtendedUser = DefaultSession["user"] & {
   role: UserRole;
@@ -36,6 +37,15 @@ export const {
     },
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "credentials") return true;
+      if (user && user.id) {
+        const existingUser = await getUserById(user.id);
+        // Prevent sign in if the user is not verified
+        if (!existingUser?.emailVerified) return false;
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
