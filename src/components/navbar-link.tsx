@@ -14,7 +14,6 @@ export default function NavbarLink({ href, name, isActive }: NavbarLinkProps) {
         className="w-full"
         href={href}
         color="primary"
-        size="lg"
         underline={isActive ? "always" : "hover"}
       >
         {name}

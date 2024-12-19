@@ -20,7 +20,7 @@ export default function TermsAndPrivacyPolicy() {
         <Checkbox name="agree" size="sm">
           I agree with the{" "}
         </Checkbox>
-        <Link className="cursor-pointer" onPress={onOpen}>
+        <Link className="cursor-pointer" onPress={onOpen} size="sm">
           Terms and Privacy Policy
         </Link>
       </div>

@@ -3,13 +3,18 @@
 import { signIn } from "@/auth";
 import { signInSchema } from "@/schemas";
 import { AuthError } from "next-auth";
+import { generateVerificationToken, getUserByEmail } from "@/data";
 import { DEFAULT_LOGGED_IN_REDIRECT } from "@/routes";
 import { ThirdPartyError } from "@/auth.config";
+import { sendVerificationEmail } from "@/lib/mail";
 
 interface SignUserInErrors {
   errors: {
     email?: string[];
     password?: string[];
+    _form?: string[];
+  };
+  success?: {
     _form?: string[];
   };
 }
@@ -32,6 +37,32 @@ export async function emailSignIn(
       errors: validationResult.error.flatten().fieldErrors,
     };
   }
+  const existingUser = await getUserByEmail(email as string);
+  if (!existingUser || !existingUser.email || !existingUser.password) {
+    return {
+      errors: {
+        _form: ["Invalid credentials"],
+      },
+    };
+  }
+  if (!existingUser.emailVerified) {
+    const verificationToken = await generateVerificationToken(
+      existingUser.email
+    );
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    );
+    return {
+      errors: {},
+      success: {
+        _form: [
+          "Please verify your email before signing in. We've sent you a new verification email.",
+        ],
+      },
+    };
+  }
+
   try {
     // Sign in the user with the provided credentials
     await signIn("credentials", {
