@@ -32,3 +32,28 @@ export const signUpSchema = signInSchema
     message: "Passwords do not match",
     path: ["password2"],
   });
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: "Email cannot be empty" })
+    .email("This is not a valid email."),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .max(16, { message: "Password cannot be longer than 16 characters" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[^A-Za-z0-9]/, {
+      message: "Password must contain at least one special character",
+    }),
+  password2: z.string(),
+});

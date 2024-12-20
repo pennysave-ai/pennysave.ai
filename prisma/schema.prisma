@@ -52,17 +52,6 @@ model User {
   role          UserRole @default(USER)
 }
 
-
-// A Model to store the verification token for user credentials signup
-model VerificationToken {
-  id         String   @id @default(uuid())
-  email      String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([email, token])
-}
-
 model Transaction {
   id          String    @id @default(uuid())
   amount      Int
@@ -84,4 +73,24 @@ model Category {
   transactions Transaction[]
 
   @@unique([id])
+}
+
+// A Model to store the verification token for user credentials signup
+model VerificationToken {
+  id         String   @id @default(uuid())
+  email      String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([email, token])
+}
+
+// A model to store the reset password token
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  email      String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([email, token])
 }

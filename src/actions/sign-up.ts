@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import bcrypt from "bcryptjs";
 import { signUpSchema } from "@/schemas";
-import { generateVerificationToken } from "@/data";
+import { generateVerificationToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/mail";
 
 interface SignUserUpErrors {

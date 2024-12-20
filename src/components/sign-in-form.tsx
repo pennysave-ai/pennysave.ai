@@ -69,7 +69,7 @@ export default function SignInForm() {
         <Checkbox name="remember" size="sm" isDisabled>
           Remember me
         </Checkbox>
-        <Link size="sm" href="/forgot-password">
+        <Link size="sm" href="/auth/reset-password">
           Forgot password?
         </Link>
       </div>
