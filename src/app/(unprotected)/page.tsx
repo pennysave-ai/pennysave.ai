@@ -17,7 +17,7 @@ export default function SignIn() {
         <OauthButtons />
         <p className="text-center text-small">
           <span className="mr-1">Need to create an account?</span>
-          <Link href="/sign-up" size="sm">
+          <Link href="/auth/sign-up" size="sm">
             Sign Up
           </Link>
         </p>

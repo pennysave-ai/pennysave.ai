@@ -11,10 +11,10 @@ export const publicRoutes = ["/auth/verify-email"];
  */
 export const authRoutes = [
   "/",
-  "/sign-up",
-  "/forgot-password",
-  "/reset-password",
   "/auth/error",
+  "/auth/sign-up",
+  "/auth/reset-password",
+  "/auth/new-password",
 ];
 
 /**
@@ -40,7 +40,7 @@ export const navItems = [
   },
   {
     name: "Sign Up",
-    href: "/sign-up",
+    href: "/auth/sign-up",
     protectedPath: false,
   },
   {
