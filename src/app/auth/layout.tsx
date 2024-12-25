@@ -9,7 +9,7 @@ export default async function UnprotectedRoadsLayout({
   return (
     <div className="flex flex-col h-screen">
       <Header
-        navItems={navItems.filter(({ protectedPath }) => !protectedPath)}
+      // navItems={navItems.filter(({ protectedPath }) => !protectedPath)}
       />
       <main className="flex-grow flex">{children}</main>
       <footer></footer>

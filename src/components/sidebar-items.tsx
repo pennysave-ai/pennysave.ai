@@ -28,10 +28,9 @@ export const sectionItems: SidebarItem[] = [
         ),
       },
       {
-        key: "tasks",
-        href: "#",
+        key: "categories",
         icon: "solar:checklist-minimalistic-outline",
-        title: "-",
+        title: "Categories",
         endContent: (
           <Icon
             className="text-default-400"
@@ -39,6 +38,11 @@ export const sectionItems: SidebarItem[] = [
             width={24}
           />
         ),
+      },
+      {
+        key: "transactions",
+        icon: "solar:card-transfer-linear",
+        title: "Transactions",
       },
       {
         key: "team",

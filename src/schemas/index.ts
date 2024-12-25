@@ -61,3 +61,13 @@ export const resetPasswordSchema = z.object({
 export const accountSchema = z.object({
   name: z.string().min(1, { message: "Name cannot be empty" }),
 });
+
+export const categorySchema = z.object({
+  name: z.string().min(1, { message: "Name cannot be empty" }),
+  description: z
+    .string()
+    .max(160, {
+      message: "Description cannot be longer than 160 characters",
+    })
+    .optional(),
+});

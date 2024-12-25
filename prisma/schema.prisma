@@ -48,6 +48,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  category      Category[]
   transactions  Transaction[]
   userAccounts  UserAccount[]
   password      String?
@@ -69,8 +70,11 @@ model Transaction {
 }
 
 model Category {
-  id          String        @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plaidId     String?
   description String?
   transactions Transaction[]
 

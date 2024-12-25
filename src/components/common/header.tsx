@@ -5,7 +5,7 @@ import type { Session } from "next-auth";
 import NavbarMenu from "@/components/navbar-menu";
 
 interface HeaderProps {
-  navItems: {
+  navItems?: {
     name: string;
     href: string;
     protectedPath: boolean;
