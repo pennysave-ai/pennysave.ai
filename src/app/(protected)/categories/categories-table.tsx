@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@nextui-org/dropdown";
-import { useDeleteAccount, type Account } from "@/features/accounts/hooks";
+import { useDeleteCategory, type Category } from "@/features/categories/hooks";
 import {
   Table,
   SortDescriptor,
@@ -61,41 +61,50 @@ export function useMemoizedCallback<T extends noop>(fn: T) {
   return memoizedFn.current as T;
 }
 
-export type ColumnsKey = "name" | "actions";
+export type ColumnsKey = "name" | "description" | "actions";
 
-const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = ["name", "actions"];
+const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
+  "name",
+  "description",
+  "actions",
+];
 
 export const columns = [
   {
-    name: "Account Name",
+    name: "Category Name",
     uid: "name",
-    info: "The name of the account",
+    info: "The name of the category",
     sortDirection: "ascending",
+  },
+  {
+    name: "Description",
+    uid: "description",
+    info: "The description of the category",
   },
   { name: "Actions", uid: "actions" },
 ];
 
-interface AccountsTableProps {
-  accounts: Account[] | [];
+interface CategoriesTableProps {
+  categories: Category[] | [];
   isLoading: boolean;
-  onOpenSidebar: (account: Account) => void;
+  onOpenSidebar: (category: Category) => void;
 }
 
-export default function AccountsTable({
-  accounts = [],
+export default function CategoriesTable({
+  categories = [],
   isLoading,
   onOpenSidebar,
-}: AccountsTableProps) {
+}: CategoriesTableProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const deleteAccountsMutation = useDeleteAccount();
+  const deleteCategory = useDeleteCategory();
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
-  const [deleteAccountsData, setDeleteAccountsData] = useState<{
+  const [deleteCategoriesData, setDeleteCategoriesData] = useState<{
     type: "bulk" | "individual";
-    accountsToDelete: string[];
+    categoriesToDelete: string[];
   }>({
     type: "individual",
-    accountsToDelete: [],
+    categoriesToDelete: [],
   });
   const [visibleColumns, setVisibleColumns] = useState<Selection>(
     new Set(INITIAL_VISIBLE_COLUMNS)
@@ -108,14 +117,14 @@ export default function AccountsTable({
   });
 
   const handleDelete = useMemoizedCallback(async (payload, onClose) => {
-    const { accountsToDelete: ids, type } = payload;
-    await deleteAccountsMutation.mutateAsync(ids);
+    const { categoriesToDelete: ids, type } = payload;
+    await deleteCategory.mutateAsync(ids);
     if (type === "bulk") {
       setSelectedKeys(new Set());
     } else {
       const newSelectedKeys =
         selectedKeys === "all"
-          ? new Set(accounts.map((item) => item.id))
+          ? new Set(categories.map((item) => item.id))
           : new Set(selectedKeys);
       ids.forEach((id: string) => {
         newSelectedKeys.delete(id);
@@ -142,15 +151,15 @@ export default function AccountsTable({
   }, [visibleColumns, sortDescriptor]);
 
   const filteredItems = useMemo(() => {
-    let filteredAccounts = accounts ? [...accounts] : [];
+    let filteredCategories = categories ? [...categories] : [];
 
     if (filterValue) {
-      filteredAccounts = filteredAccounts.filter((user) =>
+      filteredCategories = filteredCategories.filter((user) =>
         user.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-    return filteredAccounts;
-  }, [filterValue, accounts]);
+    return filteredCategories;
+  }, [filterValue, categories]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
@@ -162,8 +171,8 @@ export default function AccountsTable({
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: Account, b: Account) => {
-      const col = sortDescriptor.column as keyof Account;
+    return [...items].sort((a: Category, b: Category) => {
+      const col = sortDescriptor.column as keyof Category;
 
       let first = a[col];
       let second = b[col];
@@ -202,14 +211,20 @@ export default function AccountsTable({
   }));
 
   const renderCell = useMemoizedCallback(
-    (account: Account, columnKey: React.Key) => {
-      const accountKey = columnKey as ColumnsKey;
+    (category: Category, columnKey: React.Key) => {
+      const categoryKey = columnKey as ColumnsKey;
 
-      switch (accountKey) {
+      switch (categoryKey) {
         case "name":
           return (
             <div className="text-nowrap text-small capitalize text-default-foreground">
-              {account[accountKey]}
+              {category[categoryKey]}
+            </div>
+          );
+        case "description":
+          return (
+            <div className="truncate text-default-500 max-w-[30vw]">
+              {category[categoryKey]}
             </div>
           );
         case "actions":
@@ -221,7 +236,7 @@ export default function AccountsTable({
                 height={18}
                 width={18}
                 onClick={() => {
-                  onOpenSidebar(account);
+                  onOpenSidebar(category);
                 }}
               />
               <div className="text-danger">
@@ -231,9 +246,9 @@ export default function AccountsTable({
                   height={18}
                   width={18}
                   onClick={() => {
-                    setDeleteAccountsData({
+                    setDeleteCategoriesData({
                       type: "individual",
-                      accountsToDelete: [account.id],
+                      categoriesToDelete: [category.id],
                     });
                     onOpen();
                   }}
@@ -413,11 +428,11 @@ export default function AccountsTable({
                     onPress={() => {
                       const keys =
                         filterSelectedKeys === "all"
-                          ? accounts?.map((item) => item.id)
+                          ? categories?.map((item) => item.id)
                           : (Array.from(filterSelectedKeys) as string[]);
-                      setDeleteAccountsData({
+                      setDeleteCategoriesData({
                         type: "bulk",
-                        accountsToDelete: keys,
+                        categoriesToDelete: keys,
                       });
                       onOpen();
                     }}
@@ -547,7 +562,7 @@ export default function AccountsTable({
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                {deleteAccountsData.accountsToDelete.length > 1
+                {deleteCategoriesData.categoriesToDelete.length > 1
                   ? "Bulk delete"
                   : "Delete"}
               </ModalHeader>
@@ -555,10 +570,12 @@ export default function AccountsTable({
                 <p>
                   You are about to delete{" "}
                   <strong>
-                    {deleteAccountsData.accountsToDelete.length} account
-                    {deleteAccountsData.accountsToDelete.length > 1 ? "s" : ""}
+                    {deleteCategoriesData.categoriesToDelete.length} categor
+                    {deleteCategoriesData.categoriesToDelete.length > 1
+                      ? "ies"
+                      : "y"}
                   </strong>
-                  . All transactions and data associated with these accounts
+                  . All transactions and data associated with these categories
                   will be deleted as well. Are you sure you want to proceed?
                 </p>
               </ModalBody>
@@ -569,9 +586,9 @@ export default function AccountsTable({
                 <Button
                   color="primary"
                   data-delete="bulk"
-                  isLoading={deleteAccountsMutation.isPending}
+                  isLoading={deleteCategory.isPending}
                   onPress={() => {
-                    handleDelete(deleteAccountsData, onClose);
+                    handleDelete(deleteCategoriesData, onClose);
                   }}
                 >
                   Yes
