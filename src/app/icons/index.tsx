@@ -4,3 +4,7 @@ export { Github } from "./github";
 export { Google } from "./google";
 export { EyeOpen } from "./eye-open";
 export { EyeClosed } from "./eye-closed";
+export { ArrowUp } from "./arrow-up";
+export { ArrowDown } from "./arrow-down";
+export { Edit } from "./edit";
+export { Delete } from "./delete";

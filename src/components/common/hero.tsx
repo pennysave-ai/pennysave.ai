@@ -3,7 +3,11 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export function Hero() {
+interface HeroProps {
+  description?: string;
+}
+
+export function Hero({ description }: HeroProps) {
   const [opacity, setOpacity] = useState(1);
 
   const handleScroll = () => {
@@ -33,6 +37,11 @@ export function Hero() {
       >
         {currentPageName}
       </h1>
+      {description && (
+        <h2 className="mt-4 text-small text-white" style={{ opacity }}>
+          {description}
+        </h2>
+      )}
     </div>
   );
 }

@@ -3,3 +3,5 @@ export { PasswordInput } from "./password-input";
 export { OauthButtons } from "./oauth-buttons";
 export { Hero } from "./hero";
 export { Header } from "./header";
+export { RightSidebar } from "./right-sidebar";
+export { SidebarItems } from "./sidebar-items";
