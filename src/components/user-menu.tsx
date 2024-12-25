@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@nextui-org/dropdown";
 import { Avatar } from "@nextui-org/avatar";
-import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
+import { cn } from "@nextui-org/theme";
+import { Tooltip } from "@nextui-org/tooltip";
+import { useRouter } from "next/navigation";
 
 function getOptimizedImageUrl(url?: string | null) {
   if (!url) return null;
@@ -20,37 +16,42 @@ function getOptimizedImageUrl(url?: string | null) {
 
 interface UserMenuProps {
   user: Session["user"];
+  isCompact: boolean;
+  pathName: string;
 }
 
-export default function UserMenu({ user }: UserMenuProps) {
+export default function UserMenu({ user, isCompact, pathName }: UserMenuProps) {
+  const router = useRouter();
   return (
-    <Dropdown>
-      <DropdownTrigger>
+    <Tooltip content="User settings" isDisabled={!isCompact} placement="right">
+      <button
+        className={cn(
+          "z-0 flex items-center gap-3 px-3 py-1.5 hover:bg-default-100 rounded-[14px] overflow-hidden",
+          {
+            "bg-default-100": pathName === "settings",
+          }
+        )}
+        onClick={() => {
+          router.push("/settings");
+        }}
+      >
         <Avatar
           isBordered
-          as="button"
+          className="flex-none"
+          size="sm"
           src={getOptimizedImageUrl(user.image) || ""}
         />
-      </DropdownTrigger>
-      <DropdownMenu aria-label="Static Actions" disabledKeys={["profile"]}>
-        <DropdownItem
-          key="profile"
-          isReadOnly
-          className="h-14 gap-2 opacity-100"
-          textValue="Profile"
+        <div
+          className={cn("flex max-w-full flex-col items-start", {
+            hidden: isCompact,
+          })}
         >
-          <div>{user.name}</div>
-          <div className="text-xs">{user.email}</div>
-        </DropdownItem>
-        <DropdownItem
-          key="sign-out"
-          className="text-danger"
-          color="danger"
-          onPress={() => signOut()}
-        >
-          Sign Out
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+          <p className="truncate text-small font-medium text-default-600">
+            {user.name}
+          </p>
+          <p className="truncate text-tiny text-default-400">{user.email}</p>
+        </div>
+      </button>
+    </Tooltip>
   );
 }

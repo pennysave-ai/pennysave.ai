@@ -5,9 +5,10 @@ import { Button } from "@nextui-org/button";
 
 interface SubmitButtonProps {
   children: React.ReactNode;
+  className?: string;
 }
 
-export function SubmitButton({ children }: SubmitButtonProps) {
+export function SubmitButton({ children, className = "" }: SubmitButtonProps) {
   const { pending } = useFormStatus();
   return (
     <Button
@@ -15,6 +16,7 @@ export function SubmitButton({ children }: SubmitButtonProps) {
       color="primary"
       disabled={pending}
       isLoading={pending}
+      className={className}
     >
       {children}
     </Button>

@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// A model to store the 3rd party account details for authentication
 model Account {
   id                String  @id @default(uuid())
   userId            String
@@ -48,6 +49,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   transactions  Transaction[]
+  userAccounts  UserAccount[]
   password      String?
   role          UserRole @default(USER)
 }
@@ -93,4 +95,15 @@ model PasswordResetToken {
   expires    DateTime
 
   @@unique([email, token])
+}
+
+// A model to store User Accounts
+model UserAccount {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  plaidId    String?
+
+  @@unique([id])
 }

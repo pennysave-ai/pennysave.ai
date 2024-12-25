@@ -57,3 +57,7 @@ export const resetPasswordSchema = z.object({
     }),
   password2: z.string(),
 });
+
+export const accountSchema = z.object({
+  name: z.string().min(1, { message: "Name cannot be empty" }),
+});
