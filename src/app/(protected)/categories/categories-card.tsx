@@ -89,9 +89,12 @@ const CategoriesCard = () => {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {formState.id
                 ? "Edit an exisitng category"
-                : "Create a new category to manage your transactions"}
+                : "Create a new income or expence category to sort your transactions"}
             </div>
             <Input
+              label="Name"
+              isRequired
+              autoFocus
               name="name"
               placeholder="e.g Food, Rent, Salary"
               type="text"
@@ -108,13 +111,16 @@ const CategoriesCard = () => {
               variant="bordered"
               className="mt-2"
               label="Description"
-              placeholder="Optional: Add an additional description for this category. Max 160 characters"
+              placeholder="An additional description for this category"
               validationBehavior="aria"
               value={formState.description}
               onChange={(e) =>
                 setFormState({ ...formState, description: e.target.value })
               }
             />
+            <p className="text-small text-default-500 text-right">
+              {formState?.description?.length}/160
+            </p>
           </DrawerBody>
           <DrawerFooter>
             <div className="flex flex-col w-full">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-
+import { parseISO, isValid } from "date-fns";
 // Define a schema for the user's sign-in data
 export const signInSchema = z.object({
   email: z
@@ -59,7 +59,11 @@ export const resetPasswordSchema = z.object({
 });
 
 export const accountSchema = z.object({
-  name: z.string().min(1, { message: "Name cannot be empty" }),
+  id: z.string().optional(),
+  name: z
+    .string()
+    .min(3, { message: "The name must be longer than 3 symbols" }),
+  currencyId: z.string().min(1, { message: "Currency cannot be empty" }),
 });
 
 export const categorySchema = z.object({
@@ -70,4 +74,47 @@ export const categorySchema = z.object({
       message: "Description cannot be longer than 160 characters",
     })
     .optional(),
+});
+
+export const getTransactionsSchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  accountId: z.string().optional(),
+});
+
+export const updateTransactionSchema = z.object({
+  id: z.string(),
+  accountId: z.string(),
+  categoryId: z.string(),
+  createdAt: z.string(),
+  payee: z.string().optional(),
+  amount: z.number(),
+  notes: z.string().optional(),
+});
+
+export const createTransactionSchema = z.object({
+  id: z.string(),
+  accountId: z.string().min(1, { message: "Account cannot be empty" }),
+  categoryId: z.string().min(1, { message: "Category cannot be empty" }),
+  createdAt: z
+    .string()
+    .min(1, { message: "Date cannot be empty" })
+    .refine(
+      (val) => {
+        const date = parseISO(val);
+        return isValid(date) && date.getFullYear() >= 1900;
+      },
+      {
+        message: "Invalid date, date must be after year 1900",
+      }
+    ),
+  payee: z.string().optional(),
+  amount: z.number().refine((val) => val !== 0, {
+    message: "Amount must be a non-zero number",
+  }),
+  notes: z.string().optional(),
+});
+
+export const createTransactionsSchema = createTransactionSchema.omit({
+  id: true,
 });

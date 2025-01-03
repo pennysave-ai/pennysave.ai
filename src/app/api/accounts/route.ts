@@ -13,7 +13,13 @@ export async function GET() {
   // get all accounts for the user and all numbers of accounts
   // for the user
   const accounts = await db.userAccount.findMany({
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      currency: {
+        select: { id: true, name: true, symbol: true },
+      },
+    },
     where: { userId: user.id },
   });
   const count = await db.userAccount.count({ where: { userId: user.id } });
@@ -35,6 +41,7 @@ export async function POST(req: NextRequest) {
   }
   const validationResult = accountSchema.safeParse({
     name: body.name,
+    currencyId: body.currencyId,
   });
   if (!validationResult.success) {
     return NextResponse.json("Bad Request", { status: 400 });
@@ -45,6 +52,7 @@ export async function POST(req: NextRequest) {
       name: body.name,
       userId: user.id,
       plaidId: body.plaidId,
+      currencyId: body.currencyId,
     },
   });
   return NextResponse.json({ data: account });
@@ -85,7 +93,9 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const validationResult = accountSchema.safeParse({
+    id: body.id,
     name: body.name,
+    currencyId: body.currencyId,
   });
 
   if (!validationResult.success) {
@@ -94,7 +104,7 @@ export async function PATCH(req: NextRequest) {
 
   const accounts = await db.userAccount.update({
     where: { id: body.id, userId: user.id },
-    data: { name: body.name },
+    data: { name: body.name, currencyId: body.currencyId },
   });
 
   return NextResponse.json({ data: accounts });

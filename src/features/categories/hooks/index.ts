@@ -1,12 +1,25 @@
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useQueryClient,
+  useMutation,
+  useQuery,
+  type QueryKey,
+  type Query,
+} from "@tanstack/react-query";
 
 export type CreateCategory = {
   name: string;
-  description: string;
+  description?: string;
+};
+
+const onSuccess = (queryClient: any) => {
+  queryClient.invalidateQueries({
+    predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
+      query.queryKey.includes("categories"),
+  });
 };
 
 export const useCreateCategory = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (category: CreateCategory) => {
       const response = await fetch("/api/categories", {
@@ -18,9 +31,7 @@ export const useCreateCategory = () => {
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["categories"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };
@@ -52,7 +63,7 @@ export const useGetCategories = () => {
 };
 
 export const useDeleteCategory = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const response = await fetch("/api/categories", {
@@ -64,15 +75,13 @@ export const useDeleteCategory = () => {
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["categories"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };
 
 export const useUpdateCategory = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (payload: {
       id: string | null;
@@ -89,9 +98,7 @@ export const useUpdateCategory = () => {
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["categories"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };

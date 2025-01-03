@@ -3,19 +3,34 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-import { Navbar, NavbarContent, NavbarMenuToggle } from "@nextui-org/navbar";
+import {
+  Navbar,
+  NavbarContent,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
+} from "@nextui-org/navbar";
 import { Modal, ModalContent, ModalBody } from "@nextui-org/modal";
 import { Session } from "next-auth";
+import { Link } from "@nextui-org/link";
 import { SidebarItems } from "@/components/common";
 
 interface NavbarProps {
   children: React.ReactNode;
   user: Session["user"] | null;
+  navItems?: {
+    name: string;
+    href: string;
+  }[];
 }
 
 const sidebarWidth = 288;
 
-export default function NavbarMenu({ children, user }: NavbarProps) {
+export default function NavbarCustomMenu({
+  children,
+  user,
+  navItems,
+}: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   useEffect(() => {
@@ -23,6 +38,44 @@ export default function NavbarMenu({ children, user }: NavbarProps) {
       setIsMenuOpen(false);
     }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!user)
+    return (
+      <>
+        <Navbar isBlurred isBordered>
+          <NavbarContent justify="start">
+            <NavbarMenuToggle
+              className="sm:hidden"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            />
+            {navItems?.map((item, i) => (
+              <NavbarMenuItem key={i} className="hidden sm:block">
+                <Link
+                  className="w-full"
+                  color={item.href === pathname ? "primary" : "foreground"}
+                  href={item.href}
+                >
+                  {item.name}
+                </Link>
+              </NavbarMenuItem>
+            ))}
+          </NavbarContent>
+          <NavbarMenu>
+            {navItems?.map((item, i) => (
+              <NavbarMenuItem key={i}>
+                <Link
+                  className="w-full"
+                  color={item.href === pathname ? "primary" : "foreground"}
+                  href={item.href}
+                >
+                  {item.name}
+                </Link>
+              </NavbarMenuItem>
+            ))}
+          </NavbarMenu>
+          {children}
+        </Navbar>
+      </>
+    );
   return (
     <>
       <Navbar

@@ -1,11 +1,27 @@
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useQueryClient,
+  useMutation,
+  useQuery,
+  type QueryKey,
+  type Query,
+} from "@tanstack/react-query";
 
 export type CreateAccount = {
   name: string;
+  currencyId: string;
+};
+
+const onSuccess = (queryClient: any) => {
+  queryClient.invalidateQueries({
+    predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
+      query.queryKey.includes("accounts") ||
+      query.queryKey.includes("currencies") ||
+      query.queryKey.includes("transactions"),
+  });
 };
 
 export const useCreateAccount = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (account: CreateAccount) => {
       const response = await fetch("/api/accounts", {
@@ -17,9 +33,7 @@ export const useCreateAccount = () => {
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["accounts"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };
@@ -27,7 +41,12 @@ export const useCreateAccount = () => {
 export type Account = {
   id: string;
   name: string;
-  plaidId: string[];
+  plaidId?: string[];
+  currency: {
+    id: string;
+    name: string;
+    symbol: string;
+  };
 };
 
 type Meta = {
@@ -50,7 +69,7 @@ export const useGetAccounts = () => {
 };
 
 export const useDeleteAccount = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const response = await fetch("/api/accounts", {
@@ -62,30 +81,30 @@ export const useDeleteAccount = () => {
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["accounts"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };
 
 export const useUpdateAccount = () => {
-  const queryClinet = useQueryClient();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: async (payload: { id: string | null; name: string }) => {
-      const { id, name } = payload;
+    mutationFn: async (payload: {
+      id: string | null;
+      name: string;
+      currencyId: string;
+    }) => {
+      const { id, name, currencyId } = payload;
       const response = await fetch("/api/accounts", {
         method: "PATCH",
-        body: JSON.stringify({ id, name }),
+        body: JSON.stringify({ id, name, currencyId }),
         headers: {
           "Content-Type": "application/json",
         },
       });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClinet.invalidateQueries({ queryKey: ["accounts"] });
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };

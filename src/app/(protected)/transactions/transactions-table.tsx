@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
+
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -8,7 +9,10 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@nextui-org/dropdown";
-import { useDeleteCategory, type Category } from "@/features/categories/hooks";
+import {
+  useDeleteTransaction,
+  type Transaction,
+} from "@/features/transactions/hooks";
 import {
   Table,
   SortDescriptor,
@@ -29,54 +33,80 @@ import {
 } from "@nextui-org/modal";
 import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
 import { Spinner } from "@nextui-org/spinner";
-
 import { Input } from "@nextui-org/input";
 import { Button, useButton } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
 import { Tooltip } from "@nextui-org/tooltip";
 import { Pagination } from "@nextui-org/pagination";
-
 import { SearchIcon } from "@nextui-org/shared-icons";
 import { Icon } from "@iconify/react";
 import { cn } from "@nextui-org/theme";
 import { useMemoizedCallback } from "@/hooks";
+import { parseISO, format } from "date-fns";
+import { AmountCell } from "./amount-cell";
 
-export type ColumnsKey = "name" | "description" | "actions";
+export type ColumnsKey =
+  | "createdAt"
+  | "amount"
+  | "account.name"
+  | "category.name"
+  | "payee"
+  | "notes"
+  | "actions";
 
 const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
-  "name",
-  "description",
+  "createdAt",
+  "amount",
+  "account.name",
+  "category.name",
+  "payee",
+  "notes",
   "actions",
 ];
 
 export const columns = [
   {
-    name: "Category Name",
-    uid: "name",
-    info: "The name of the category",
+    name: "Date",
+    uid: "createdAt",
+    info: "Transaction date",
     sortDirection: "ascending",
   },
   {
-    name: "Description",
-    uid: "description",
-    info: "The description of the category",
+    name: "Amount",
+    uid: "amount",
+  },
+  {
+    name: "Account",
+    uid: "account.name",
+  },
+  {
+    name: "Category",
+    uid: "category.name",
+  },
+  {
+    name: "Payee",
+    uid: "payee",
+  },
+  {
+    name: "Notes",
+    uid: "notes",
   },
   { name: "Actions", uid: "actions" },
 ];
 
 interface CategoriesTableProps {
-  categories: Category[] | [];
+  transactions: Transaction[] | [];
   isLoading: boolean;
-  onOpenSidebar: (category: Category) => void;
+  onOpenSidebar: (transaction: Transaction) => void;
 }
 
-export default function CategoriesTable({
-  categories = [],
+export default function TransactionsTable({
+  transactions = [],
   isLoading,
   onOpenSidebar,
 }: CategoriesTableProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const deleteCategory = useDeleteCategory();
+  const deleteTransaction = useDeleteTransaction();
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [deleteCategoriesData, setDeleteCategoriesData] = useState<{
@@ -98,13 +128,13 @@ export default function CategoriesTable({
 
   const handleDelete = useMemoizedCallback(async (payload, onClose) => {
     const { categoriesToDelete: ids, type } = payload;
-    await deleteCategory.mutateAsync(ids);
+    await deleteTransaction.mutateAsync(ids);
     if (type === "bulk") {
       setSelectedKeys(new Set());
     } else {
       const newSelectedKeys =
         selectedKeys === "all"
-          ? new Set(categories.map((item) => item.id))
+          ? new Set(transactions.map((item) => item.id))
           : new Set(selectedKeys);
       ids.forEach((id: string) => {
         newSelectedKeys.delete(id);
@@ -131,15 +161,23 @@ export default function CategoriesTable({
   }, [visibleColumns, sortDescriptor]);
 
   const filteredItems = useMemo(() => {
-    let filteredCategories = categories ? [...categories] : [];
-
+    let filteredTransactions = transactions ? [...transactions] : [];
     if (filterValue) {
-      filteredCategories = filteredCategories.filter((user) =>
-        user.name.toLowerCase().includes(filterValue.toLowerCase())
+      filteredTransactions = filteredTransactions.filter(
+        (transaction) =>
+          transaction?.notes
+            ?.toLowerCase()
+            .includes(filterValue.toLowerCase()) ||
+          transaction?.payee
+            ?.toLowerCase()
+            .includes(filterValue.toLowerCase()) ||
+          transaction?.category.name
+            ?.toLowerCase()
+            .includes(filterValue.toLowerCase())
       );
     }
-    return filteredCategories;
-  }, [filterValue, categories]);
+    return filteredTransactions;
+  }, [filterValue, transactions]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
@@ -151,8 +189,8 @@ export default function CategoriesTable({
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: Category, b: Category) => {
-      const col = sortDescriptor.column as keyof Category;
+    return [...items].sort((a: Transaction, b: Transaction) => {
+      const col = sortDescriptor.column as keyof Transaction;
 
       let first = a[col];
       let second = b[col];
@@ -191,20 +229,39 @@ export default function CategoriesTable({
   }));
 
   const renderCell = useMemoizedCallback(
-    (category: Category, columnKey: React.Key) => {
-      const categoryKey = columnKey as ColumnsKey;
-
-      switch (categoryKey) {
-        case "name":
+    (transaction: Transaction, columnKey: React.Key) => {
+      const transactionKey = columnKey as ColumnsKey;
+      switch (transactionKey) {
+        case "createdAt":
           return (
             <div className="text-nowrap text-small capitalize text-default-foreground">
-              {category[categoryKey]}
+              {format(parseISO(transaction[transactionKey]), "PP HH:mm")}
             </div>
           );
-        case "description":
+        case "amount":
           return (
-            <div className="truncate text-default-500 max-w-[30vw]">
-              {category[categoryKey]}
+            <AmountCell
+              amount={transaction[transactionKey]}
+              currency={transaction.account.currency.name}
+            />
+          );
+        case "account.name":
+          return (
+            <div className="capitalize text-default-foreground">
+              {transaction.account.name}
+            </div>
+          );
+        case "category.name":
+          return (
+            <div className="capitalize text-default-foreground">
+              {transaction.category.name}
+            </div>
+          );
+        case "notes":
+        case "payee":
+          return (
+            <div className=" text-default-foreground">
+              {transaction[transactionKey]}
             </div>
           );
         case "actions":
@@ -216,7 +273,7 @@ export default function CategoriesTable({
                 height={18}
                 width={18}
                 onClick={() => {
-                  onOpenSidebar(category);
+                  onOpenSidebar(transaction);
                 }}
               />
               <div className="text-danger">
@@ -228,7 +285,7 @@ export default function CategoriesTable({
                   onClick={() => {
                     setDeleteCategoriesData({
                       type: "individual",
-                      categoriesToDelete: [category.id],
+                      categoriesToDelete: [transaction.id],
                     });
                     onOpen();
                   }}
@@ -291,11 +348,11 @@ export default function CategoriesTable({
         <div className="flex items-center gap-3 w-full flex-col md:flex-row">
           <div className="flex items-center gap-4 flex-col md:flex-row md:w-auto w-full">
             <Input
-              className="min-w-[200px] md:w-auto w-full"
+              className="min-w-[300px] md:w-auto w-full"
               endContent={
                 <SearchIcon className="text-default-400" width={16} />
               }
-              placeholder="Search"
+              placeholder="Search by notes, payee or category"
               size="sm"
               value={filterValue}
               onValueChange={onSearchChange}
@@ -408,7 +465,7 @@ export default function CategoriesTable({
                     onPress={() => {
                       const keys =
                         filterSelectedKeys === "all"
-                          ? categories?.map((item) => item.id)
+                          ? transactions?.map((item) => item.id)
                           : (Array.from(filterSelectedKeys) as string[]);
                       setDeleteCategoriesData({
                         type: "bulk",
@@ -550,13 +607,12 @@ export default function CategoriesTable({
                 <p>
                   You are about to delete{" "}
                   <strong>
-                    {deleteCategoriesData.categoriesToDelete.length} categor
+                    {deleteCategoriesData.categoriesToDelete.length} transaction
                     {deleteCategoriesData.categoriesToDelete.length > 1
-                      ? "ies"
-                      : "y"}
+                      ? "s"
+                      : ""}
                   </strong>
-                  . All transactions and data associated with these categories
-                  will be deleted as well. Are you sure you want to proceed?
+                  . Are you sure you want to proceed?
                 </p>
               </ModalBody>
               <ModalFooter>
@@ -566,7 +622,7 @@ export default function CategoriesTable({
                 <Button
                   color="primary"
                   data-delete="bulk"
-                  isLoading={deleteCategory.isPending}
+                  isLoading={deleteTransaction.isPending}
                   onPress={() => {
                     handleDelete(deleteCategoriesData, onClose);
                   }}

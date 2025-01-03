@@ -2,25 +2,24 @@ import { NavbarContent, NavbarItem } from "@nextui-org/navbar";
 
 import ThemeSwitcher from "@/components/theme-switcher";
 import type { Session } from "next-auth";
-import NavbarMenu from "@/components/navbar-menu";
+import NavbarCustomMenu from "@/components/navbar-custom-menu";
 
 interface HeaderProps {
   navItems?: {
     name: string;
     href: string;
-    protectedPath: boolean;
   }[];
   user?: Session["user"] | null;
 }
 
-export async function Header({ user }: HeaderProps) {
+export async function Header({ user, navItems }: HeaderProps) {
   return (
-    <NavbarMenu user={user || null}>
+    <NavbarCustomMenu user={user || null} navItems={navItems}>
       <NavbarContent justify="end">
         <NavbarItem>
           <ThemeSwitcher />
         </NavbarItem>
       </NavbarContent>
-    </NavbarMenu>
+    </NavbarCustomMenu>
   );
 }
