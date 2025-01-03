@@ -8,10 +8,15 @@ import { cn } from "@nextui-org/theme";
 import { Icon } from "@iconify/react";
 import { Button } from "@nextui-org/button";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
-import SidebarMainMenuItems from "@/components/sidebar-main-menu-items";
+import SidebarMainMenuItems, {
+  SidebarItem,
+} from "@/components/sidebar-main-menu-items";
 import { sectionItems } from "@/components/sidebar-items";
 import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
+import { useGetEntities } from "@/features/entities/hooks";
+import { Chip } from "@nextui-org/chip";
+import { useCallback } from "react";
 
 interface SidebarItemsProps {
   user: Session["user"] | null;
@@ -20,8 +25,29 @@ interface SidebarItemsProps {
 
 export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
   let pathname = usePathname();
+  const { data } = useGetEntities();
   pathname = pathname.replace("/", "");
   const router = useRouter();
+  const getSectionItems = useCallback((): SidebarItem[] => {
+    return sectionItems.reduce((acc, section) => {
+      if (section.items) {
+        const items = section.items.map((item) => {
+          if (["categories", "transactions", "accounts"].includes(item.key)) {
+            item.endContent = (
+              <Chip size="sm" variant="flat">
+                {data?.[item.key] > 999 ? "999+" : data?.[item.key]}
+              </Chip>
+            );
+          }
+          return item;
+        });
+        acc.push({ ...section, items });
+      } else {
+        acc.push(section);
+      }
+      return acc;
+    }, [] as SidebarItem[]);
+  }, [data]);
   return (
     <>
       {user && (
@@ -32,7 +58,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
           defaultSelectedKey="dashboard"
           isCompact={isCompact}
           selectedKeys={[pathname]}
-          items={sectionItems}
+          items={getSectionItems()}
           onSelect={(key) => {
             if (!key) return;
             router.push(`/${key}`);

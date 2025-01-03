@@ -5,6 +5,7 @@ import { Button } from "@nextui-org/button";
 import { Icon } from "@iconify/react";
 import { Card } from "@nextui-org/card";
 import { Chip } from "@nextui-org/chip";
+import { Select, SelectItem } from "@nextui-org/select";
 import { useDisclosure } from "@nextui-org/modal";
 import { DrawerHeader, DrawerBody, DrawerFooter } from "@nextui-org/drawer";
 import AccountsTable from "./accounts-table";
@@ -18,38 +19,78 @@ import {
   useUpdateAccount,
 } from "@/features/accounts/hooks";
 import { Input } from "@nextui-org/input";
+import {
+  useGetCurrencies,
+  type CurrencyItem,
+} from "@/features/currencies/hooks";
+import { accountSchema } from "@/schemas";
 
 const AccountsCard = () => {
   const { data, isLoading } = useGetAccounts();
+  const { data: currencies, isLoading: isCurrenciesLoading } =
+    useGetCurrencies();
   const deleteAccounts = useDeleteAccount();
   const updateAccount = useUpdateAccount();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [formState, setFormState] = useState<{
     id: null | string;
     name: string;
+    currencyId: string;
   }>({
     id: null,
     name: "",
+    currencyId: "",
   });
+  const [formError, setFormError] = useState<Record<string, string[]>>({});
+  console.log("formError", formError);
 
   useEffect(() => {
     if (!isOpen) {
-      setFormState({ id: "", name: "" });
+      setFormState({ id: "", name: "", currencyId: "" });
+      setFormError({});
     }
   }, [isOpen]);
+
   const createAccount = useCreateAccount();
 
   const onOpenSidebar = (account: Account) => {
-    setFormState(account);
+    setFormState({
+      id: account.id,
+      name: account.name,
+      currencyId: account.currency.id,
+    });
     onOpenChange();
   };
   const handleCreate = async () => {
-    await createAccount.mutateAsync(formState);
-    onOpenChange();
+    const validationResult = accountSchema.safeParse({
+      name: formState.name,
+      currencyId: formState.currencyId,
+    });
+    if (!validationResult.success) {
+      setFormError(validationResult.error.flatten().fieldErrors);
+      return;
+    } else {
+      setFormError({});
+      await createAccount.mutateAsync({
+        name: formState.name,
+        currencyId: formState?.currencyId || "",
+      });
+      onOpenChange();
+    }
   };
   const handleUpdate = async () => {
-    await updateAccount.mutateAsync(formState);
-    onOpenChange();
+    const validationResult = accountSchema.safeParse({
+      name: formState.name,
+      currencyId: formState.currencyId,
+    });
+    if (!validationResult.success) {
+      setFormError(validationResult.error.flatten().fieldErrors);
+      return;
+    } else {
+      setFormError({});
+      await updateAccount.mutateAsync(formState);
+      onOpenChange();
+    }
   };
 
   const deleteAccount = async () => {
@@ -58,6 +99,8 @@ const AccountsCard = () => {
       onOpenChange();
     }
   };
+
+  console.log("currencies", currencies?.data);
 
   return (
     <Card className="-mt-24 w-full p-8 max-w-screen-2xl">
@@ -89,24 +132,51 @@ const AccountsCard = () => {
                 ? "Edit an exisitng account"
                 : "Create a new account to track your transactions"}
             </div>
-            <Input
-              name="name"
-              placeholder="e.g Cash or Bank account, Credit Card"
-              type="text"
-              variant="bordered"
-              validationBehavior="aria"
-              value={formState.name}
-              onChange={(e) =>
-                setFormState({ ...formState, name: e.target.value })
-              }
-            />
+            <div className="gap-3 flex flex-col">
+              <Input
+                autoFocus
+                label="Name"
+                isRequired
+                name="name"
+                placeholder="e.g Cash or Bank account, Credit Card"
+                type="text"
+                variant="bordered"
+                validationBehavior="aria"
+                value={formState.name}
+                onChange={(e) =>
+                  setFormState({ ...formState, name: e.target.value })
+                }
+                isInvalid={!!formError?.name}
+                errorMessage={formError?.name?.join(", ")}
+              />
+              {currencies && currencies?.data && (
+                <Select
+                  isInvalid={!!formError?.currencyId}
+                  errorMessage={formError?.currencyId?.join(", ")}
+                  variant="bordered"
+                  isLoading={isCurrenciesLoading}
+                  label="Account Currency"
+                  isRequired
+                  defaultSelectedKeys={[formState?.currencyId || ""]}
+                  onChange={({ target }) => {
+                    setFormState({
+                      ...formState,
+                      currencyId: target.value,
+                    });
+                  }}
+                >
+                  {currencies.data.map((currency: CurrencyItem) => (
+                    <SelectItem key={currency.id}>{currency.name}</SelectItem>
+                  ))}
+                </Select>
+              )}
+            </div>
           </DrawerBody>
           <DrawerFooter>
             <div className="flex flex-col w-full">
               <Button
                 color="primary"
                 className="w-full"
-                isDisabled={formState.name.length < 3}
                 isLoading={createAccount.isPending || updateAccount.isPending}
                 onPress={formState.id ? handleUpdate : handleCreate}
               >
@@ -126,7 +196,7 @@ const AccountsCard = () => {
                       stroke="currentColor"
                       className="mr-1"
                     />
-                    <div>Delete</div>
+                    Delete
                   </div>
                 </Button>
               )}

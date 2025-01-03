@@ -1,5 +1,4 @@
 import { Chip } from "@nextui-org/chip";
-import { Icon } from "@iconify/react";
 
 import { type SidebarItem } from "./sidebar-main-menu-items";
 
@@ -10,34 +9,18 @@ export const sectionItems: SidebarItem[] = [
     items: [
       {
         key: "dashboard",
-        // href: "/dashboard",
         icon: "solar:pie-chart-2-outline",
         title: "Dashboard",
       },
       {
         key: "accounts",
-        // href: "/accounts",
         icon: "solar:wallet-money-outline",
         title: "Accounts",
-        endContent: (
-          <Icon
-            className="text-default-400"
-            icon="solar:add-circle-line-duotone"
-            width={24}
-          />
-        ),
       },
       {
         key: "categories",
         icon: "solar:checklist-minimalistic-outline",
         title: "Categories",
-        endContent: (
-          <Icon
-            className="text-default-400"
-            icon="solar:add-circle-line-duotone"
-            width={24}
-          />
-        ),
       },
       {
         key: "transactions",

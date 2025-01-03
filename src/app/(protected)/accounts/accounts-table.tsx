@@ -39,31 +39,11 @@ import { Pagination } from "@nextui-org/pagination";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import { Icon } from "@iconify/react";
 import { cn } from "@nextui-org/theme";
+import { useMemoizedCallback } from "@/hooks";
 
-type noop = (this: any, ...args: any[]) => any;
+export type ColumnsKey = "name" | "currency" | "actions";
 
-type PickFunction<T extends noop> = (
-  this: ThisParameterType<T>,
-  ...args: Parameters<T>
-) => ReturnType<T>;
-
-export function useMemoizedCallback<T extends noop>(fn: T) {
-  const fnRef = useRef<T>(fn);
-  fnRef.current = useMemo<T>(() => fn, [fn]);
-
-  const memoizedFn = useRef<PickFunction<T>>();
-
-  if (!memoizedFn.current) {
-    memoizedFn.current = function (this, ...args) {
-      return fnRef.current.apply(this, args);
-    };
-  }
-  return memoizedFn.current as T;
-}
-
-export type ColumnsKey = "name" | "actions";
-
-const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = ["name", "actions"];
+const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = ["name", "currency", "actions"];
 
 export const columns = [
   {
@@ -71,6 +51,10 @@ export const columns = [
     uid: "name",
     info: "The name of the account",
     sortDirection: "ascending",
+  },
+  {
+    name: "Currency",
+    uid: "currency",
   },
   { name: "Actions", uid: "actions" },
 ];
@@ -165,8 +149,8 @@ export default function AccountsTable({
     return [...items].sort((a: Account, b: Account) => {
       const col = sortDescriptor.column as keyof Account;
 
-      let first = a[col];
-      let second = b[col];
+      const first = a[col] as string;
+      const second = b[col] as string;
 
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
@@ -204,8 +188,13 @@ export default function AccountsTable({
   const renderCell = useMemoizedCallback(
     (account: Account, columnKey: React.Key) => {
       const accountKey = columnKey as ColumnsKey;
-
       switch (accountKey) {
+        case "currency":
+          return (
+            <div className="text-nowrap text-small capitalize text-default-foreground">
+              {account[accountKey].name}
+            </div>
+          );
         case "name":
           return (
             <div className="text-nowrap text-small capitalize text-default-foreground">

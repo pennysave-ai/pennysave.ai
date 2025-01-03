@@ -1,7 +1,9 @@
 "use client";
 
-import { Accordion, AccordionItem } from "@nextui-org/accordion";
 import React from "react";
+import { Accordion, AccordionItem } from "@nextui-org/accordion";
+import { Badge } from "@nextui-org/badge";
+
 import {
   Listbox,
   ListboxItem,

@@ -8,9 +8,7 @@ export default async function UnprotectedRoadsLayout({
 }>) {
   return (
     <div className="flex flex-col h-screen">
-      <Header
-      // navItems={navItems.filter(({ protectedPath }) => !protectedPath)}
-      />
+      <Header navItems={navItems} />
       <main className="flex-grow flex">{children}</main>
       <footer></footer>
     </div>

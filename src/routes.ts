@@ -36,16 +36,9 @@ export const navItems = [
   {
     name: "Sign In",
     href: "/",
-    protectedPath: false,
   },
   {
     name: "Sign Up",
     href: "/auth/sign-up",
-    protectedPath: false,
-  },
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    protectedPath: true,
   },
 ];
