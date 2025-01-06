@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseISO, isValid } from "date-fns";
+
 // Define a schema for the user's sign-in data
 export const signInSchema = z.object({
   email: z
@@ -85,8 +86,20 @@ export const getTransactionsSchema = z.object({
 export const updateTransactionSchema = z.object({
   id: z.string(),
   accountId: z.string(),
-  categoryId: z.string(),
-  createdAt: z.string(),
+  categoryId: z.string().uuid().nullable().optional(),
+  // categoryId: z.string().optional(),
+  createdAt: z
+    .string()
+    .min(1, { message: "Date cannot be empty" })
+    .refine(
+      (val) => {
+        const date = parseISO(val);
+        return isValid(date) && date.getFullYear() >= 1900;
+      },
+      {
+        message: "Invalid date, date must be after year 1900",
+      }
+    ),
   payee: z.string().optional(),
   amount: z.number(),
   notes: z.string().optional(),
@@ -95,7 +108,7 @@ export const updateTransactionSchema = z.object({
 export const createTransactionSchema = z.object({
   id: z.string(),
   accountId: z.string().min(1, { message: "Account cannot be empty" }),
-  categoryId: z.string().min(1, { message: "Category cannot be empty" }),
+  categoryId: z.string().nullable().optional(),
   createdAt: z
     .string()
     .min(1, { message: "Date cannot be empty" })
@@ -117,4 +130,8 @@ export const createTransactionSchema = z.object({
 
 export const createTransactionsSchema = createTransactionSchema.omit({
   id: true,
+});
+
+export const bulkCreateTransactionsSchema = createTransactionsSchema.omit({
+  categoryId: true,
 });

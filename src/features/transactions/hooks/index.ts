@@ -8,20 +8,20 @@ import {
 
 import { useSearchParams } from "next/navigation";
 
-export type CreateTransaction = {
-  amount: number;
-  payee: string;
-  notes?: string;
-  accountId: string;
-  categoryId: string;
-  createdAt: string;
-};
-
 const onSuccess = (queryClient: any) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
       query.queryKey.includes("transactions"),
   });
+};
+
+export type CreateTransaction = {
+  amount: number;
+  payee: string;
+  notes?: string;
+  accountId: string;
+  categoryId: string | null;
+  createdAt: string;
 };
 
 export const useCreateTransaction = () => {
@@ -42,7 +42,28 @@ export const useCreateTransaction = () => {
   return mutation;
 };
 
-export type Transaction = {
+// TODO: Add onError handler to all mutations and queries
+// TODO: Add toast notifications to all mutations and queries
+// when the componet will be ready
+export const useBulkCreateTransactions = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (transactions: CreateTransaction[]) => {
+      const response = await fetch("/api/transactions/bulk-create", {
+        method: "POST",
+        body: JSON.stringify(transactions),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
+    },
+    onSuccess: () => onSuccess(queryClient),
+  });
+  return mutation;
+};
+
+export type TransactionResponseItem = {
   id: string;
   amount: number;
   payee: string;
@@ -57,7 +78,7 @@ export type Transaction = {
     };
   };
   category: {
-    id: string;
+    id: string | null;
     name: string;
   };
 };
@@ -89,7 +110,7 @@ export const useGetTransactions = () => {
         throw new Error("Failed to fetch transactions");
       }
       const { data, meta } = await response.json();
-      return { data, meta } as { data: Transaction[]; meta: Meta };
+      return { data, meta } as { data: TransactionResponseItem[]; meta: Meta };
     },
   });
   return query;
@@ -127,44 +148,23 @@ export const useDeleteTransaction = () => {
   return mutation;
 };
 
-export type updateTransaction = {
+export type UpdateTransaction = {
   id: string;
   amount: number;
   payee: string;
   notes?: string;
   accountId: string;
-  categoryId: string;
+  categoryId: string | null;
   createdAt: string;
 };
 
 export const useUpdateTransaction = () => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: async (payload: updateTransaction) => {
+    mutationFn: async (payload: UpdateTransaction) => {
       const response = await fetch("/api/transactions", {
         method: "PATCH",
         body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return await response.json();
-    },
-    onSuccess: () => onSuccess(queryClient),
-  });
-  return mutation;
-};
-
-// TODO: Add onError handler to all mutations and queries
-// TODO: Add toast notifications to all mutations and queries
-// when the componet will be ready
-export const useBulkCreateTransactions = () => {
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: async (transactions: CreateTransaction[]) => {
-      const response = await fetch("/api/transactions/bulk-create", {
-        method: "POST",
-        body: JSON.stringify(transactions),
         headers: {
           "Content-Type": "application/json",
         },

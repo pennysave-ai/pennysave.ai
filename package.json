@@ -68,6 +68,7 @@
     "react-apexcharts": "^1.7.0",
     "react-currency-input-field": "^3.9.0",
     "react-dom": "^18",
+    "react-papaparse": "^4.4.0",
     "resend": "^4.0.1",
     "usehooks-ts": "^3.1.0",
     "uuid": "^11.0.3",
