@@ -14,7 +14,8 @@ export type CreateCategory = {
 const onSuccess = (queryClient: any) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
-      query.queryKey.includes("categories"),
+      query.queryKey.includes("categories") ||
+      query.queryKey.includes("transactions"),
   });
 };
 

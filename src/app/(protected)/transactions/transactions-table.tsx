@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/dropdown";
 import {
   useDeleteTransaction,
-  type Transaction,
+  type TransactionResponseItem,
 } from "@/features/transactions/hooks";
 import {
   Table,
@@ -95,9 +95,9 @@ export const columns = [
 ];
 
 interface CategoriesTableProps {
-  transactions: Transaction[] | [];
+  transactions: TransactionResponseItem[] | [];
   isLoading: boolean;
-  onOpenSidebar: (transaction: Transaction) => void;
+  onOpenSidebar: (transaction: TransactionResponseItem) => void;
 }
 
 export default function TransactionsTable({
@@ -171,7 +171,7 @@ export default function TransactionsTable({
           transaction?.payee
             ?.toLowerCase()
             .includes(filterValue.toLowerCase()) ||
-          transaction?.category.name
+          transaction?.category?.name
             ?.toLowerCase()
             .includes(filterValue.toLowerCase())
       );
@@ -189,16 +189,18 @@ export default function TransactionsTable({
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: Transaction, b: Transaction) => {
-      const col = sortDescriptor.column as keyof Transaction;
+    return [...items].sort(
+      (a: TransactionResponseItem, b: TransactionResponseItem) => {
+        const col = sortDescriptor.column as keyof TransactionResponseItem;
 
-      let first = a[col];
-      let second = b[col];
+        let first = a[col] as string;
+        let second = b[col] as string;
 
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
+        const cmp = first < second ? -1 : first > second ? 1 : 0;
 
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
-    });
+        return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      }
+    );
   }, [sortDescriptor, items]);
 
   const filterSelectedKeys = useMemo(() => {
@@ -229,7 +231,7 @@ export default function TransactionsTable({
   }));
 
   const renderCell = useMemoizedCallback(
-    (transaction: Transaction, columnKey: React.Key) => {
+    (transaction: TransactionResponseItem, columnKey: React.Key) => {
       const transactionKey = columnKey as ColumnsKey;
       switch (transactionKey) {
         case "createdAt":
@@ -253,8 +255,12 @@ export default function TransactionsTable({
           );
         case "category.name":
           return (
-            <div className="capitalize text-default-foreground">
-              {transaction.category.name}
+            <div
+              className={cn("capitalize text-default-foreground", {
+                "text-danger": !transaction.category?.name,
+              })}
+            >
+              {transaction.category?.name || "Uncategorized"}
             </div>
           );
         case "notes":

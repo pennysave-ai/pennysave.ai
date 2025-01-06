@@ -552,11 +552,15 @@ export default function CategoriesTable({
                   <strong>
                     {deleteCategoriesData.categoriesToDelete.length} categor
                     {deleteCategoriesData.categoriesToDelete.length > 1
-                      ? "ies"
-                      : "y"}
+                      ? "ies. "
+                      : "y. "}
                   </strong>
-                  . All transactions and data associated with these categories
-                  will be deleted as well. Are you sure you want to proceed?
+                  All transactions associated with
+                  {deleteCategoriesData.categoriesToDelete.length > 1
+                    ? " these categories "
+                    : " this category "}
+                  will be set as Uncategorized. Are you sure you want to
+                  proceed?
                 </p>
               </ModalBody>
               <ModalFooter>

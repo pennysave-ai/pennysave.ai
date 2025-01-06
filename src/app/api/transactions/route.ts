@@ -196,7 +196,7 @@ export async function PATCH(req: NextRequest) {
       notes,
       accountId,
       createdAt,
-      categoryId,
+      categoryId: categoryId ? categoryId : null,
     },
   });
 
