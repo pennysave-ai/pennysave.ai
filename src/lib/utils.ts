@@ -4,7 +4,7 @@ import {
   toZoned,
   getLocalTimeZone,
 } from "@internationalized/date";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, eachDayOfInterval, isSameDay } from "date-fns";
 
 export function convertAmountToMilliunits(amount: number) {
   return Math.round(amount * 1000);
@@ -50,4 +50,34 @@ export const parseDateTime = (dateString: string): ZonedDateTime => {
     millisecond
   );
   return toZoned(dateTime, getLocalTimeZone());
+};
+
+export const calculatePercentageChange = (
+  current: number,
+  previous: number
+) => {
+  if (previous === 0) {
+    return previous === current ? 0 : 100;
+  }
+  return ((current - previous) / previous) * 100;
+};
+
+export const fillMissingDates = (
+  data: { date: string; income: number; expences: number }[],
+  startDate: Date,
+  endDate: Date
+) => {
+  if (data.length === 0) {
+    return [];
+  }
+  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const transactionByDate = allDays.map((day) => {
+    const found = data.find((d) => isSameDay(d.date, day));
+    if (found) {
+      return found;
+    } else {
+      return { date: day, income: 0, expences: 0 };
+    }
+  });
+  return transactionByDate;
 };
