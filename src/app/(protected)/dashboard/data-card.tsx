@@ -1,0 +1,204 @@
+"use client";
+
+import React from "react";
+import CountUp from "react-countup";
+import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
+
+import { Card } from "@nextui-org/card";
+import { Button } from "@nextui-org/button";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@nextui-org/dropdown";
+import { Skeleton } from "@nextui-org/skeleton";
+import { cn } from "@nextui-org/theme";
+import { Icon } from "@iconify/react";
+
+interface DataCardProps {
+  title: string;
+  type: string;
+  value: number | undefined;
+  change: number | undefined;
+  changeType: string;
+  data: {
+    day: string;
+    value: number;
+  }[];
+  isLoading?: boolean;
+}
+
+export default function DataCard({
+  data,
+  title,
+  value,
+  change,
+  changeType,
+  type,
+  isLoading,
+}: DataCardProps) {
+  if (isLoading) {
+    return (
+      <dl className="grid w-full">
+        <Card className="border border-transparent dark:border-default-100">
+          <section className="flex flex-nowrap justify-between">
+            <div className="flex flex-col justify-between gap-y-2 p-4">
+              <div className="flex flex-col gap-y-4">
+                <dt className="text-sm font-medium text-default-600">
+                  <Skeleton className="w-20 h-5 rounded" />
+                </dt>
+                <dd className="text-3xl font-semibold text-default-700">
+                  <Skeleton className="w-36 h-9 rounded" />
+                </dd>
+              </div>
+              <div className="mt-2 flex items-center gap-x-1 text-xs font-medium">
+                <Skeleton className="w-44 h-4 rounded" />
+              </div>
+            </div>
+          </section>
+        </Card>
+      </dl>
+    );
+  }
+  return (
+    <dl className="grid w-full">
+      <Card className="border border-transparent dark:border-default-100">
+        <section className="flex flex-nowrap justify-between">
+          <div className="flex flex-col justify-between gap-y-2 p-4">
+            <div className="flex flex-col gap-y-4">
+              <dt className="text-sm font-medium text-default-600">{title}</dt>
+              <dd className="text-3xl font-semibold text-default-700">
+                <CountUp
+                  decimals={2}
+                  duration={1.6}
+                  end={Math.abs(value || 0)}
+                  start={0}
+                  prefix="€"
+                />
+              </dd>
+            </div>
+            <div
+              className={cn(
+                "mt-2 flex items-center gap-x-1 text-xs font-medium",
+                {
+                  "text-success-500": changeType === "positive",
+                  "text-warning-500": changeType === "neutral",
+                  "text-danger-500": changeType === "negative",
+                }
+              )}
+            >
+              {changeType === "positive" ? (
+                <Icon
+                  height={16}
+                  icon={"solar:arrow-right-up-linear"}
+                  width={16}
+                />
+              ) : changeType === "neutral" ? (
+                <Icon
+                  height={16}
+                  icon={"solar:arrow-right-linear"}
+                  width={16}
+                />
+              ) : (
+                <Icon
+                  height={16}
+                  icon={`${
+                    type === "income"
+                      ? "solar:arrow-right-down-linear"
+                      : "solar:arrow-right-up-linear"
+                  }`}
+                  width={16}
+                />
+              )}
+
+              <span>{change?.toFixed(2) || 0}%</span>
+              <span className="text-default-400 dark:text-default-500">
+                vs last month
+              </span>
+            </div>
+          </div>
+          <div className="mt-10 min-h-24 w-36 min-w-[140px] shrink-0">
+            <ResponsiveContainer
+              className="[&_.recharts-surface]:outline-none"
+              width="100%"
+            >
+              <AreaChart accessibilityLayer data={data}>
+                <defs>
+                  <linearGradient
+                    id={"colorUv" + 0}
+                    x1="0"
+                    x2="0"
+                    y1="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor={cn({
+                        "hsl(var(--nextui-success))": changeType === "positive",
+                        "hsl(var(--nextui-danger))": changeType === "negative",
+                        "hsl(var(--nextui-warning))": changeType === "neutral",
+                      })}
+                      stopOpacity={0.2}
+                    />
+
+                    <stop
+                      offset="60%"
+                      stopColor={cn({
+                        "hsl(var(--nextui-success))": changeType === "positive",
+                        "hsl(var(--nextui-danger))": changeType === "negative",
+                        "hsl(var(--nextui-warning))": changeType === "neutral",
+                      })}
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+                <YAxis
+                  domain={[Math.min(...data.map((d) => d.value)), "auto"]}
+                  hide={true}
+                />
+
+                <Area
+                  dataKey="value"
+                  fill={`url(#colorUv${0})`}
+                  stroke={cn({
+                    "hsl(var(--nextui-success))": changeType === "positive",
+                    "hsl(var(--nextui-danger))": changeType === "negative",
+                    "hsl(var(--nextui-warning))": changeType === "neutral",
+                  })}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <Dropdown
+            classNames={{
+              content: "min-w-[120px]",
+            }}
+            placement="bottom-end"
+          >
+            <DropdownTrigger>
+              <Button
+                isIconOnly
+                className="absolute right-2 top-2 w-auto rounded-full"
+                size="sm"
+                variant="light"
+              >
+                <Icon height={16} icon="solar:menu-dots-bold" width={16} />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              itemClasses={{
+                title: "text-tiny",
+              }}
+              variant="flat"
+            >
+              <DropdownItem key="view-details">View Details</DropdownItem>
+              <DropdownItem key="export-data">Export Data</DropdownItem>
+              <DropdownItem key="set-alert">Set Alert</DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </section>
+      </Card>
+    </dl>
+  );
+}
