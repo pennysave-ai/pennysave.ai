@@ -11,7 +11,8 @@ import { useSearchParams } from "next/navigation";
 const onSuccess = (queryClient: any) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
-      query.queryKey.includes("transactions"),
+      query.queryKey.includes("transactions") ||
+      query.queryKey.includes("summary"),
   });
 };
 

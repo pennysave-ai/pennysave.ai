@@ -18,14 +18,6 @@ const TransactionsCard = () => {
   });
   const onCancelImport = () => {
     setView(VIEW_VARIANTS.LIST);
-    // setImportData({
-    //   data: [],
-    //   errors: [],
-    //   meta: {},
-    // });
-  };
-  const onSubmit = (data: any) => {
-    console.log("onSubmit", data);
   };
   if (view === VIEW_VARIANTS.IMPORT) {
     return (

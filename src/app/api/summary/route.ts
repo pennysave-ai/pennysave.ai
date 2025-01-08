@@ -210,6 +210,7 @@ export async function GET(req: NextRequest) {
       endDate,
       accountId
     );
+
     const topCategories = spendingByCategory.slice(0, TOP_CATEGORIES);
     const otherCategories = spendingByCategory.slice(TOP_CATEGORIES);
     const otherCategoriesTotal = otherCategories.reduce(
@@ -219,8 +220,8 @@ export async function GET(req: NextRequest) {
     const spentByCategory = topCategories;
     if (otherCategories.length > 0) {
       spentByCategory.push({
-        id: "other",
-        name: "Other",
+        id: "Rest",
+        name: "Rest",
         totalSpending: otherCategoriesTotal,
       });
     }
