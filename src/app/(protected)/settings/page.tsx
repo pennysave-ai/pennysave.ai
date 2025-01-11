@@ -23,12 +23,11 @@ export default function SettingsPage() {
             panel: "w-full p-0 pt-4",
           }}
         >
-          <Tab key="profile" title="Profile">
-            {/* <ProfileSetting /> */}
-            <div>Profile</div>
+          <Tab key="general" title="General">
+            Users Default Base Currency
           </Tab>
-          <Tab key="appearance" title="Appearance">
-            {/* <AppearanceSetting /> */}
+          <Tab key="profile" title="Profile">
+            <div>Profile</div>
           </Tab>
           <Tab key="account" title="Account">
             {/* <AccountSetting /> */}

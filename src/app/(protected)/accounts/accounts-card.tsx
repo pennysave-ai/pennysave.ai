@@ -42,7 +42,6 @@ const AccountsCard = () => {
     currencyId: "",
   });
   const [formError, setFormError] = useState<Record<string, string[]>>({});
-  console.log("formError", formError);
 
   useEffect(() => {
     if (!isOpen) {
@@ -99,8 +98,6 @@ const AccountsCard = () => {
       onOpenChange();
     }
   };
-
-  console.log("currencies", currencies?.data);
 
   return (
     <Card className="-mt-24 w-full p-8 max-w-screen-2xl">

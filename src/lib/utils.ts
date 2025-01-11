@@ -3,6 +3,7 @@ import {
   ZonedDateTime,
   toZoned,
   getLocalTimeZone,
+  CalendarDate,
 } from "@internationalized/date";
 import { format, parseISO, eachDayOfInterval, isSameDay } from "date-fns";
 
@@ -80,4 +81,45 @@ export const fillMissingDates = (
     }
   });
   return transactionByDate;
+};
+
+/**
+ * Converts an amount from one currency to another using exchange rates relative to a base currency.
+ *
+ * @param amount - The amount to convert.
+ * @param fromRate - The exchange rate of the source currency relative to the base currency.
+ * @param toRate - The exchange rate of the target currency relative to the base currency.
+ * @returns The converted amount.
+ */
+export function convertCurrency(
+  amount: number,
+  fromRate: number,
+  toRate: number
+): number {
+  const baseAmount = Number(amount) / Number(fromRate);
+  return baseAmount * Number(toRate);
+}
+
+/**
+ * Converts a date string to a CalendarDate object.
+ *
+ * @param dateString - The date string to convert.
+ * @returns {CalendarDate | null}
+ */
+export const convertDateStringToCalendarDate = (
+  dateString: string | null
+): CalendarDate | null => {
+  if (!dateString) {
+    return null;
+  }
+  const date = parseISO(format(dateString, "yyyy-MM-dd"));
+
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+  return new CalendarDate(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate()
+  );
 };

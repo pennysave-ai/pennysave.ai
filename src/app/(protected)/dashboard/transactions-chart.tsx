@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Icon } from "@iconify/react";
+import { format, subDays } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -30,12 +31,49 @@ type ChartData = {
 interface TransactionsChartProps {
   data: ChartData[];
   isLoading: boolean;
+  currency: string;
 }
 
 export default function TransactionsChart({
   data,
   isLoading,
+  currency,
 }: TransactionsChartProps) {
+  const isEmptyData = !!data && !isLoading && data.length === 0;
+  const emptyDataPayload = [
+    {
+      date: format(subDays(new Date(), 8), "PP"),
+      noData: 10,
+    },
+    {
+      date: format(subDays(new Date(), 7), "PP"),
+      noData: 200,
+    },
+    {
+      date: format(subDays(new Date(), 6), "PP"),
+      noData: 90,
+    },
+    {
+      date: format(subDays(new Date(), 5), "PP"),
+      noData: 10,
+    },
+    {
+      date: format(subDays(new Date(), 4), "PP"),
+      noData: 150,
+    },
+    {
+      date: format(subDays(new Date(), 3), "PP"),
+      noData: 30,
+    },
+    {
+      date: format(subDays(new Date(), 2), "PP"),
+      noData: 110,
+    },
+    {
+      date: format(subDays(new Date(), 1), "PP"),
+      noData: 40,
+    },
+  ];
   return (
     <Card
       as="dl"
@@ -56,13 +94,12 @@ export default function TransactionsChart({
           </div>
         </div>
         <ResponsiveContainer
-          className="min-h-[300px] [&_.recharts-surface]:outline-none"
-          height="100%"
-          width="100%"
+          className="[&_.recharts-surface]:outline-none"
+          height={300}
         >
           <AreaChart
             accessibilityLayer
-            data={data}
+            data={isEmptyData ? emptyDataPayload : data}
             height={300}
             margin={{
               left: 0,
@@ -71,7 +108,13 @@ export default function TransactionsChart({
             width={500}
           >
             <defs>
-              <linearGradient id="colorGradient" x1="0" x2="0" y1="0" y2="1">
+              <linearGradient
+                id="colorGradientIncome"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
                 <stop
                   offset="10%"
                   stopColor={`hsl(var(--nextui-success-500))`}
@@ -79,7 +122,43 @@ export default function TransactionsChart({
                 />
                 <stop
                   offset="100%"
+                  stopColor={`hsl(var(--nextui-sucess-100))`}
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+              <linearGradient
+                id="colorGradientExpenses"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
+                <stop
+                  offset="10%"
+                  stopColor={`hsl(var(--nextui-danger-500))`}
+                  stopOpacity={0.3}
+                />
+                <stop
+                  offset="100%"
                   stopColor={`hsl(var(--nextui-danger-100))`}
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+              <linearGradient
+                id="colorGradientNoData"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
+                <stop
+                  offset="10%"
+                  stopColor={`hsl(var(--nextui-default-500))`}
+                  stopOpacity={0.3}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={`hsl(var(--nextui-default-100))`}
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -99,48 +178,52 @@ export default function TransactionsChart({
               }}
               tickLine={false}
             />
-            <Tooltip
-              content={({ label, payload }) => (
-                <div className="flex h-auto min-w-[120px] items-center gap-x-2 rounded-medium bg-background p-2 text-tiny shadow-small">
-                  <div className="flex w-full flex-col gap-y-0">
-                    {payload?.map((p, index) => {
-                      console.log(p);
-                      return (
-                        <div
-                          key={index}
-                          className="flex w-full items-center gap-x-2"
-                        >
-                          <div className="flex w-full items-center gap-x-1 text-small text-foreground-500 capitalize">
-                            {p.dataKey && (
-                              <>
-                                <span
-                                  className={
-                                    p.dataKey === "income"
-                                      ? "text-success"
-                                      : "text-danger"
-                                  }
-                                >
-                                  {p.dataKey}
-                                </span>
-                                <span>
-                                  {formatCurrency(p.payload[p.dataKey], "EUR")}
-                                </span>
-                              </>
-                            )}
+            {!isEmptyData && (
+              <Tooltip
+                content={({ label, payload }) => (
+                  <div className="flex h-auto min-w-[120px] items-center gap-x-2 rounded-medium bg-background p-2 text-tiny shadow-small">
+                    <div className="flex w-full flex-col gap-y-0">
+                      {payload?.map((p, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className="flex w-full items-center gap-x-2"
+                          >
+                            <div className="flex w-full items-center gap-x-1 text-small text-foreground-500 capitalize">
+                              {p.dataKey && (
+                                <>
+                                  <span
+                                    className={
+                                      p.dataKey === "income"
+                                        ? "text-success"
+                                        : "text-danger"
+                                    }
+                                  >
+                                    {p.dataKey}
+                                  </span>
+                                  <span>
+                                    {formatCurrency(
+                                      p.payload[p.dataKey],
+                                      currency
+                                    )}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                    <span className="text-small font-medium text-foreground-400">
-                      {label}
-                    </span>
+                        );
+                      })}
+                      <span className="text-small font-medium text-foreground-400">
+                        {label}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
-              cursor={{
-                strokeWidth: 0,
-              }}
-            />
+                )}
+                cursor={{
+                  strokeWidth: 0,
+                }}
+              />
+            )}
             <Area
               activeDot={{
                 stroke: `hsl(var(--nextui-success))`,
@@ -151,7 +234,7 @@ export default function TransactionsChart({
               animationDuration={1000}
               animationEasing="ease"
               dataKey="income"
-              fill="url(#colorGradient)"
+              fill="url(#colorGradientIncome)"
               stroke={`hsl(var(--nextui-success))`}
               strokeWidth={2}
               type="monotone"
@@ -166,11 +249,34 @@ export default function TransactionsChart({
               animationDuration={1000}
               animationEasing="ease"
               dataKey="expences"
-              fill="transparent"
+              fill="url(#colorGradientExpenses)"
               stroke={`hsl(var(--nextui-danger))`}
               strokeWidth={2}
               type="monotone"
             />
+            {isEmptyData && (
+              <>
+                <Area
+                  activeDot={false}
+                  animationDuration={1000}
+                  animationEasing="ease"
+                  dataKey="noData"
+                  fill="url(#colorGradientNoData)"
+                  stroke={`hsl(var(--nextui-default-100))`}
+                  strokeWidth={2}
+                  type="monotone"
+                />
+                <text
+                  className="text-cente text-sm z-10"
+                  fill="hsl(var(--nextui-default-400))"
+                  textAnchor="middle"
+                  x="50%"
+                  y="50%"
+                >
+                  No income and expenses in this period
+                </text>
+              </>
+            )}
           </AreaChart>
         </ResponsiveContainer>
         <Dropdown

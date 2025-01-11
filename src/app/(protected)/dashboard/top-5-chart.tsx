@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 
 import { Card } from "@nextui-org/card";
@@ -6,6 +7,7 @@ import { CardProps } from "@nextui-org/card";
 import { Skeleton } from "@nextui-org/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
+import { type CategoryResponse } from "@/app/api/summary/route";
 
 const COLORS = [
   "#9333ea",
@@ -16,26 +18,34 @@ const COLORS = [
   "#FF8042",
 ];
 
-type ChartData = {
-  name: string;
-  totalSpending: number;
-  [key: string]: string | number;
-};
-
 type CircleChartProps = {
-  data: ChartData[];
+  data: CategoryResponse[];
   title: string;
   isLoading: boolean;
+  currency: string;
 };
 
 interface Top5ChartProps {
-  data: ChartData[];
+  data: CategoryResponse[];
   title: string;
   isLoading: boolean;
+  currency: string;
 }
 
-export default function Top5Chart({ data, title, isLoading }: Top5ChartProps) {
-  return <CircleChartCard data={data} title={title} isLoading={isLoading} />;
+export default function Top5Chart({
+  data,
+  title,
+  isLoading,
+  currency,
+}: Top5ChartProps) {
+  return (
+    <CircleChartCard
+      data={data}
+      title={title}
+      isLoading={isLoading}
+      currency={currency}
+    />
+  );
 }
 
 const truncateText = (text: string, maxLength: number) => {
@@ -57,7 +67,31 @@ const renderActiveShape = (props: any) => {
     payload,
     percent,
   } = props;
-
+  if (payload.payload.id === "empty") {
+    return (
+      <g>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+        <text
+          x={cx}
+          y={cy}
+          dy={0}
+          textAnchor="middle"
+          fill="hsl(var(--nextui-default-400))"
+          className="text-sm"
+        >
+          {payload.name}
+        </text>
+      </g>
+    );
+  }
   return (
     <g>
       <text
@@ -97,13 +131,12 @@ const renderActiveShape = (props: any) => {
 const CircleChartCard = React.forwardRef<
   HTMLDivElement,
   Omit<CardProps, "children"> & CircleChartProps
->(({ title, data, isLoading }, ref) => {
+>(({ title, data, isLoading, currency }, ref) => {
   const [activeIndex, setActiveIndex] = useState(0);
-
   const onPieEnter = (_: undefined, index: number) => {
     setActiveIndex(index);
   };
-
+  const isEmptyData = !!data && !isLoading && data.length === 0;
   return (
     <Card className="md:col-span-1 border border-transparent dark:border-default-100">
       <dl>
@@ -115,34 +148,47 @@ const CircleChartCard = React.forwardRef<
               </div>
             </div>
           </div>
-          <div className="flex h-full items-center justify-between gap-x-2">
+          <div className="h-full items-center justify-between gap-x-2">
             <ResponsiveContainer
               className="[&_.recharts-surface]:outline-none"
-              height={260}
-              width="80%"
+              height={300}
             >
               <PieChart
                 accessibilityLayer
                 margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
               >
                 <Pie
-                  data={data}
+                  data={
+                    isEmptyData
+                      ? [
+                          {
+                            id: "empty",
+                            name: "No expences in this period",
+                            amount: 100,
+                          },
+                        ]
+                      : data
+                  }
                   activeIndex={activeIndex}
-                  dataKey="totalSpending"
+                  dataKey="amount"
                   innerRadius="50%"
                   nameKey="name"
                   strokeWidth={0}
                   activeShape={renderActiveShape}
                   onMouseEnter={onPieEnter}
                 >
-                  {data.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                  ))}
+                  {isEmptyData ? (
+                    <Cell fill="hsl(var(--nextui-default-100))" />
+                  ) : (
+                    data.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                    ))
+                  )}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex flex-col justify-center gap-4 p-4 text-tiny text-default-500 lg:p-0">
-              {data.map(({ id, name, totalSpending }, index) => (
+            <div className="flex justify-center gap-4 p-4 text-tiny text-default-500 lg:p-0">
+              {data.map(({ id, name, amount }, index) => (
                 <div key={id} className="flex items-center gap-2">
                   <span
                     className="h-2 w-2 rounded-full"
@@ -151,7 +197,7 @@ const CircleChartCard = React.forwardRef<
                     }}
                   />
                   <span className="capitalize">
-                    {name} {formatCurrency(totalSpending, "EUR")}
+                    {name} {formatCurrency(amount, currency)}
                   </span>
                 </div>
               ))}

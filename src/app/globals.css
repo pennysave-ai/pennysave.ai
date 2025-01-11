@@ -8,3 +8,6 @@
 .dark {
   background: var(--background);
 }
+.recharts-pie * {
+  outline: none !important;
+}
