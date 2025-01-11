@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import CountUp from "react-countup";
+import { parseISO, format } from "date-fns";
 import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
+import { Tooltip } from "@nextui-org/tooltip";
 
 import { Card } from "@nextui-org/card";
 import { Button } from "@nextui-org/button";
@@ -21,23 +23,56 @@ interface DataCardProps {
   type: string;
   value: number | undefined;
   change: number | undefined;
-  changeType: string;
+  prefix: string | undefined;
   data: {
     day: string;
     value: number;
   }[];
   isLoading?: boolean;
+  prevPeriod:
+    | {
+        start: string;
+        end: string;
+      }
+    | undefined;
 }
 
 export default function DataCard({
   data,
   title,
   value,
-  change,
-  changeType,
+  change = 0,
   type,
+  prefix,
   isLoading,
+  prevPeriod,
 }: DataCardProps) {
+  const getChangeType = useCallback(() => {
+    if (change === 0) return "neutral";
+    switch (type) {
+      case "income":
+      case "remaining":
+        return change < 0 ? "negative" : "positive";
+      case "expenses":
+        return change < 0 ? "positive" : "negative";
+    }
+  }, [change, type, value]);
+  const drawArrow = useCallback(() => {
+    if (change === 0)
+      return <Icon height={16} icon="solar:arrow-right-linear" width={16} />;
+    if (change < 0)
+      return (
+        <Icon height={16} icon="solar:arrow-right-down-linear" width={16} />
+      );
+    if (change > 0)
+      return <Icon height={16} icon="solar:arrow-right-up-linear" width={16} />;
+  }, [change, type, value]);
+  const prevPeriodStartDate = prevPeriod?.start
+    ? format(parseISO(prevPeriod?.start), "PP")
+    : "";
+  const prevPeriodEndDate = prevPeriod?.end
+    ? format(parseISO(prevPeriod?.end), "PP")
+    : "";
   if (isLoading) {
     return (
       <dl className="grid w-full">
@@ -65,16 +100,16 @@ export default function DataCard({
     <dl className="grid w-full">
       <Card className="border border-transparent dark:border-default-100">
         <section className="flex flex-nowrap justify-between">
-          <div className="flex flex-col justify-between gap-y-2 p-4">
+          <div className="flex flex-col justify-between gap-y-2 p-4 truncate">
             <div className="flex flex-col gap-y-4">
               <dt className="text-sm font-medium text-default-600">{title}</dt>
               <dd className="text-3xl font-semibold text-default-700">
                 <CountUp
                   decimals={2}
                   duration={1.6}
-                  end={Math.abs(value || 0)}
+                  end={value || 0}
                   start={0}
-                  prefix="€"
+                  prefix={prefix}
                 />
               </dd>
             </div>
@@ -82,40 +117,27 @@ export default function DataCard({
               className={cn(
                 "mt-2 flex items-center gap-x-1 text-xs font-medium",
                 {
-                  "text-success-500": changeType === "positive",
-                  "text-warning-500": changeType === "neutral",
-                  "text-danger-500": changeType === "negative",
+                  "text-success-500": getChangeType() === "positive",
+                  "text-warning-500": getChangeType() === "neutral",
+                  "text-danger-500": getChangeType() === "negative",
                 }
               )}
             >
-              {changeType === "positive" ? (
+              {drawArrow()}
+              <div>{change?.toFixed(2) || 0}%</div>
+              <div className="text-default-400 dark:text-default-500 truncate">
+                vs prev period
+              </div>
+              <Tooltip
+                content={`${prevPeriodStartDate} - ${prevPeriodEndDate}`}
+              >
                 <Icon
                   height={16}
-                  icon={"solar:arrow-right-up-linear"}
+                  icon="solar:info-circle-linear"
+                  className="text-default-400 dark:text-default-500 cursor-pointer"
                   width={16}
                 />
-              ) : changeType === "neutral" ? (
-                <Icon
-                  height={16}
-                  icon={"solar:arrow-right-linear"}
-                  width={16}
-                />
-              ) : (
-                <Icon
-                  height={16}
-                  icon={`${
-                    type === "income"
-                      ? "solar:arrow-right-down-linear"
-                      : "solar:arrow-right-up-linear"
-                  }`}
-                  width={16}
-                />
-              )}
-
-              <span>{change?.toFixed(2) || 0}%</span>
-              <span className="text-default-400 dark:text-default-500">
-                vs last month
-              </span>
+              </Tooltip>
             </div>
           </div>
           <div className="mt-10 min-h-24 w-36 min-w-[140px] shrink-0">
@@ -135,19 +157,24 @@ export default function DataCard({
                     <stop
                       offset="5%"
                       stopColor={cn({
-                        "hsl(var(--nextui-success))": changeType === "positive",
-                        "hsl(var(--nextui-danger))": changeType === "negative",
-                        "hsl(var(--nextui-warning))": changeType === "neutral",
+                        "hsl(var(--nextui-success))":
+                          getChangeType() === "positive",
+                        "hsl(var(--nextui-danger))":
+                          getChangeType() === "negative",
+                        "hsl(var(--nextui-warning))":
+                          getChangeType() === "neutral",
                       })}
                       stopOpacity={0.2}
                     />
-
                     <stop
                       offset="60%"
                       stopColor={cn({
-                        "hsl(var(--nextui-success))": changeType === "positive",
-                        "hsl(var(--nextui-danger))": changeType === "negative",
-                        "hsl(var(--nextui-warning))": changeType === "neutral",
+                        "hsl(var(--nextui-success))":
+                          getChangeType() === "positive",
+                        "hsl(var(--nextui-danger))":
+                          getChangeType() === "negative",
+                        "hsl(var(--nextui-warning))":
+                          getChangeType() === "neutral",
                       })}
                       stopOpacity={0}
                     />
@@ -157,14 +184,14 @@ export default function DataCard({
                   domain={[Math.min(...data.map((d) => d.value)), "auto"]}
                   hide={true}
                 />
-
                 <Area
                   dataKey="value"
                   fill={`url(#colorUv${0})`}
                   stroke={cn({
-                    "hsl(var(--nextui-success))": changeType === "positive",
-                    "hsl(var(--nextui-danger))": changeType === "negative",
-                    "hsl(var(--nextui-warning))": changeType === "neutral",
+                    "hsl(var(--nextui-success))":
+                      getChangeType() === "positive",
+                    "hsl(var(--nextui-danger))": getChangeType() === "negative",
+                    "hsl(var(--nextui-warning))": getChangeType() === "neutral",
                   })}
                 />
               </AreaChart>

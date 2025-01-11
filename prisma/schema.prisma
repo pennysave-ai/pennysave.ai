@@ -86,6 +86,7 @@ model Currency {
   code        String
   symbol      String
   userAccounts UserAccount[]
+  exchangeRate Float
 
   @@unique([id])
 }
