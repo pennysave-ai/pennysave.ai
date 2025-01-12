@@ -1,11 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
-const { BASE_CURRENCY } = require("../src/constants");
+const { BASE_CURRENCY } = require("../../../constants");
 
 const API_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY}.json`;
 const db = new PrismaClient();
 
-// Seed exchange rates
-const seed = async () => {
+import { NextResponse } from "next/server";
+
+/**
+ * An API route to update the exchange rates in the database
+ * runs accoording the schedule defined in vercel.json file
+ * twice a day
+ * @param req
+ * @returns {Promise<NextResponse>}
+ */
+
+export async function GET(
+  req: Request
+): Promise<NextResponse<string | object>> {
+  if (
+    req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
   try {
     const response = await fetch(API_URL);
     if (!response.ok) {
@@ -40,11 +56,11 @@ const seed = async () => {
 
     await db.$transaction(updateOperations);
     console.log(`Exchange rates updated successfully on ${new Date()}`);
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("error", error);
+    return NextResponse.json({ ok: false });
   } finally {
     await db.$disconnect();
   }
-};
-
-seed();
+}
