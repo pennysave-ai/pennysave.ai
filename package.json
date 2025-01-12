@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "dotenv -e .env.local -- next dev",
     "build:dev": "dotenv -e .env.local prisma migrate deploy && next build",
-    "build:prod": "prisma migrate deploy && next build && npm run populate:db:prod",
+    "build": "prisma migrate deploy && next build && npm run populate:db:prod",
     "populate:db:dev": "dotenv -e .env.local node populate-db.js",
     "populate:db:prod": "node populate-db.js",
     "start": "next start",
