@@ -3,7 +3,7 @@
     {
       "path": "/api/cron",
       "method": "GET",
-      "schedule": "0 12,0 * * *"
+      "schedule": "0 17 * * *"
     }
   ]
 }
