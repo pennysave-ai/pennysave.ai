@@ -5,14 +5,12 @@
   "scripts": {
     "dev": "dotenv -e .env.local -- next dev",
     "build:dev": "dotenv -e .env.local prisma migrate deploy && next build",
-    "build": "prisma migrate deploy && next build && npm run populate:db:prod",
-    "populate:db:dev": "dotenv -e .env.local node populate-db.js",
-    "populate:db:prod": "node populate-db.js",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --coverage",
-    "prisma:migrate:local": "dotenv -e .env.local -- npx prisma migrate dev --schema=prisma/schema.prisma",
-    "prisma:generate:local": "dotenv -e .env.local -- npx prisma generate --schema=prisma/schema.prisma",
+    "prisma:migrate:dev": "dotenv -e .env.local -- npx prisma migrate dev --schema=prisma/schema.prisma",
+    "prisma:generate:dev": "dotenv -e .env.local -- npx prisma generate --schema=prisma/schema.prisma",
     "prisma:seed": "dotenv -e .env.local ts-node --compiler-options '{\"module\":\"commonjs\"}' prisma/seed-exchange-rate.ts",
     "start:db": "docker run --rm -p 5432:5432 -v postgres-data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust postgres",
     "reset:db": "dotenv -e .env.local -- npx prisma migrate reset && npx prisma database push"
