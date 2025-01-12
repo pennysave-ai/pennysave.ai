@@ -1,4 +1,4 @@
-import { Chip } from "@nextui-org/chip";
+// import { Chip } from "@nextui-org/chip";
 
 import { type SidebarItem } from "./sidebar-main-menu-items";
 
@@ -27,23 +27,23 @@ export const sectionItems: SidebarItem[] = [
         icon: "solar:card-transfer-linear",
         title: "Transactions",
       },
-      {
-        key: "team",
-        href: "#",
-        icon: "solar:users-group-two-rounded-outline",
-        title: "-",
-      },
-      {
-        key: "tracker",
-        href: "#",
-        icon: "solar:sort-by-time-linear",
-        title: "-",
-        endContent: (
-          <Chip size="sm" variant="flat">
-            New
-          </Chip>
-        ),
-      },
+      // {
+      //   key: "team",
+      //   href: "#",
+      //   icon: "solar:users-group-two-rounded-outline",
+      //   title: "-",
+      // },
+      // {
+      //   key: "tracker",
+      //   href: "#",
+      //   icon: "solar:sort-by-time-linear",
+      //   title: "-",
+      //   endContent: (
+      //     <Chip size="sm" variant="flat">
+      //       New
+      //     </Chip>
+      //   ),
+      // },
     ],
   },
 ];

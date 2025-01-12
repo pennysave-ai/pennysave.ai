@@ -60,11 +60,11 @@ export const useGetSummary = () => {
         incomeAmount: convertAmountFromMilliunits(data.incomeAmount),
         expensesAmount: convertAmountFromMilliunits(data.expensesAmount),
         remainingAmount: convertAmountFromMilliunits(data.remainingAmount),
-        categories: data.categories.map((category: any) => ({
+        categories: data.categories.map((category: CategoryResponse) => ({
           ...category,
           amount: convertAmountFromMilliunits(category.amount),
         })),
-        days: data.days.map((day: any) => ({
+        days: data.days.map((day: DailyDataResponse) => ({
           ...day,
           income: convertAmountFromMilliunits(day.income),
           expences: convertAmountFromMilliunits(day.expences),

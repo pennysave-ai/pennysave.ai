@@ -120,7 +120,7 @@ export default function TransactionsHistory({
         });
       }
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onOpenSidebar = (transaction: TransactionResponseItem) => {
     const { id, amount, payee, notes, createdAt, account, category } =

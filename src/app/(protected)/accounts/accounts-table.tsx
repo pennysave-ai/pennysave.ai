@@ -421,12 +421,14 @@ export default function AccountsTable({
       </div>
     );
   }, [
+    accounts,
     filterValue,
     visibleColumns,
     filterSelectedKeys,
     headerColumns,
     sortDescriptor,
     onSearchChange,
+    onOpen,
     setVisibleColumns,
   ]);
 
@@ -444,7 +446,7 @@ export default function AccountsTable({
         />
       </div>
     );
-  }, [filterSelectedKeys, page, pages, filteredItems.length]);
+  }, [page, pages]);
 
   const handleNameClick = useMemoizedCallback(() => {
     setSortDescriptor({

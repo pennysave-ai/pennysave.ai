@@ -26,10 +26,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Prepare data for bulk creation
-  const transactionsToCreate = body.map((transaction: any) => ({
-    id: uuid(),
-    ...transaction,
-  }));
+  const transactionsToCreate = body.map(
+    (transaction: { [key: string]: string }) => ({
+      id: uuid(),
+      ...transaction,
+    })
+  );
 
   try {
     await db.transaction.createMany({

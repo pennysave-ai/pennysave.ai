@@ -31,7 +31,7 @@ type CSVData = { [key: string]: string }[];
 interface UploadTransactionsProps {
   data: CSVData;
   onCancel: () => void;
-  onUpload: (data: any) => void;
+  onUpload: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxxx";
@@ -105,39 +105,40 @@ export default function UploadTransactions({
       }
       setCurrentStep(2);
     },
-    []
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const asyncMapData = useCallback(
-    async (selectedColumns: SelectedColumnsState, data: CSVData) => {
-      const mappedData = [];
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
-        const obj: any = {};
-        for (const [key, value] of Object.entries(selectedColumns)) {
-          switch (value) {
-            case "amount":
-              const sanitizedStr = row[key].replace(/[$,]/g, "");
-              const amount = parseFloat(sanitizedStr);
-              obj[value] = convertAmountToMilliunits(amount);
-              break;
-            case "date":
-              obj["createdAt"] = format(
-                parse(row[key], csvFormat, new Date()),
-                dateFormat
-              );
-              break;
-            default:
-              if (value) obj[value] = row[key];
-          }
+  const asyncMapData = async (
+    selectedColumns: SelectedColumnsState,
+    data: CSVData
+  ) => {
+    const mappedData = [];
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const obj: any = {};
+      for (const [key, value] of Object.entries(selectedColumns)) {
+        switch (value) {
+          case "amount":
+            const sanitizedStr = row[key].replace(/[$,]/g, "");
+            const amount = parseFloat(sanitizedStr);
+            obj[value] = convertAmountToMilliunits(amount);
+            break;
+          case "date":
+            obj["createdAt"] = format(
+              parse(row[key], csvFormat, new Date()),
+              dateFormat
+            );
+            break;
+          default:
+            if (value) obj[value] = row[key];
         }
-        mappedData.push(obj);
       }
-      return mappedData;
-    },
-    []
-  );
-
+      mappedData.push(obj);
+    }
+    return mappedData;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onUploadAccepted = useCallback((results: any) => {
     setZoneHover(false);
     setCurrentStep(1);
@@ -145,19 +146,18 @@ export default function UploadTransactions({
     const data = results.data;
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      const obj: any = {};
+      const obj: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
       for (let j = 0; j < row.length; j++) {
         obj[j] = row[j];
       }
       body.push(obj);
     }
-    console.log("body", body);
     onUpload({
       data: [...body],
       errors: results.errors,
       meta: results.meta,
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (
     mappedData: CreateTransaction[],
@@ -189,7 +189,7 @@ export default function UploadTransactions({
         console.log("Error", error);
       }
     },
-    []
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (
@@ -250,7 +250,9 @@ export default function UploadTransactions({
             setZoneHover(false);
           }}
         >
-          {({ getRootProps }: any) => (
+          {(
+            { getRootProps }: any // eslint-disable-line @typescript-eslint/no-explicit-any
+          ) => (
             <div
               className={cn(
                 "mt-4 flex items-center justify-center h-32 border-dashed border-2 border-default-200 rounded-lg bg-default-100 text-default-400 cursor-pointer",

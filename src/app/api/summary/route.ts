@@ -258,8 +258,8 @@ const fetchSpendingByCategory = async (
       []
     );
     return result;
-  } catch (error: any) {
-    console.error("Error fetching spending by category:", error);
+  } catch {
+    console.error("Error fetching spending by category:");
     throw new Error("Failed to fetch spending by category.");
   }
 };
@@ -350,8 +350,8 @@ const dailyData = async (
       return acc;
     }, []);
     return result;
-  } catch (error: any) {
-    console.error("Error fetching daily data:", error);
+  } catch {
+    console.error("Error fetching daily data:");
     throw new Error("Failed to fetch daily data.");
   }
 };

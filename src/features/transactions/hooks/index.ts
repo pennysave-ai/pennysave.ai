@@ -4,11 +4,12 @@ import {
   useQuery,
   type QueryKey,
   type Query,
+  type QueryClient,
 } from "@tanstack/react-query";
 
 import { useSearchParams } from "next/navigation";
 
-const onSuccess = (queryClient: any) => {
+const onSuccess = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
       query.queryKey.includes("transactions") ||

@@ -8,6 +8,7 @@ import { Skeleton } from "@nextui-org/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
 import { type CategoryResponse } from "@/app/api/summary/route";
+import { PieSectorDataItem } from "recharts/types/polar/Pie";
 
 const COLORS = [
   "#9333ea",
@@ -55,7 +56,7 @@ const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-const renderActiveShape = (props: any) => {
+const renderActiveShape = (props: PieSectorDataItem) => {
   const {
     cx,
     cy,
@@ -113,7 +114,7 @@ const renderActiveShape = (props: any) => {
         className="text-sm font-semibold"
       >
         {" "}
-        {(percent * 100).toFixed(2)}%{" "}
+        {percent && (percent * 100).toFixed(2)}%{" "}
       </text>
       <Sector
         cx={cx}
