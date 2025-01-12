@@ -11,7 +11,6 @@
     "test": "jest --coverage",
     "prisma:migrate:dev": "dotenv -e .env.local -- npx prisma migrate dev --schema=prisma/schema.prisma",
     "prisma:generate:dev": "dotenv -e .env.local -- npx prisma generate --schema=prisma/schema.prisma",
-    "prisma:seed": "dotenv -e .env.local ts-node --compiler-options '{\"module\":\"commonjs\"}' prisma/seed-exchange-rate.ts",
     "start:db": "docker run --rm -p 5432:5432 -v postgres-data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust postgres",
     "reset:db": "dotenv -e .env.local -- npx prisma migrate reset && npx prisma database push"
   },
