@@ -1,10 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
-const { BASE_CURRENCY } = require("../../../constants");
-
-const API_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY}.json`;
-const db = new PrismaClient();
-
 import { NextResponse } from "next/server";
+
+import { db } from "@/db";
+import { BASE_CURRENCY } from "@/constants";
+
+const CURRENCY_API_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY}.json`;
 
 /**
  * An API route to update the exchange rates in the database
@@ -23,7 +22,7 @@ export async function GET(
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(CURRENCY_API_URL);
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.statusText}`);
     }
@@ -47,11 +46,12 @@ export async function GET(
       })
     );
 
-    const updateOperations = updates.map((update: any) =>
-      db.currency.update({
-        where: update.where,
-        data: update.data,
-      })
+    const updateOperations = updates.map(
+      (update: { where: { id: string }; data: { exchangeRate: number } }) =>
+        db.currency.update({
+          where: update.where,
+          data: update.data,
+        })
     );
 
     await db.$transaction(updateOperations);
