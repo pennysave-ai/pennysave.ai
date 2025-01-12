@@ -4,6 +4,7 @@ import {
   useQuery,
   type QueryKey,
   type Query,
+  type QueryClient,
 } from "@tanstack/react-query";
 
 export type CreateAccount = {
@@ -11,7 +12,7 @@ export type CreateAccount = {
   currencyId: string;
 };
 
-const onSuccess = (queryClient: any) => {
+const onSuccess = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
       query.queryKey.includes("accounts") ||

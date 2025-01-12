@@ -168,7 +168,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
           )}
         >
           {steps?.map((step, stepIdx) => {
-            let status =
+            const status =
               currentStep === stepIdx
                 ? "active"
                 : currentStep < stepIdx
@@ -246,7 +246,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                       aria-hidden="true"
                       className="pointer-events-none absolute right-0 w-10 flex-none items-center sm:block hidden"
                       style={{
-                        // @ts-ignore
+                        // @ts-expect-error - idx is not a valid CSS property
                         "--idx": stepIdx,
                       }}
                     >

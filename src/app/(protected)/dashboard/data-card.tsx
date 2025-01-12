@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React from "react";
 import CountUp from "react-countup";
 import { parseISO, format } from "date-fns";
 import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
@@ -47,7 +47,7 @@ export default function DataCard({
   isLoading,
   prevPeriod,
 }: DataCardProps) {
-  const getChangeType = useCallback(() => {
+  const getChangeType = () => {
     if (change === 0) return "neutral";
     switch (type) {
       case "income":
@@ -56,8 +56,8 @@ export default function DataCard({
       case "expenses":
         return change < 0 ? "positive" : "negative";
     }
-  }, [change, type, value]);
-  const drawArrow = useCallback(() => {
+  };
+  const drawArrow = () => {
     if (change === 0)
       return <Icon height={16} icon="solar:arrow-right-linear" width={16} />;
     if (change < 0)
@@ -66,7 +66,7 @@ export default function DataCard({
       );
     if (change > 0)
       return <Icon height={16} icon="solar:arrow-right-up-linear" width={16} />;
-  }, [change, type, value]);
+  };
   const prevPeriodStartDate = prevPeriod?.start
     ? format(parseISO(prevPeriod?.start), "PP")
     : "";

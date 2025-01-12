@@ -193,8 +193,8 @@ export default function TransactionsTable({
       (a: TransactionResponseItem, b: TransactionResponseItem) => {
         const col = sortDescriptor.column as keyof TransactionResponseItem;
 
-        let first = a[col] as string;
-        let second = b[col] as string;
+        const first = a[col] as string;
+        const second = b[col] as string;
 
         const cmp = first < second ? -1 : first > second ? 1 : 0;
 
@@ -497,6 +497,8 @@ export default function TransactionsTable({
     sortDescriptor,
     onSearchChange,
     setVisibleColumns,
+    onOpen,
+    transactions,
   ]);
 
   const bottomContent = useMemo(() => {
@@ -513,7 +515,7 @@ export default function TransactionsTable({
         />
       </div>
     );
-  }, [filterSelectedKeys, page, pages, filteredItems.length]);
+  }, [page, pages]);
 
   const handleNameClick = useMemoizedCallback(() => {
     setSortDescriptor({

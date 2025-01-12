@@ -154,8 +154,8 @@ export default function CategoriesTable({
     return [...items].sort((a: Category, b: Category) => {
       const col = sortDescriptor.column as keyof Category;
 
-      let first = a[col];
-      let second = b[col];
+      const first = a[col];
+      const second = b[col];
 
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
@@ -434,6 +434,8 @@ export default function CategoriesTable({
     sortDescriptor,
     onSearchChange,
     setVisibleColumns,
+    onOpen,
+    categories,
   ]);
 
   const bottomContent = useMemo(() => {
@@ -450,7 +452,7 @@ export default function CategoriesTable({
         />
       </div>
     );
-  }, [filterSelectedKeys, page, pages, filteredItems.length]);
+  }, [page, pages]);
 
   const handleNameClick = useMemoizedCallback(() => {
     setSortDescriptor({

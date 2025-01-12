@@ -1,6 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
+
 import { Tooltip } from "@nextui-org/tooltip";
 import { Spacer } from "@nextui-org/spacer";
 import UserMenu from "@/components/user-menu";
@@ -12,11 +15,9 @@ import SidebarMainMenuItems, {
   SidebarItem,
 } from "@/components/sidebar-main-menu-items";
 import { sectionItems } from "@/components/sidebar-items";
-import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useGetEntities } from "@/features/entities/hooks";
 import { Chip } from "@nextui-org/chip";
-import { useCallback } from "react";
 
 interface SidebarItemsProps {
   user: Session["user"] | null;
@@ -28,7 +29,8 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
   const { data } = useGetEntities();
   pathname = pathname.replace("/", "");
   const router = useRouter();
-  const getSectionItems = useCallback((): SidebarItem[] => {
+
+  const items = useMemo(() => {
     return sectionItems.reduce((acc, section) => {
       if (section.items) {
         const items = section.items.map((item) => {
@@ -48,6 +50,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
       return acc;
     }, [] as SidebarItem[]);
   }, [data]);
+
   return (
     <>
       {user && (
@@ -58,7 +61,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
           defaultSelectedKey="dashboard"
           isCompact={isCompact}
           selectedKeys={[pathname]}
-          items={getSectionItems()}
+          items={items}
           onSelect={(key) => {
             if (!key) return;
             router.push(`/${key}`);
@@ -71,7 +74,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
           "items-center": isCompact,
         })}
       >
-        <Tooltip
+        {/* <Tooltip
           content="Help & Feedback"
           isDisabled={!isCompact}
           placement="right"
@@ -106,7 +109,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
               "Help & Information"
             )}
           </Button>
-        </Tooltip>
+        </Tooltip> */}
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             onPress={() => signOut()}
