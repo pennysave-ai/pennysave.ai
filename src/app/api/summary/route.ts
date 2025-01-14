@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { subDays, parse, differenceInDays, isSameDay } from "date-fns";
+import {
+  subDays,
+  parse,
+  differenceInDays,
+  isSameDay,
+  endOfDay,
+} from "date-fns";
 import { db } from "@/db";
 import { auth } from "@/auth";
 import { convertCurrency } from "@/lib/utils";
@@ -284,7 +290,7 @@ const dailyData = async (
   try {
     const query = `
         SELECT
-          DATE_TRUNC('day', "Transaction"."createdAt")::date AS "date",
+          "Transaction"."createdAt" AS "date",
           COALESCE(SUM(CASE WHEN "Transaction"."amount" > 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "income",
           COALESCE(SUM(CASE WHEN "Transaction"."amount" < 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "expences",
           "Currency"."id" AS "currencyId",
@@ -336,7 +342,9 @@ const dailyData = async (
             item.exchangeRate,
             targetCurrency.exchangeRate
           );
-      const existingDay = acc.find((day) => isSameDay(day.date, item.date));
+      const existingDay = acc.find((day) => {
+        return isSameDay(day.date, item.date);
+      });
       if (existingDay) {
         existingDay.income += income;
         existingDay.expences += expences;
@@ -373,7 +381,9 @@ export async function GET(req: NextRequest) {
   const defaultFrom = subDays(defaultTo, DEFAULT_DATA_PERIOD);
 
   const startDate = from ? parse(from, "yyyy-MM-dd", new Date()) : defaultFrom;
-  const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
+  const endDate = to
+    ? endOfDay(parse(to, "yyyy-MM-dd", new Date()))
+    : endOfDay(defaultTo);
   const periodLength = differenceInDays(endDate, startDate) + 1;
   const lastPeriodStart = subDays(startDate, periodLength);
   const lastPeriodEnd = subDays(endDate, periodLength);
@@ -428,14 +438,13 @@ export async function GET(req: NextRequest) {
       lastPeriod.income
     );
     const expensesChange = calculatePercentageChange(
-      currentPeriod.expences,
-      lastPeriod.expences
+      Math.abs(currentPeriod.expences),
+      Math.abs(lastPeriod.expences)
     );
     const remainingChange = calculatePercentageChange(
       currentPeriod.remaining,
       lastPeriod.remaining
     );
-
     const dailyTransactionsData = fillMissingDates(
       dailyTransactions,
       startDate,

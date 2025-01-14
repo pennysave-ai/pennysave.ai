@@ -68,8 +68,8 @@ export const columns = [
   {
     name: "Date",
     uid: "createdAt",
-    info: "Transaction date",
     sortDirection: "ascending",
+    info: false,
   },
   {
     name: "Amount",

@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { Button, ButtonGroup } from "@nextui-org/button";
@@ -37,20 +39,18 @@ export default function RangePicker() {
     start: CalendarDate;
   } | null>(defaultDate);
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      const query = new URLSearchParams(searchParams);
-      if (value?.start) {
-        const from = `${value.start.year}-${value.start.month}-${value.start.day}`;
-        query.set("from", from);
-      }
-      if (value?.end) {
-        const to = `${value.end.year}-${value.end.month}-${value.end.day}`;
-        query.set("to", to);
-      }
-      router.push(`${pathname}?${query.toString()}`);
+  useEffect(() => {
+    const query = new URLSearchParams(searchParams);
+    if (value?.start) {
+      const from = `${value.start.year}-${value.start.month}-${value.start.day}`;
+      query.set("from", from);
     }
-  };
+    if (value?.end) {
+      const to = `${value.end.year}-${value.end.month}-${value.end.day}`;
+      query.set("to", to);
+    }
+    router.push(`${pathname}?${query.toString()}`);
+  }, [value]);
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -65,6 +65,7 @@ export default function RangePicker() {
             variant="bordered"
           >
             <Button
+              className="text-xs"
               onPress={() => {
                 setValue({
                   start: now.subtract({ days: 30 }),
@@ -96,20 +97,21 @@ export default function RangePicker() {
             </Button>
           </ButtonGroup>
         }
+        calendarWidth={280}
         calendarProps={{
-          focusedValue: value?.start,
-          onFocusChange: (val) => value && setValue({ ...value, start: val }),
           nextButtonProps: {
             variant: "bordered",
           },
           prevButtonProps: {
             variant: "bordered",
           },
+          classNames: {
+            // base: "bg-background-100",
+          },
         }}
         label="Data range"
         value={value}
         onChange={setValue}
-        onOpenChange={handleOpenChange}
       />
     </div>
   );

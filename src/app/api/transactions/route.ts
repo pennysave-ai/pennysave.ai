@@ -7,7 +7,7 @@ import {
   updateTransactionSchema,
   createTransactionSchema,
 } from "@/schemas";
-import { subDays, parse } from "date-fns";
+import { subDays, parse, endOfDay } from "date-fns";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
 
   const startDate = from ? parse(from, "yyyy-MM-dd", new Date()) : defaultFrom;
   const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
-
   // if notes is empty, return empty string
   const transactions = await db.transaction.findMany({
     select: {
@@ -64,7 +63,7 @@ export async function GET(req: NextRequest) {
       },
       createdAt: {
         gte: startDate,
-        lte: endDate,
+        lte: endOfDay(endDate),
       },
     },
     orderBy: { createdAt: "desc" },
@@ -85,7 +84,7 @@ export async function GET(req: NextRequest) {
       },
       createdAt: {
         gte: startDate,
-        lte: endDate,
+        lte: endOfDay(endDate),
       },
     },
   });

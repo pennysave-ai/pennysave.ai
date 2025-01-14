@@ -5,7 +5,13 @@ import {
   getLocalTimeZone,
   CalendarDate,
 } from "@internationalized/date";
-import { format, parseISO, eachDayOfInterval, isSameDay } from "date-fns";
+import {
+  format,
+  parseISO,
+  eachDayOfInterval,
+  isSameDay,
+  startOfDay,
+} from "date-fns";
 
 export function convertAmountToMilliunits(amount: number) {
   return Math.round(amount * 1000);
@@ -58,7 +64,7 @@ export const calculatePercentageChange = (
   previous: number
 ) => {
   if (previous === 0) {
-    return previous === current ? 0 : 100;
+    return previous === current ? 0 : current > 0 ? 100 : -100;
   }
   return ((current - previous) / previous) * 100;
 };
@@ -73,9 +79,15 @@ export const fillMissingDates = (
   }
   const allDays = eachDayOfInterval({ start: startDate, end: endDate });
   const transactionByDate = allDays.map((day) => {
-    const found = data.find((d) => isSameDay(d.date, day));
+    const found = data.find((d) => {
+      return isSameDay(startOfDay(d.date), day);
+    });
     if (found) {
-      return found;
+      // Normalize the date to the start of the day
+      return {
+        ...found,
+        date: startOfDay(found.date),
+      };
     } else {
       return { date: day, income: 0, expences: 0 };
     }
