@@ -193,203 +193,207 @@ export default function UploadTransactions({
   );
 
   return (
-    <Card className="-mt-24 w-full p-8 max-w-screen-2xl">
-      <div className="flex sm:flex-row flex-col justify-between">
-        <div className="flex items-center sm:mb-0 mb-4">
-          <h1 className="text-2xl font-[700] leading-[32px]">
-            Bulk upload Transactions
-          </h1>
-        </div>
-        <div className="gap-3 flex sm:flex-row flex-col">
-          {currentStep === 1 && (
-            <Button
-              color="primary"
-              isDisabled={
-                !requiredOptions.every((option) =>
-                  Object.values(selectedColumns).includes(option)
-                )
-              }
-              onPress={() => mapData(selectedColumns, data)}
-            >
-              Next
-            </Button>
-          )}
-          {currentStep !== 3 && (
-            <Button color="danger" onPress={onCancel}>
-              Cancel
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-col gap-4 mt-4">
-        <RowSteps
-          color="primary"
-          currentStep={currentStep}
-          steps={[
-            {
-              title: "Select or drag and drop your file",
-            },
-            {
-              title: "Review and map columns",
-            },
-            {
-              title: "Upload data",
-            },
-          ]}
-        />
-      </div>
-      {currentStep === 0 && (
-        <CSVReader
-          onUploadAccepted={onUploadAccepted}
-          onDragOver={(event: DragEvent) => {
-            event.preventDefault();
-            setZoneHover(true);
-          }}
-          onDragLeave={(event: DragEvent) => {
-            event.preventDefault();
-            setZoneHover(false);
-          }}
-        >
-          {(
-            { getRootProps }: any // eslint-disable-line @typescript-eslint/no-explicit-any
-          ) => (
-            <div
-              className={cn(
-                "mt-4 flex items-center justify-center h-32 border-dashed border-2 border-default-200 rounded-lg bg-default-100 text-default-400 cursor-pointer",
-                {
-                  "shadow-inner": zoneHover,
+    <div className="px-4 flex w-full flex-col items-center -mt-[72px] lg:-mt-18">
+      <Card className="w-full p-8 max-w-screen-2xl">
+        <div className="flex sm:flex-row flex-col justify-between">
+          <div className="flex items-center sm:mb-0 mb-4">
+            <h1 className="text-2xl font-[700] leading-[32px]">
+              Bulk upload Transactions
+            </h1>
+          </div>
+          <div className="gap-3 flex sm:flex-row flex-col">
+            {currentStep === 1 && (
+              <Button
+                color="primary"
+                isDisabled={
+                  !requiredOptions.every((option) =>
+                    Object.values(selectedColumns).includes(option)
+                  )
                 }
-              )}
-              {...getRootProps()}
-            >
-              <div className="flex items-center gap-2">
-                <Icon icon="solar:file-download-bold" width={44} />
-                <div>Drop CSV file here or click to upload</div>
-              </div>
-            </div>
-          )}
-        </CSVReader>
-      )}
-      {currentStep === 1 && (
-        <>
-          {dataErrors && (
-            <div className="text-danger text-sm mt-3">{dataErrors}</div>
-          )}
-          <div className="text-sm mt-3 flex items-center gap-1">
-            Please select the following required columns:
-            {requiredOptions.map((option: string, i) => (
-              <div
-                key={i}
-                className={cn("capitalize", {
-                  "text-primary":
-                    Object.values(selectedColumns).includes(option),
-                })}
+                onPress={() => mapData(selectedColumns, data)}
               >
-                {option}
-              </div>
-            ))}
+                Next
+              </Button>
+            )}
+            {currentStep !== 3 && (
+              <Button color="danger" onPress={onCancel}>
+                Cancel
+              </Button>
+            )}
           </div>
-          <Table
+        </div>
+        <div className="flex flex-col gap-4 mt-4">
+          <RowSteps
             color="primary"
-            isHeaderSticky
-            bottomContent={
-              <div>
-                {data.length > 20 && (
-                  <div className="text-default-400 text-sm">
-                    {`Showing only 20 of ${data.length} records
-                `}
-                  </div>
-                )}
-              </div>
-            }
-            bottomContentPlacement="outside"
-            classNames={{
-              wrapper: "max-h-96 overflow-auto shadow-none p-0 mt-4",
-              tr: "!shadow-none",
+            currentStep={currentStep}
+            steps={[
+              {
+                title: "Select or drag and drop your file",
+              },
+              {
+                title: "Review and map columns",
+              },
+              {
+                title: "Upload data",
+              },
+            ]}
+          />
+        </div>
+        {currentStep === 0 && (
+          <CSVReader
+            onUploadAccepted={onUploadAccepted}
+            onDragOver={(event: DragEvent) => {
+              event.preventDefault();
+              setZoneHover(true);
             }}
-            selectionMode="none"
-            topContentPlacement="outside"
+            onDragLeave={(event: DragEvent) => {
+              event.preventDefault();
+              setZoneHover(false);
+            }}
           >
-            <TableHeader>
-              {Object.keys(data[0]).map((_, i) => {
-                return (
-                  <TableColumn key={i}>
-                    <HeaderDropdown
-                      onChange={onChange}
-                      columnIndex={i}
-                      disabledKeys={Object.values(selectedColumns).filter(
-                        (value) => value !== null
-                      )}
-                    />
-                  </TableColumn>
-                );
-              })}
-            </TableHeader>
-            <TableBody emptyContent="Bummer! No items found">
-              {body.map((item, i) => (
-                <TableRow key={i}>
-                  {(columnKey) => {
-                    return <TableCell>{item[columnKey]}</TableCell>;
-                  }}
-                </TableRow>
+            {(
+              { getRootProps }: any // eslint-disable-line @typescript-eslint/no-explicit-any
+            ) => (
+              <div
+                className={cn(
+                  "mt-4 flex items-center justify-center h-32 border-dashed border-2 border-default-200 rounded-lg bg-default-100 text-default-400 cursor-pointer",
+                  {
+                    "shadow-inner": zoneHover,
+                  }
+                )}
+                {...getRootProps()}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="solar:file-download-bold" width={44} />
+                  <div>Drop CSV file here or click to upload</div>
+                </div>
+              </div>
+            )}
+          </CSVReader>
+        )}
+        {currentStep === 1 && (
+          <>
+            {dataErrors && (
+              <div className="text-danger text-sm mt-3">{dataErrors}</div>
+            )}
+            <div className="text-sm mt-3 flex items-center gap-1">
+              Please select the following required columns:
+              {requiredOptions.map((option: string, i) => (
+                <div
+                  key={i}
+                  className={cn("capitalize", {
+                    "text-primary":
+                      Object.values(selectedColumns).includes(option),
+                  })}
+                >
+                  {option}
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        </>
-      )}
-      {currentStep === 2 && (
-        <div className="flex justify-center mt-4">
-          <div className="bg-default-100 p-6 rounded-lg max-w-md w-full flex flex-col gap-y-6">
-            <h4 className="text-default-600 text-sm">
-              Please select an account with which these transactions will be
-              associated. Please note: all transactions will be set as
-              Uncategorized.
-            </h4>
-            <Autocomplete
-              isRequired
-              onSelectionChange={(id) => {
-                if (id) setSelectedAccount(id as string);
-              }}
-              defaultItems={
-                accountsData?.data.map(({ id, name, currency }) => ({
-                  key: id,
-                  label: `${name} (${currency.name})`,
-                })) || []
-              }
-              label="Account"
-              variant="bordered"
-            >
-              {(item) => (
-                <AutocompleteItem key={item.key}>{item.label}</AutocompleteItem>
-              )}
-            </Autocomplete>
-            <Button
-              color="primary"
-              className="w-full"
-              isLoading={createTransactions.isPending}
-              isDisabled={!selectedAccount || createTransactions.isPending}
-              onPress={() => uploadData(mappedData, selectedAccount)}
-            >
-              Upload
-            </Button>
-          </div>
-        </div>
-      )}
-      {currentStep === 3 && (
-        <div className="flex justify-center mt-4">
-          <div className="bg-default-100 p-6 rounded-lg max-w-md w-full flex flex-col gap-y-6 items-center">
-            <h4 className="text-default-600 text-sm">
-              Success! Your transactions have been successfully uploaded.
-            </h4>
-            <div className="text-primary">
-              <Icon icon="solar:check-circle-linear" width={48} />
             </div>
-            <Button color="primary" className="w-full" onPress={onCancel}>
-              Done
-            </Button>
+            <Table
+              color="primary"
+              isHeaderSticky
+              bottomContent={
+                <div>
+                  {data.length > 20 && (
+                    <div className="text-default-400 text-sm">
+                      {`Showing only 20 of ${data.length} records
+                `}
+                    </div>
+                  )}
+                </div>
+              }
+              bottomContentPlacement="outside"
+              classNames={{
+                wrapper: "max-h-96 overflow-auto shadow-none p-0 mt-4",
+                tr: "!shadow-none",
+              }}
+              selectionMode="none"
+              topContentPlacement="outside"
+            >
+              <TableHeader>
+                {Object.keys(data[0]).map((_, i) => {
+                  return (
+                    <TableColumn key={i}>
+                      <HeaderDropdown
+                        onChange={onChange}
+                        columnIndex={i}
+                        disabledKeys={Object.values(selectedColumns).filter(
+                          (value) => value !== null
+                        )}
+                      />
+                    </TableColumn>
+                  );
+                })}
+              </TableHeader>
+              <TableBody emptyContent="Bummer! No items found">
+                {body.map((item, i) => (
+                  <TableRow key={i}>
+                    {(columnKey) => {
+                      return <TableCell>{item[columnKey]}</TableCell>;
+                    }}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
+        )}
+        {currentStep === 2 && (
+          <div className="flex justify-center mt-4">
+            <div className="bg-default-100 p-6 rounded-lg max-w-md w-full flex flex-col gap-y-6">
+              <h4 className="text-default-600 text-sm">
+                Please select an account with which these transactions will be
+                associated. Please note: all transactions will be set as
+                Uncategorized.
+              </h4>
+              <Autocomplete
+                isRequired
+                onSelectionChange={(id) => {
+                  if (id) setSelectedAccount(id as string);
+                }}
+                defaultItems={
+                  accountsData?.data.map(({ id, name, currency }) => ({
+                    key: id,
+                    label: `${name} (${currency.name})`,
+                  })) || []
+                }
+                label="Account"
+                variant="bordered"
+              >
+                {(item) => (
+                  <AutocompleteItem key={item.key}>
+                    {item.label}
+                  </AutocompleteItem>
+                )}
+              </Autocomplete>
+              <Button
+                color="primary"
+                className="w-full"
+                isLoading={createTransactions.isPending}
+                isDisabled={!selectedAccount || createTransactions.isPending}
+                onPress={() => uploadData(mappedData, selectedAccount)}
+              >
+                Upload
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+        {currentStep === 3 && (
+          <div className="flex justify-center mt-4">
+            <div className="bg-default-100 p-6 rounded-lg max-w-md w-full flex flex-col gap-y-6 items-center">
+              <h4 className="text-default-600 text-sm">
+                Success! Your transactions have been successfully uploaded.
+              </h4>
+              <div className="text-primary">
+                <Icon icon="solar:check-circle-linear" width={48} />
+              </div>
+              <Button color="primary" className="w-full" onPress={onCancel}>
+                Done
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }

@@ -32,9 +32,9 @@ export default function DashboardPage() {
   }));
   return (
     <div className="relative z-10 flex flex-col w-full">
-      <Hero />
-      <div className="-mt-44 grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full mb-4 place-content-end">
-        <div className="grid w-full col-start-1 lg:col-start-3 gap-y-3">
+      <Hero description="Analyze, your expenses and income" />
+      <div className="-mt-[72px] lg:-mt-[216px] grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full mb-4 place-content-end">
+        <div className="grid w-full col-start-1 lg:col-start-3 gap-y-4">
           <div className="grid w-full">
             <DateRangePicker />
           </div>

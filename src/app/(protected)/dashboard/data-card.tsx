@@ -73,6 +73,7 @@ export default function DataCard({
   const prevPeriodEndDate = prevPeriod?.end
     ? format(parseISO(prevPeriod?.end), "PP")
     : "";
+
   if (isLoading) {
     return (
       <dl className="grid w-full">
@@ -148,7 +149,7 @@ export default function DataCard({
               <AreaChart accessibilityLayer data={data}>
                 <defs>
                   <linearGradient
-                    id={"colorUv" + 0}
+                    id={"colorUv" + type}
                     x1="0"
                     x2="0"
                     y1="0"
@@ -164,7 +165,7 @@ export default function DataCard({
                         "hsl(var(--nextui-warning))":
                           getChangeType() === "neutral",
                       })}
-                      stopOpacity={0.2}
+                      stopOpacity={0.4}
                     />
                     <stop
                       offset="60%"
@@ -186,7 +187,7 @@ export default function DataCard({
                 />
                 <Area
                   dataKey="value"
-                  fill={`url(#colorUv${0})`}
+                  fill={`url(#colorUv${type})`}
                   stroke={cn({
                     "hsl(var(--nextui-success))":
                       getChangeType() === "positive",

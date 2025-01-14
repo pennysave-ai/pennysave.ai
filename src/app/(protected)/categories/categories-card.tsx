@@ -62,9 +62,9 @@ const CategoriesCard = () => {
   };
 
   return (
-    <Card className="-mt-24 w-full p-8 max-w-screen-2xl">
-      <div className="flex sm:flex-row flex-col justify-between">
-        <div className="flex items-center sm:mb-0 mb-4">
+    <Card className="-mt-[72px] w-full p-8 max-w-screen-2xl">
+      <div className="flex md:flex-row flex-col justify-between">
+        <div className="flex items-center md:mb-0 mb-4">
           <h1 className="text-2xl font-[700] leading-[32px]">My Categories</h1>
           <Chip
             className="items-center text-default-500 ml-1 w-min-[10px]"
@@ -79,7 +79,7 @@ const CategoriesCard = () => {
           endContent={<Icon icon="solar:add-circle-bold" width={20} />}
           onPress={onOpen}
         >
-          Add New Category
+          Add New
         </Button>
         <RightSidebar isOpen={isOpen} onOpenChange={onOpenChange}>
           <DrawerHeader className="flex flex-col pb-2">

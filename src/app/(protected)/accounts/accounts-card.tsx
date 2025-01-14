@@ -100,7 +100,7 @@ const AccountsCard = () => {
   };
 
   return (
-    <Card className="-mt-24 w-full p-8 max-w-screen-2xl">
+    <Card className="-mt-[72px] w-full p-8 max-w-screen-2xl">
       <div className="flex sm:flex-row flex-col justify-between">
         <div className="flex items-center sm:mb-0 mb-4">
           <h1 className="text-2xl font-[700] leading-[32px]">My Accounts</h1>
@@ -117,7 +117,7 @@ const AccountsCard = () => {
           endContent={<Icon icon="solar:add-circle-bold" width={20} />}
           onPress={onOpen}
         >
-          Add New Account
+          Add New
         </Button>
         <RightSidebar isOpen={isOpen} onOpenChange={onOpenChange}>
           <DrawerHeader className="flex flex-col pb-2">

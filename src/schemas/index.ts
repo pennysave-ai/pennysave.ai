@@ -78,16 +78,25 @@ export const categorySchema = z.object({
 });
 
 export const getTransactionsSchema = z.object({
-  from: z.string().optional(),
-  to: z.string().optional(),
-  accountId: z.string().optional(),
+  from: z
+    .string()
+    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+      message: "From date must be in yyyy-mm-dd format",
+    })
+    .optional(),
+  to: z
+    .string()
+    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+      message: "To date must be in yyyy-mm-dd format",
+    })
+    .optional(),
+  accountId: z.string().uuid().optional(),
 });
 
 export const updateTransactionSchema = z.object({
   id: z.string(),
   accountId: z.string(),
   categoryId: z.string().uuid().nullable().optional(),
-  // categoryId: z.string().optional(),
   createdAt: z
     .string()
     .min(1, { message: "Date cannot be empty" })
