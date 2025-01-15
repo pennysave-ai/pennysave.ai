@@ -134,7 +134,7 @@ export const convertDateStringToCalendarDate = (
       date.getMonth() + 1,
       date.getDate()
     );
-  } catch (error) {
+  } catch {
     return null;
   }
 };
