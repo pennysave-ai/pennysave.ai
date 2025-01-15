@@ -354,7 +354,7 @@ export default function UploadTransactions({
                 defaultItems={
                   accountsData?.data.map(({ id, name, currency }) => ({
                     key: id,
-                    label: `${name} (${currency.name})`,
+                    label: `${name} (${currency})`,
                   })) || []
                 }
                 label="Account"
