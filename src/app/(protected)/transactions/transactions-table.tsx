@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
-
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -33,10 +32,10 @@ import {
 } from "@nextui-org/modal";
 import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
 import { Spinner } from "@nextui-org/spinner";
+
 import { Input } from "@nextui-org/input";
 import { Button, useButton } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
-import { Tooltip } from "@nextui-org/tooltip";
 import { Pagination } from "@nextui-org/pagination";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import { Icon } from "@iconify/react";
@@ -69,27 +68,31 @@ export const columns = [
     name: "Date",
     uid: "createdAt",
     sortDirection: "ascending",
-    info: false,
   },
   {
     name: "Amount",
     uid: "amount",
+    sortDirection: "ascending",
   },
   {
     name: "Account",
     uid: "account.name",
+    sortDirection: "ascending",
   },
   {
     name: "Category",
     uid: "category.name",
+    sortDirection: "ascending",
   },
   {
     name: "Payee",
     uid: "payee",
+    sortDirection: "ascending",
   },
   {
     name: "Notes",
     uid: "notes",
+    sortDirection: "ascending",
   },
   { name: "Actions", uid: "actions" },
 ];
@@ -192,12 +195,19 @@ export default function TransactionsTable({
     return [...items].sort(
       (a: TransactionResponseItem, b: TransactionResponseItem) => {
         const col = sortDescriptor.column as keyof TransactionResponseItem;
-
+        if (col.includes(".")) {
+          const [first, second] = col.split(".");
+          const firstValue =
+            (a[first as keyof TransactionResponseItem] as any)?.[second] ?? ""; // eslint-disable-line
+          const secondValue =
+            (b[first as keyof TransactionResponseItem] as any)?.[second] ?? ""; // eslint-disable-line
+          const cmp =
+            firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
+          return sortDescriptor.direction === "descending" ? -cmp : cmp;
+        }
         const first = a[col] as string;
         const second = b[col] as string;
-
         const cmp = first < second ? -1 : first > second ? 1 : 0;
-
         return sortDescriptor.direction === "descending" ? -cmp : cmp;
       }
     );
@@ -226,8 +236,8 @@ export default function TransactionsTable({
   const deleteRef = useRef<HTMLButtonElement | null>(null);
   const { getButtonProps: getEditProps } = useButton({ ref: editRef });
   const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
-  const getNameInfoProps = useMemoizedCallback(() => ({
-    onClick: handleNameClick,
+  const getColumnProps = useMemoizedCallback((columnName) => ({
+    onClick: () => handleColumnNameClick(columnName),
   }));
 
   const renderCell = useMemoizedCallback(
@@ -517,9 +527,9 @@ export default function TransactionsTable({
     );
   }, [page, pages]);
 
-  const handleNameClick = useMemoizedCallback(() => {
+  const handleColumnNameClick = useMemoizedCallback((column) => {
     setSortDescriptor({
-      column: "name",
+      column,
       direction:
         sortDescriptor.direction === "ascending" ? "descending" : "ascending",
     });
@@ -557,9 +567,9 @@ export default function TransactionsTable({
                   : "",
               ])}
             >
-              {column.uid === "name" ? (
+              {column.uid !== "actions" ? (
                 <div
-                  {...getNameInfoProps()}
+                  {...getColumnProps(column.uid)}
                   className="flex w-full cursor-pointer items-center"
                 >
                   {column.name}
@@ -568,18 +578,6 @@ export default function TransactionsTable({
                   ) : (
                     <ArrowDown className="ml-1 text-default-400" />
                   )}
-                </div>
-              ) : column.info ? (
-                <div className="flex min-w-[108px] items-center justify-between">
-                  {column.name}
-                  <Tooltip content={column.info}>
-                    <Icon
-                      className="text-default-300"
-                      height={16}
-                      icon="solar:info-circle-linear"
-                      width={16}
-                    />
-                  </Tooltip>
                 </div>
               ) : (
                 column.name

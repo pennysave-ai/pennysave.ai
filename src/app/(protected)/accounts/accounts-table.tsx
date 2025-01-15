@@ -33,7 +33,6 @@ import { Spinner } from "@nextui-org/spinner";
 import { Input } from "@nextui-org/input";
 import { Button, useButton } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
-import { Tooltip } from "@nextui-org/tooltip";
 import { Pagination } from "@nextui-org/pagination";
 
 import { SearchIcon } from "@nextui-org/shared-icons";
@@ -49,12 +48,12 @@ export const columns = [
   {
     name: "Account Name",
     uid: "name",
-    info: "The name of the account",
-    sortDirection: "ascending",
+    sortDirection: "acending",
   },
   {
     name: "Currency",
     uid: "currency",
+    sortDirection: "acending",
   },
   { name: "Actions", uid: "actions" },
 ];
@@ -90,7 +89,6 @@ export default function AccountsTable({
     column: "name",
     direction: "ascending",
   });
-
   const handleDelete = useMemoizedCallback(async (payload, onClose) => {
     const { accountsToDelete: ids, type } = payload;
     await deleteAccountsMutation.mutateAsync(ids);
@@ -148,7 +146,6 @@ export default function AccountsTable({
   const sortedItems = useMemo(() => {
     return [...items].sort((a: Account, b: Account) => {
       const col = sortDescriptor.column as keyof Account;
-
       const first = a[col] as string;
       const second = b[col] as string;
 
@@ -181,8 +178,8 @@ export default function AccountsTable({
   const deleteRef = useRef<HTMLButtonElement | null>(null);
   const { getButtonProps: getEditProps } = useButton({ ref: editRef });
   const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
-  const getNameInfoProps = useMemoizedCallback(() => ({
-    onClick: handleNameClick,
+  const getColumnProps = useMemoizedCallback((columnName) => ({
+    onClick: () => handleColumnNameClick(columnName),
   }));
 
   const renderCell = useMemoizedCallback(
@@ -190,11 +187,6 @@ export default function AccountsTable({
       const accountKey = columnKey as ColumnsKey;
       switch (accountKey) {
         case "currency":
-          return (
-            <div className="text-nowrap text-small capitalize text-default-foreground">
-              {account[accountKey].name}
-            </div>
-          );
         case "name":
           return (
             <div className="text-nowrap text-small capitalize text-default-foreground">
@@ -289,7 +281,7 @@ export default function AccountsTable({
               endContent={
                 <SearchIcon className="text-default-400" width={16} />
               }
-              placeholder="Search"
+              placeholder="Search by name"
               size="sm"
               value={filterValue}
               onValueChange={onSearchChange}
@@ -315,7 +307,7 @@ export default function AccountsTable({
                   <DropdownMenu
                     aria-label="Sort"
                     items={headerColumns.filter(
-                      (c) => !["actions", "teams"].includes(c.uid)
+                      (c) => !["actions"].includes(c.uid)
                     )}
                   >
                     {(item) => (
@@ -448,9 +440,9 @@ export default function AccountsTable({
     );
   }, [page, pages]);
 
-  const handleNameClick = useMemoizedCallback(() => {
+  const handleColumnNameClick = useMemoizedCallback((column) => {
     setSortDescriptor({
-      column: "name",
+      column,
       direction:
         sortDescriptor.direction === "ascending" ? "descending" : "ascending",
     });
@@ -488,9 +480,9 @@ export default function AccountsTable({
                   : "",
               ])}
             >
-              {column.uid === "name" ? (
+              {column.uid === "name" || column.uid === "currency" ? (
                 <div
-                  {...getNameInfoProps()}
+                  {...getColumnProps(column.uid)}
                   className="flex w-full cursor-pointer items-center"
                 >
                   {column.name}
@@ -499,18 +491,6 @@ export default function AccountsTable({
                   ) : (
                     <ArrowDown className="ml-1 text-default-400" />
                   )}
-                </div>
-              ) : column.info ? (
-                <div className="flex min-w-[108px] items-center justify-between">
-                  {column.name}
-                  <Tooltip content={column.info}>
-                    <Icon
-                      className="text-default-300"
-                      height={16}
-                      icon="solar:info-circle-linear"
-                      width={16}
-                    />
-                  </Tooltip>
                 </div>
               ) : (
                 column.name

@@ -43,6 +43,7 @@ export default function TransactionsHistory({
   onBulkUpload,
 }: TransactionsHistoryProps) {
   const { data, isLoading } = useGetTransactions();
+  console.log("data", data);
   const deleteTransaction = useDeleteTransaction();
   const updateTransaction = useUpdateTransaction();
   const createTransaction = useCreateTransaction();
@@ -110,8 +111,8 @@ export default function TransactionsHistory({
             name: accountsData?.data[0]?.name || "",
             id: accountsData?.data[0]?.id || "",
             currency: {
-              symbol: accountsData?.data[0]?.currency.symbol || "",
-              name: accountsData?.data[0]?.currency.name || "",
+              symbol: accountsData?.data[0]?.currencySymbol || "",
+              name: accountsData?.data[0]?.currency || "",
             },
           },
           category: {
@@ -293,11 +294,11 @@ export default function TransactionsHistory({
                         accountsData?.data.find((a) => a.id === id)?.name || "",
                       currency: {
                         symbol:
-                          accountsData?.data.find((a) => a.id === id)?.currency
-                            .symbol || "",
+                          accountsData?.data.find((a) => a.id === id)
+                            ?.currencySymbol || "",
                         name:
-                          accountsData?.data.find((a) => a.id === id)?.currency
-                            .name || "",
+                          accountsData?.data.find((a) => a.id === id)
+                            ?.currency || "",
                       },
                     },
                   });
@@ -307,7 +308,7 @@ export default function TransactionsHistory({
                 defaultItems={
                   accountsData?.data.map(({ id, name, currency }) => ({
                     key: id,
-                    label: `${name} (${currency.name})`,
+                    label: `${name} (${currency})`,
                   })) || []
                 }
                 label="Account"
