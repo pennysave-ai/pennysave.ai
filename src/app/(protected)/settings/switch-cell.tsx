@@ -30,9 +30,8 @@ export type SwitchCellProps = Omit<SwitchProps, "color"> & {
 };
 
 const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
-  ({ label, description, classNames, ...props }, ref) => (
+  ({ label, description, classNames, ...props }) => (
     <CustomSwitch
-      ref={ref}
       classNames={{
         ...classNames,
         base: cn(
