@@ -2,43 +2,49 @@
 
 import React from "react";
 import { Tab, Tabs } from "@nextui-org/tabs";
+import { Card } from "@nextui-org/card";
+import { Icon } from "@iconify/react";
+import { Hero } from "@/components/common";
+import General from "./general";
+import Notifications from "./notifications";
 
-export default function SettingsPage() {
+export default function Settings() {
   return (
-    <div className="relative z-10 flex flex-col w-full p-8">
-      <div className="flex items-center gap-x-3">
-        <h1 className="text-5xl font-bold leading-9 text-default-foreground">
-          Settings
-        </h1>
-      </div>
-      <h2 className="mt-4 text-small text-default-500">
-        Customize settings, email preferences, and web appearance.
-      </h2>
-      <div className="max-w-2xl">
-        <Tabs
-          fullWidth
-          classNames={{
-            base: "mt-6",
-            cursor: "bg-content1 dark:bg-content1",
-            panel: "w-full p-0 pt-4",
-          }}
-        >
-          <Tab key="general" title="General">
-            Users Default Base Currency
-          </Tab>
-          <Tab key="profile" title="Profile">
-            <div>Profile</div>
-          </Tab>
-          <Tab key="account" title="Account">
-            {/* <AccountSetting /> */}
-          </Tab>
-          <Tab key="billing" title="Billing">
-            {/* <BillingSetting /> */}
-          </Tab>
-          <Tab key="team" title="Team">
-            {/* <TeamSetting /> */}
-          </Tab>
-        </Tabs>
+    <div className="relative z-10 flex flex-col w-full">
+      <Hero description="Customize settings, email preferences, and web appearance." />
+      <div className="flex w-full max-w-screen-2xl -mt-20 px-4 mx-auto">
+        <Card className="p-8 w-full">
+          <Tabs
+            classNames={{
+              base: "",
+              cursor: "bg-content1 dark:bg-content1",
+              panel: "p-0 pt-4",
+            }}
+          >
+            <Tab
+              key="general"
+              title={
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="solar:user-id-bold" width={20} />
+                  <p>General</p>
+                </div>
+              }
+            >
+              <General />
+            </Tab>
+            <Tab
+              key="profile"
+              title={
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="solar:bell-bold" width={20} />
+                  <p>Notifications</p>
+                </div>
+              }
+            >
+              <Notifications />
+            </Tab>
+          </Tabs>
+        </Card>
       </div>
     </div>
   );
