@@ -23,21 +23,22 @@ export default function RangePicker() {
   const now = today(getLocalTimeZone());
   const router = useRouter();
   const pathname = usePathname();
+
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+
   const start = convertDateStringToCalendarDate(from);
   const end = convertDateStringToCalendarDate(to);
 
-  const defaultDate = {
+  const [value, setValue] = useState<{
+    end: CalendarDate;
+    start: CalendarDate;
+  } | null>({
     end: end ? end : today(getLocalTimeZone()),
     start: start
       ? start
       : today(getLocalTimeZone()).subtract({ days: DEFAULT_DATA_PERIOD }),
-  };
-  const [value, setValue] = useState<{
-    end: CalendarDate;
-    start: CalendarDate;
-  } | null>(defaultDate);
+  });
 
   useEffect(() => {
     const query = new URLSearchParams(searchParams);
@@ -50,7 +51,7 @@ export default function RangePicker() {
       query.set("to", to);
     }
     router.push(`${pathname}?${query.toString()}`);
-  }, [value]);
+  }, [value?.end, value?.start]);
 
   return (
     <div className="flex flex-col gap-4 w-full">

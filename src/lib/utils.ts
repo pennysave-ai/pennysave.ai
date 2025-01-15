@@ -121,17 +121,20 @@ export function convertCurrency(
 export const convertDateStringToCalendarDate = (
   dateString: string | null
 ): CalendarDate | null => {
-  if (!dateString) {
+  try {
+    if (!dateString) {
+      return null;
+    }
+    const date = parseISO(format(dateString, "yyyy-MM-dd"));
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return new CalendarDate(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      date.getDate()
+    );
+  } catch {
     return null;
   }
-  const date = parseISO(format(dateString, "yyyy-MM-dd"));
-
-  if (isNaN(date.getTime())) {
-    return null;
-  }
-  return new CalendarDate(
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate()
-  );
 };
