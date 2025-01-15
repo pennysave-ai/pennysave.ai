@@ -39,7 +39,7 @@ export const useCreateAccount = () => {
   return mutation;
 };
 
-export type Account = {
+export type AccountResponse = {
   id: string;
   name: string;
   plaidId?: string[];
@@ -54,6 +54,14 @@ type Meta = {
   count: number;
 };
 
+export type Account = {
+  id: string;
+  name: string;
+  currency: string;
+  currencyId: string;
+  currencySymbol: string;
+};
+
 export const useGetAccounts = () => {
   const query = useQuery({
     queryKey: ["accounts"],
@@ -63,7 +71,17 @@ export const useGetAccounts = () => {
         throw new Error("Failed to fetch accounts");
       }
       const { data, meta } = await response.json();
-      return { data, meta } as { data: Account[]; meta: Meta };
+      // Normalize the data for data Table
+      const accounts = data.map((account: AccountResponse) => ({
+        ...account,
+        currency: account.currency.name,
+        currencyId: account.currency.id,
+        currencySymbol: account.currency.symbol,
+      }));
+      return { data: accounts, meta } as {
+        data: Account[];
+        meta: Meta;
+      };
     },
   });
   return query;

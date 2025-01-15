@@ -49,9 +49,9 @@ export default function AccountFilter() {
           All Accounts
         </SelectItem>
         {data?.data
-          .map(({ id, name, currency: { name: currencyName } }) => ({
+          .map(({ id, name, currency }) => ({
             key: id,
-            label: `${name} (${currencyName})`,
+            label: `${name} (${currency})`,
           }))
           .map((animal) => (
             <SelectItem className="capitalize" key={animal.key}>

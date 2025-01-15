@@ -33,9 +33,7 @@ import { Spinner } from "@nextui-org/spinner";
 import { Input } from "@nextui-org/input";
 import { Button, useButton } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
-import { Tooltip } from "@nextui-org/tooltip";
 import { Pagination } from "@nextui-org/pagination";
-
 import { SearchIcon } from "@nextui-org/shared-icons";
 import { Icon } from "@iconify/react";
 import { cn } from "@nextui-org/theme";
@@ -53,13 +51,12 @@ export const columns = [
   {
     name: "Category Name",
     uid: "name",
-    info: "The name of the category",
     sortDirection: "ascending",
   },
   {
     name: "Description",
     uid: "description",
-    info: "The description of the category",
+    sortDirection: "acending",
   },
   { name: "Actions", uid: "actions" },
 ];
@@ -186,8 +183,8 @@ export default function CategoriesTable({
   const deleteRef = useRef<HTMLButtonElement | null>(null);
   const { getButtonProps: getEditProps } = useButton({ ref: editRef });
   const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
-  const getNameInfoProps = useMemoizedCallback(() => ({
-    onClick: handleNameClick,
+  const getColumnProps = useMemoizedCallback((columnName) => ({
+    onClick: () => handleColumnNameClick(columnName),
   }));
 
   const renderCell = useMemoizedCallback(
@@ -196,14 +193,9 @@ export default function CategoriesTable({
 
       switch (categoryKey) {
         case "name":
-          return (
-            <div className="text-nowrap text-small capitalize text-default-foreground">
-              {category[categoryKey]}
-            </div>
-          );
         case "description":
           return (
-            <div className="truncate text-default-500 max-w-[30vw]">
+            <div className="text-nowrap text-small capitalize text-default-foreground">
               {category[categoryKey]}
             </div>
           );
@@ -295,7 +287,7 @@ export default function CategoriesTable({
               endContent={
                 <SearchIcon className="text-default-400" width={16} />
               }
-              placeholder="Search"
+              placeholder="Search by name"
               size="sm"
               value={filterValue}
               onValueChange={onSearchChange}
@@ -321,7 +313,7 @@ export default function CategoriesTable({
                   <DropdownMenu
                     aria-label="Sort"
                     items={headerColumns.filter(
-                      (c) => !["actions", "teams"].includes(c.uid)
+                      (c) => !["actions"].includes(c.uid)
                     )}
                   >
                     {(item) => (
@@ -454,9 +446,9 @@ export default function CategoriesTable({
     );
   }, [page, pages]);
 
-  const handleNameClick = useMemoizedCallback(() => {
+  const handleColumnNameClick = useMemoizedCallback((column) => {
     setSortDescriptor({
-      column: "name",
+      column,
       direction:
         sortDescriptor.direction === "ascending" ? "descending" : "ascending",
     });
@@ -494,9 +486,9 @@ export default function CategoriesTable({
                   : "",
               ])}
             >
-              {column.uid === "name" ? (
+              {column.uid === "name" || column.uid === "description" ? (
                 <div
-                  {...getNameInfoProps()}
+                  {...getColumnProps(column.uid)}
                   className="flex w-full cursor-pointer items-center"
                 >
                   {column.name}
@@ -505,18 +497,6 @@ export default function CategoriesTable({
                   ) : (
                     <ArrowDown className="ml-1 text-default-400" />
                   )}
-                </div>
-              ) : column.info ? (
-                <div className="flex min-w-[108px] items-center justify-between">
-                  {column.name}
-                  <Tooltip content={column.info}>
-                    <Icon
-                      className="text-default-300"
-                      height={16}
-                      icon="solar:info-circle-linear"
-                      width={16}
-                    />
-                  </Tooltip>
                 </div>
               ) : (
                 column.name

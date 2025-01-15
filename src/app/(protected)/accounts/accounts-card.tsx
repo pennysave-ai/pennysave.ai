@@ -56,7 +56,7 @@ const AccountsCard = () => {
     setFormState({
       id: account.id,
       name: account.name,
-      currencyId: account.currency.id,
+      currencyId: account.currencyId,
     });
     onOpenChange();
   };

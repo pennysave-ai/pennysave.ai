@@ -10,8 +10,9 @@ export async function GET() {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  // get all accounts for the user and all numbers of accounts
-  // for the user
+  if (!user.id) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
   const accounts = await db.userAccount.findMany({
     select: {
       id: true,
