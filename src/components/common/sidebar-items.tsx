@@ -67,16 +67,15 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
             router.push(`/${key}`);
           }}
         />
-        {!isCompact && (
+        {!isCompact && !user?.hasActiveStripeSubscription && (
           <Card className="mx-2 overflow-visible mb-2" shadow="sm">
             <CardBody className="items-center py-5 text-center">
               <div className="flex justify-start gap-x-2 items-center">
-                <Icon icon="solar:medal-ribbon-star-linear" width={32} />
-                <h3 className="text-medium font-medium text-default-700 text-start">
+                <h3 className="text-medium font-medium text-default-700">
                   Subscribe to the Pro Plan
                 </h3>
               </div>
-              <p className="p-4 text-small text-default-500 text-start">
+              <p className="p-4 text-small text-default-500">
                 Get access to all premium features only for $4.99/month.
               </p>
             </CardBody>
