@@ -7,6 +7,11 @@ import { getUserById } from "@/data";
 
 export type ExtendedUser = DefaultSession["user"] & {
   role: UserRole;
+  subscription?: {
+    priceId: string;
+    expires: string;
+    cancelAt: string | null;
+  };
 };
 
 declare module "next-auth" {
@@ -54,17 +59,34 @@ export const {
       if (token.role && session.user) {
         session.user.role = token.role as UserRole;
       }
+      if (token.activeSubscription && session.user) {
+        session.user.subscription = {
+          priceId: token.priceId as string,
+          expires: token.expires as string,
+          cancelAt: token.cancelAt as string | null,
+        };
+      }
       return session;
     },
     async jwt({ token }) {
       if (!token.sub) return token;
       // Adding the user role to the token
       const existingUser = await db.user.findUnique({
-        select: { role: true },
+        select: {
+          role: true,
+          hasActiveStripeSubscription: true,
+          stripePriceId: true,
+          stripeSubscriptionEndDate: true,
+          stripeSubscriptionCancelAtDate: true,
+        },
         where: { id: token.sub },
       });
       if (!existingUser) return token;
       token.role = existingUser.role;
+      token.activeSubscription = existingUser.hasActiveStripeSubscription;
+      token.priceId = existingUser.stripePriceId;
+      token.expires = existingUser.stripeSubscriptionEndDate;
+      token.cancelAt = existingUser.stripeSubscriptionCancelAtDate;
       return token;
     },
   },

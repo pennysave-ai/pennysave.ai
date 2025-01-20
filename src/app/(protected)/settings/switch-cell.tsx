@@ -30,7 +30,10 @@ export type SwitchCellProps = Omit<SwitchProps, "color"> & {
 };
 
 const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
-  ({ label, description, classNames, ...props }) => (
+  (
+    { label, description, classNames, ...props },
+    ref // eslint-disable-line
+  ) => (
     <CustomSwitch
       classNames={{
         ...classNames,
