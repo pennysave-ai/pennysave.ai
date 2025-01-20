@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
-
 import { Tooltip } from "@nextui-org/tooltip";
 import { Spacer } from "@nextui-org/spacer";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
@@ -71,24 +70,24 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
         {!isCompact && (
           <Card className="mx-2 overflow-visible mb-2" shadow="sm">
             <CardBody className="items-center py-5 text-center">
-              <h3 className="text-medium font-medium text-default-700">
-                Upgrade to Pro
-                <span aria-label="rocket-emoji" className="ml-2" role="img">
-                  🚀
-                </span>
-              </h3>
-              <p className="p-4 text-small text-default-500">
-                Get 1 month free and unlock all the features of the pro plan.
+              <div className="flex justify-start gap-x-2 items-center">
+                <Icon icon="solar:medal-ribbon-star-linear" width={32} />
+                <h3 className="text-medium font-medium text-default-700 text-start">
+                  Subscribe to the Pro Plan
+                </h3>
+              </div>
+              <p className="p-4 text-small text-default-500 text-start">
+                Get access to all premium features only for $4.99/month.
               </p>
             </CardBody>
             <CardFooter className="absolute -bottom-8 justify-center">
               <Button
                 className="px-10 shadow-md"
                 color="primary"
-                radius="full"
                 variant="shadow"
+                onPress={() => router.push("/settings?cta=subscribe")}
               >
-                Upgrade
+                Subscribe
               </Button>
             </CardFooter>
           </Card>
