@@ -58,7 +58,7 @@ export default function General({ user }: GeneralProps) {
                     <div>
                       <SubscriptionButton
                         key={plan.priceId}
-                        priceId={plan.priceId}
+                        priceId={plan.priceId || ""}
                       />
                     </div>
                   </div>
