@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 
 import { Tooltip } from "@nextui-org/tooltip";
 import { Spacer } from "@nextui-org/spacer";
+import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import UserMenu from "@/components/user-menu";
 import { cn } from "@nextui-org/theme";
 import { Icon } from "@iconify/react";
@@ -67,6 +68,31 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
             router.push(`/${key}`);
           }}
         />
+        {!isCompact && (
+          <Card className="mx-2 overflow-visible mb-2" shadow="sm">
+            <CardBody className="items-center py-5 text-center">
+              <h3 className="text-medium font-medium text-default-700">
+                Upgrade to Pro
+                <span aria-label="rocket-emoji" className="ml-2" role="img">
+                  🚀
+                </span>
+              </h3>
+              <p className="p-4 text-small text-default-500">
+                Get 1 month free and unlock all the features of the pro plan.
+              </p>
+            </CardBody>
+            <CardFooter className="absolute -bottom-8 justify-center">
+              <Button
+                className="px-10 shadow-md"
+                color="primary"
+                radius="full"
+                variant="shadow"
+              >
+                Upgrade
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
       </ScrollShadow>
       <Spacer y={2} />
       <div
