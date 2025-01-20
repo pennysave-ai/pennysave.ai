@@ -2,7 +2,11 @@
  * List of public routes (without authentication)
  * @type {string[]}
  */
-export const publicRoutes = ["/auth/verify-email", "/api/cron"];
+export const publicRoutes = [
+  "/auth/verify-email",
+  "/api/webhooks/cron",
+  "/api/webhooks/stripe",
+];
 
 /**
  * List of routes for user authentication
