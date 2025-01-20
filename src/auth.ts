@@ -7,6 +7,7 @@ import { getUserById } from "@/data";
 
 export type ExtendedUser = DefaultSession["user"] & {
   role: UserRole;
+  hasActiveStripeSubscription: boolean;
   subscription?: {
     priceId: string;
     expires: string;
@@ -66,6 +67,8 @@ export const {
           cancelAt: token.cancelAt as string | null,
         };
       }
+      session.user.hasActiveStripeSubscription =
+        token.activeSubscription as boolean;
       return session;
     },
     async jwt({ token }) {
