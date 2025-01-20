@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Session } from "next-auth";
 import { format } from "date-fns";
+import { useSearchParams } from "next/navigation";
 import { CardBody, CardHeader } from "@nextui-org/card";
 import { Button } from "@nextui-org/button";
 import { Accordion, AccordionItem } from "@nextui-org/accordion";
@@ -18,9 +20,17 @@ export default function General({ user }: GeneralProps) {
   const subscription = STRIPE_PLANS.find(
     (plan) => plan.priceId === user.subscription?.priceId
   );
+  const searchParams = useSearchParams();
+  const cta = searchParams.get("cta");
+  const [selectedKeys, setSelectedKeys] = useState(new Set([""]));
   const handleManageSubscription = () => {
     window.location.href = `https://billing.stripe.com/p/login/${process.env.NEXT_PUBLIC_STRIPE_MANAGE_ID}?prefilled_email=${user.email}`;
   };
+  useEffect(() => {
+    if (cta === "subscribe") {
+      setSelectedKeys(new Set(["1"]));
+    }
+  }, [cta]);
   return (
     <>
       <CardHeader className="flex flex-col items-start p-4">
@@ -29,7 +39,13 @@ export default function General({ user }: GeneralProps) {
       </CardHeader>
       <div className="grid grid-col-1 gap-y-3 px-3">
         {!subscription && (
-          <Accordion variant="bordered">
+          <Accordion
+            variant="bordered"
+            selectedKeys={selectedKeys}
+            onSelectionChange={(keys) =>
+              setSelectedKeys(new Set(Array.from(keys).map(String)))
+            }
+          >
             <AccordionItem
               className="p-0"
               key="1"
@@ -46,7 +62,7 @@ export default function General({ user }: GeneralProps) {
               title="Subscriptions"
             >
               <div className="grid grid-col-1 gap-y-2">
-                {STRIPE_PLANS.map((plan) => (
+                {STRIPE_PLANS.map((plan, i) => (
                   <div
                     key={plan.priceId}
                     className="flex items-center justify-between"
@@ -59,6 +75,7 @@ export default function General({ user }: GeneralProps) {
                       <SubscriptionButton
                         key={plan.priceId}
                         priceId={plan.priceId || ""}
+                        highlight={cta ? !i : false}
                       />
                     </div>
                   </div>

@@ -5,10 +5,12 @@ import { Button } from "@nextui-org/button";
 
 interface SubscriptionButtonProps {
   priceId: string;
+  highlight?: boolean;
 }
 
 export default function SubscriptionButton({
   priceId,
+  highlight,
 }: SubscriptionButtonProps) {
   const [loading, setLoading] = useState(false);
   const handleCheckout = async () => {
@@ -35,7 +37,12 @@ export default function SubscriptionButton({
     }
   };
   return (
-    <Button isLoading={loading} color="primary" onPress={handleCheckout}>
+    <Button
+      isLoading={loading}
+      color="primary"
+      onPress={handleCheckout}
+      className={highlight ? "shine-button" : ""}
+    >
       Subscribe
     </Button>
   );
