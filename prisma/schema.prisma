@@ -52,6 +52,11 @@ model User {
   userAccounts  UserAccount[]
   password      String?
   role          UserRole @default(USER)
+  stripeCustomerId String?
+  stripeSubscriptionEndDate DateTime?
+  stripeSubscriptionCancelAtDate DateTime?
+  stripePriceId String?
+  hasActiveStripeSubscription Boolean? @default(false)
 }
 
 model Transaction {
