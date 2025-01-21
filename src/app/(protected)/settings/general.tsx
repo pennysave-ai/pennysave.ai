@@ -60,7 +60,7 @@ export default function General({ user }: GeneralProps) {
               title="Subscriptions"
             >
               <div className="grid grid-col-1 gap-y-2">
-                {STRIPE_PLANS.map((plan, i) => (
+                {STRIPE_PLANS.map((plan) => (
                   <div
                     key={plan.priceId}
                     className="flex items-center justify-between"

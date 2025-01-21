@@ -86,6 +86,7 @@ export const PaywallModal = () => {
               if (plan?.perk) {
                 return (
                   <Badge
+                    key={plan.priceId}
                     showOutline
                     classNames={{
                       badge:
