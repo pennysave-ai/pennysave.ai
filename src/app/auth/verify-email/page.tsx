@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Card, CardHeader } from "@nextui-org/card";
+import { Card, CardHeader } from "@heroui/card";
 import VerifyEmail from "@/components/verify-email";
 
 export default async function VerifyEmailPage() {

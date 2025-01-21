@@ -1,6 +1,6 @@
-import { Card, CardHeader } from "@nextui-org/card";
-import { Button } from "@nextui-org/button";
-import { Link } from "@nextui-org/link";
+import { Card, CardHeader } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Link } from "@heroui/link";
 
 export default async function AuthErrorPage() {
   return (

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 
-import { DateRangePicker } from "@nextui-org/date-picker";
-import { Button, ButtonGroup } from "@nextui-org/button";
+import { DateRangePicker } from "@heroui/date-picker";
+import { Button, ButtonGroup } from "@heroui/button";
 import {
   today,
   startOfWeek,

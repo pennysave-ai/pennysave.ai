@@ -9,10 +9,10 @@ import {
   NavbarMenuToggle,
   NavbarMenu,
   NavbarMenuItem,
-} from "@nextui-org/navbar";
-import { Modal, ModalContent, ModalBody } from "@nextui-org/modal";
+} from "@heroui/navbar";
+import { Modal, ModalContent, ModalBody } from "@heroui/modal";
 import { Session } from "next-auth";
-import { Link } from "@nextui-org/link";
+import { Link } from "@heroui/link";
 import { SidebarItems } from "@/components/common";
 
 interface NavbarProps {

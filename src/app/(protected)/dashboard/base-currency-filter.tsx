@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { useGetCurrencies } from "@/features/currencies/hooks";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/select";
 import { BASE_CURRENCY } from "@/constants";
 
 export default function BaseCurrencyFilter({

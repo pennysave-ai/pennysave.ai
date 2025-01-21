@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
-import { Spacer } from "@nextui-org/spacer";
-import { cn } from "@nextui-org/theme";
+import { Spacer } from "@heroui/spacer";
+import { cn } from "@heroui/theme";
 import { useMediaQuery } from "usehooks-ts";
 import type { Session } from "next-auth";
 import { SidebarItems } from "@/components/common";

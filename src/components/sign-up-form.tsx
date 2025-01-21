@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
-import { Input } from "@nextui-org/input";
+import { Input } from "@heroui/input";
 import TermsAndPrivacyPolicy from "@/components/terms-and-privacy-policy";
 
 import * as actions from "@/actions";

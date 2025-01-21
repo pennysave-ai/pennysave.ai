@@ -1,9 +1,9 @@
 "use client";
 
 import { useFormState } from "react-dom";
-import { Input } from "@nextui-org/input";
-import { Checkbox } from "@nextui-org/checkbox";
-import { Link } from "@nextui-org/link";
+import { Input } from "@heroui/input";
+import { Checkbox } from "@heroui/checkbox";
+import { Link } from "@heroui/link";
 import { useSearchParams } from "next/navigation";
 
 import * as actions from "@/actions";

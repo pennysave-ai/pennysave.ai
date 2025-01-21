@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
-import { Card } from "@nextui-org/card";
-import { Chip } from "@nextui-org/chip";
-import { Select, SelectItem } from "@nextui-org/select";
-import { useDisclosure } from "@nextui-org/modal";
-import { DrawerHeader, DrawerBody, DrawerFooter } from "@nextui-org/drawer";
+import { Card } from "@heroui/card";
+import { Chip } from "@heroui/chip";
+import { Select, SelectItem } from "@heroui/select";
+import { useDisclosure } from "@heroui/modal";
+import { DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/drawer";
 import AccountsTable from "./accounts-table";
 import { RightSidebar } from "@/components/common";
 import { Delete } from "@/app/icons";
@@ -18,7 +18,7 @@ import {
   useDeleteAccount,
   useUpdateAccount,
 } from "@/features/accounts/hooks";
-import { Input } from "@nextui-org/input";
+import { Input } from "@heroui/input";
 import {
   useGetCurrencies,
   type CurrencyItem,

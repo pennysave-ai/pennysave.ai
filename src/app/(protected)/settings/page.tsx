@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Card } from "@nextui-org/card";
+import { Card } from "@heroui/card";
 import { Hero } from "@/components/common";
 import Tabs from "./tabs";
 import { auth } from "@/auth";

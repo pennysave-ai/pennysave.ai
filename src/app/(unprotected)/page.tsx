@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
-import { Card, CardHeader } from "@nextui-org/card";
-import { Link } from "@nextui-org/link";
+import { Card, CardHeader } from "@heroui/card";
+import { Link } from "@heroui/link";
 
 import SignInForm from "@/components/sign-in-form";
 import { OauthButtons } from "@/components/common";

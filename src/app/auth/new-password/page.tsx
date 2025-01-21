@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Card, CardHeader } from "@nextui-org/card";
+import { Card, CardHeader } from "@heroui/card";
 import NewPassword from "@/components/new-password";
 
 export default async function NewPasswordPage() {

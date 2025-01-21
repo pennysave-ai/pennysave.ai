@@ -1,5 +1,5 @@
-import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
 
 import { Github, Google } from "@/app/icons";
 import * as actions from "@/actions";

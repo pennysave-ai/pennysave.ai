@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card } from "@nextui-org/card";
-import { Button } from "@nextui-org/button";
+import { Card } from "@heroui/card";
+import { Button } from "@heroui/button";
 import { format, parse } from "date-fns";
 import {
   Table,
@@ -11,11 +11,11 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@nextui-org/table";
-import { Autocomplete, AutocompleteItem } from "@nextui-org/autocomplete";
+} from "@heroui/table";
+import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
 import { useCSVReader } from "react-papaparse";
 import { Icon } from "@iconify/react";
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 
 import { useGetAccounts } from "@/features/accounts/hooks";
 import {
