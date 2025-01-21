@@ -1,6 +1,7 @@
 import { Header } from "@/components/common";
 import Sidebar from "@/components/sidebar";
 import { auth } from "@/auth";
+import { PaywallModal } from "@/components/common/paywall-modal";
 
 export default async function ProtectedRoadsLayout({
   children,
@@ -14,6 +15,7 @@ export default async function ProtectedRoadsLayout({
       <main className="flex-grow flex">
         <Sidebar user={session?.user || null} />
         {children}
+        <PaywallModal />
       </main>
       <footer></footer>
     </div>

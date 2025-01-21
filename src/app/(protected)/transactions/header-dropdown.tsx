@@ -1,14 +1,14 @@
 import React from "react";
 
-import { Button } from "@nextui-org/button";
-import { Selection } from "@nextui-org/table";
+import { Button } from "@heroui/button";
+import { Selection } from "@heroui/table";
 import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-} from "@nextui-org/dropdown";
-import { cn } from "@nextui-org/theme";
+} from "@heroui/dropdown";
+import { cn } from "@heroui/theme";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 interface HeaderDropdown {

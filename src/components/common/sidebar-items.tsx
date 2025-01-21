@@ -3,21 +3,22 @@
 import { useMemo } from "react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
-import { Tooltip } from "@nextui-org/tooltip";
-import { Spacer } from "@nextui-org/spacer";
-import { Card, CardBody, CardFooter } from "@nextui-org/card";
+import { Tooltip } from "@heroui/tooltip";
+import { Spacer } from "@heroui/spacer";
+import { Card, CardBody, CardFooter } from "@heroui/card";
 import UserMenu from "@/components/user-menu";
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 import { Icon } from "@iconify/react";
-import { Button } from "@nextui-org/button";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
+import { Button } from "@heroui/button";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 import SidebarMainMenuItems, {
   SidebarItem,
 } from "@/components/sidebar-main-menu-items";
 import { sectionItems } from "@/components/sidebar-items";
 import { usePathname, useRouter } from "next/navigation";
 import { useGetEntities } from "@/features/entities/hooks";
-import { Chip } from "@nextui-org/chip";
+import { Chip } from "@heroui/chip";
+import { useModal } from "@/app/providers/modal";
 
 interface SidebarItemsProps {
   user: Session["user"] | null;
@@ -26,6 +27,7 @@ interface SidebarItemsProps {
 
 export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
   let pathname = usePathname();
+  const { onOpen } = useModal();
   const { data } = useGetEntities();
   pathname = pathname.replace("/", "");
   const router = useRouter();
@@ -72,11 +74,13 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
             <CardBody className="items-center py-5 text-center">
               <div className="flex justify-start gap-x-2 items-center">
                 <h3 className="text-medium font-medium text-default-700">
-                  Subscribe to the Pro Plan
+                  Subscribe to the
+                  <span className="ml-2 text-primary">Pro Plan</span>
                 </h3>
               </div>
               <p className="p-4 text-small text-default-500">
-                Get access to all premium features only for $4.99/month.
+                Get access to all premium features only for{" "}
+                <span className="text-success">$4.99/month</span>.
               </p>
             </CardBody>
             <CardFooter className="absolute -bottom-8 justify-center">
@@ -84,7 +88,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
                 className="px-10 shadow-md"
                 color="primary"
                 variant="shadow"
-                onPress={() => router.push("/settings?cta=subscribe")}
+                onPress={onOpen}
               >
                 Subscribe
               </Button>

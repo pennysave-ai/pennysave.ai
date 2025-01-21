@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@nextui-org/input";
+import { Input } from "@heroui/input";
 import { EyeOpen, EyeClosed } from "@/app/icons";
 
 interface PasswordInputProps {

@@ -6,7 +6,7 @@ const nextConfig = {
 
 // Make sure adding Sentry options is the last code to run before exporting
 module.exports = withSentryConfig(nextConfig, {
-  org: "smart-money-y4",
+  org: "pennysave",
   project: "app",
 
   // An auth token is required for uploading source maps.

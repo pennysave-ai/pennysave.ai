@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 interface SubmitButtonProps {
   children: React.ReactNode;

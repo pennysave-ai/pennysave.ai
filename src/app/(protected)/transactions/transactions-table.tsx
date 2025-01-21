@@ -7,7 +7,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-} from "@nextui-org/dropdown";
+} from "@heroui/dropdown";
 import {
   useDeleteTransaction,
   type TransactionResponseItem,
@@ -21,7 +21,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@nextui-org/table";
+} from "@heroui/table";
 import {
   useDisclosure,
   Modal,
@@ -29,17 +29,17 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-} from "@nextui-org/modal";
+} from "@heroui/modal";
 import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
-import { Spinner } from "@nextui-org/spinner";
+import { Spinner } from "@heroui/spinner";
 
-import { Input } from "@nextui-org/input";
-import { Button, useButton } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
-import { Pagination } from "@nextui-org/pagination";
-import { SearchIcon } from "@nextui-org/shared-icons";
+import { Input } from "@heroui/input";
+import { Button, useButton } from "@heroui/button";
+import { Divider } from "@heroui/divider";
+import { Pagination } from "@heroui/pagination";
+import { SearchIcon } from "@heroui/shared-icons";
 import { Icon } from "@iconify/react";
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 import { useMemoizedCallback } from "@/hooks";
 import { parseISO, format } from "date-fns";
 import { AmountCell } from "./amount-cell";
@@ -600,7 +600,7 @@ export default function TransactionsTable({
           )}
         </TableBody>
       </Table>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="opaque">
         <ModalContent>
           {(onClose) => (
             <>

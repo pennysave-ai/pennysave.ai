@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Switch } from "@nextui-org/switch";
+import { Switch } from "@heroui/switch";
 import { Moon, Sun } from "@/app/icons";
 
 const ThemeSwitcher = () => {

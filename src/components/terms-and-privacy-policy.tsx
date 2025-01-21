@@ -7,10 +7,10 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-} from "@nextui-org/modal";
-import { Checkbox } from "@nextui-org/checkbox";
-import { Button } from "@nextui-org/button";
-import { Link } from "@nextui-org/link";
+} from "@heroui/modal";
+import { Checkbox } from "@heroui/checkbox";
+import { Button } from "@heroui/button";
+import { Link } from "@heroui/link";
 
 export default function TermsAndPrivacyPolicy() {
   const { isOpen, onOpen, onClose } = useDisclosure();

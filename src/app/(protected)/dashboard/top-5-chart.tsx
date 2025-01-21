@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 
-import { Card } from "@nextui-org/card";
-import { CardProps } from "@nextui-org/card";
-import { Skeleton } from "@nextui-org/skeleton";
+import { Card } from "@heroui/card";
+import { CardProps } from "@heroui/card";
+import { Skeleton } from "@heroui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
 import { type CategoryResponse } from "@/app/api/summary/route";
@@ -85,7 +85,7 @@ const renderActiveShape = (props: PieSectorDataItem) => {
           y={cy}
           dy={0}
           textAnchor="middle"
-          fill="hsl(var(--nextui-default-400))"
+          fill="hsl(var(--heroui-default-400))"
           className="text-sm"
         >
           {payload.name}
@@ -179,7 +179,7 @@ const CircleChartCard = React.forwardRef<
                   onMouseEnter={onPieEnter}
                 >
                   {isEmptyData ? (
-                    <Cell fill="hsl(var(--nextui-default-100))" />
+                    <Cell fill="hsl(var(--heroui-default-100))" />
                   ) : (
                     data.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index]} />

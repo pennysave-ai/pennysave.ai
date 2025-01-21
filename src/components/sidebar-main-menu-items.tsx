@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Accordion, AccordionItem } from "@nextui-org/accordion";
+import { Accordion, AccordionItem } from "@heroui/accordion";
 
 import {
   Listbox,
@@ -9,10 +9,10 @@ import {
   ListboxSection,
   type ListboxProps,
   type ListboxSectionProps,
-} from "@nextui-org/listbox";
-import { Tooltip } from "@nextui-org/tooltip";
+} from "@heroui/listbox";
+import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 
 export enum SidebarItemType {
   Nest = "nest",

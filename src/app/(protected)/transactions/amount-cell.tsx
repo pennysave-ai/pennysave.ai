@@ -1,4 +1,4 @@
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 import { convertAmountFromMilliunits } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 

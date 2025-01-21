@@ -4,11 +4,14 @@ export const STRIPE_PLANS = [
     priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
     price: 4.99,
     duration: "/month",
+    name: "Monthly Subscription",
   },
   {
     link: process.env.NEXT_PUBLIC_STRIPE_YEARLY_LINK,
     priceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
     price: 49.99,
     duration: "/year",
+    name: "Yearly Subscription",
+    perk: "Save 15% with annual billing.",
   },
 ];

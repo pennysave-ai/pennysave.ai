@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormState } from "react-dom";
-import { Input } from "@nextui-org/input";
-import { Link } from "@nextui-org/link";
+import { Input } from "@heroui/input";
+import { Link } from "@heroui/link";
 
 import * as actions from "@/actions";
 import { SubmitButton } from "@/components/common";

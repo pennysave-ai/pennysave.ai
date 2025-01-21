@@ -1,4 +1,4 @@
-// import { Chip } from "@nextui-org/chip";
+// import { Chip } from "@heroui/chip";
 
 import { type SidebarItem } from "./sidebar-main-menu-items";
 

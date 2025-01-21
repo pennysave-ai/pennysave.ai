@@ -1,9 +1,9 @@
 "use client";
 
-import { Avatar } from "@nextui-org/avatar";
+import { Avatar } from "@heroui/avatar";
 import type { Session } from "next-auth";
-import { cn } from "@nextui-org/theme";
-import { Tooltip } from "@nextui-org/tooltip";
+import { cn } from "@heroui/theme";
+import { Tooltip } from "@heroui/tooltip";
 import { useRouter } from "next/navigation";
 
 function getOptimizedImageUrl(url?: string | null) {

@@ -1,5 +1,5 @@
 "use client";
-import { Drawer, DrawerContent } from "@nextui-org/drawer";
+import { Drawer, DrawerContent } from "@heroui/drawer";
 
 interface RightSidebarProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export function RightSidebar({
     <>
       <Drawer
         className="p-4 rounded-none"
-        backdrop="blur"
+        backdrop="opaque"
         isOpen={isOpen}
         onOpenChange={onOpenChange}
       >

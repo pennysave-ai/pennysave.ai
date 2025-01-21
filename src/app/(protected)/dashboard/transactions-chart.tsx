@@ -11,15 +11,15 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { Button } from "@nextui-org/button";
-import { Card } from "@nextui-org/card";
-import { Skeleton } from "@nextui-org/skeleton";
+import { Button } from "@heroui/button";
+import { Card } from "@heroui/card";
+import { Skeleton } from "@heroui/skeleton";
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-} from "@nextui-org/dropdown";
+} from "@heroui/dropdown";
 import { formatCurrency } from "@/lib/utils";
 
 type ChartData = {
@@ -117,12 +117,12 @@ export default function TransactionsChart({
               >
                 <stop
                   offset="10%"
-                  stopColor={`hsl(var(--nextui-success-500))`}
+                  stopColor={`hsl(var(--heroui-success-500))`}
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="100%"
-                  stopColor={`hsl(var(--nextui-sucess-100))`}
+                  stopColor={`hsl(var(--heroui-sucess-100))`}
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -135,12 +135,12 @@ export default function TransactionsChart({
               >
                 <stop
                   offset="10%"
-                  stopColor={`hsl(var(--nextui-danger-500))`}
+                  stopColor={`hsl(var(--heroui-danger-500))`}
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="100%"
-                  stopColor={`hsl(var(--nextui-danger-100))`}
+                  stopColor={`hsl(var(--heroui-danger-100))`}
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -153,19 +153,19 @@ export default function TransactionsChart({
               >
                 <stop
                   offset="10%"
-                  stopColor={`hsl(var(--nextui-default-500))`}
+                  stopColor={`hsl(var(--heroui-default-500))`}
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="100%"
-                  stopColor={`hsl(var(--nextui-default-100))`}
+                  stopColor={`hsl(var(--heroui-default-100))`}
                   stopOpacity={0.1}
                 />
               </linearGradient>
             </defs>
             <CartesianGrid
               horizontalCoordinatesGenerator={() => [200, 150, 100, 50]}
-              stroke="hsl(var(--nextui-default-200))"
+              stroke="hsl(var(--heroui-default-200))"
               strokeDasharray="3 3"
               vertical={false}
             />
@@ -173,7 +173,7 @@ export default function TransactionsChart({
               axisLine={false}
               dataKey="date"
               style={{
-                fontSize: "var(--nextui-font-size-tiny)",
+                fontSize: "var(--heroui-font-size-tiny)",
                 transform: "translateX(-40px)",
               }}
               tickLine={false}
@@ -226,31 +226,31 @@ export default function TransactionsChart({
             )}
             <Area
               activeDot={{
-                stroke: `hsl(var(--nextui-success))`,
+                stroke: `hsl(var(--heroui-success))`,
                 strokeWidth: 2,
-                fill: "hsl(var(--nextui-background))",
+                fill: "hsl(var(--heroui-background))",
                 r: 5,
               }}
               animationDuration={1000}
               animationEasing="ease"
               dataKey="income"
               fill="url(#colorGradientIncome)"
-              stroke={`hsl(var(--nextui-success))`}
+              stroke={`hsl(var(--heroui-success))`}
               strokeWidth={2}
               type="monotone"
             />
             <Area
               activeDot={{
-                stroke: "hsl(var(--nextui-danger))",
+                stroke: "hsl(var(--heroui-danger))",
                 strokeWidth: 2,
-                fill: "hsl(var(--nextui-background))",
+                fill: "hsl(var(--heroui-background))",
                 r: 5,
               }}
               animationDuration={1000}
               animationEasing="ease"
               dataKey="expences"
               fill="url(#colorGradientExpenses)"
-              stroke={`hsl(var(--nextui-danger))`}
+              stroke={`hsl(var(--heroui-danger))`}
               strokeWidth={2}
               type="monotone"
             />
@@ -262,13 +262,13 @@ export default function TransactionsChart({
                   animationEasing="ease"
                   dataKey="noData"
                   fill="url(#colorGradientNoData)"
-                  stroke={`hsl(var(--nextui-default-100))`}
+                  stroke={`hsl(var(--heroui-default-100))`}
                   strokeWidth={2}
                   type="monotone"
                 />
                 <text
                   className="text-cente text-sm z-10"
-                  fill="hsl(var(--nextui-default-400))"
+                  fill="hsl(var(--heroui-default-400))"
                   textAnchor="middle"
                   x="50%"
                   y="50%"

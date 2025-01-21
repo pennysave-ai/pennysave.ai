@@ -4,18 +4,18 @@ import React from "react";
 import CountUp from "react-countup";
 import { parseISO, format } from "date-fns";
 import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
-import { Tooltip } from "@nextui-org/tooltip";
+import { Tooltip } from "@heroui/tooltip";
 
-import { Card } from "@nextui-org/card";
-import { Button } from "@nextui-org/button";
+import { Card } from "@heroui/card";
+import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-} from "@nextui-org/dropdown";
-import { Skeleton } from "@nextui-org/skeleton";
-import { cn } from "@nextui-org/theme";
+} from "@heroui/dropdown";
+import { Skeleton } from "@heroui/skeleton";
+import { cn } from "@heroui/theme";
 import { Icon } from "@iconify/react";
 
 interface DataCardProps {
@@ -158,11 +158,11 @@ export default function DataCard({
                     <stop
                       offset="5%"
                       stopColor={cn({
-                        "hsl(var(--nextui-success))":
+                        "hsl(var(--heroui-success))":
                           getChangeType() === "positive",
-                        "hsl(var(--nextui-danger))":
+                        "hsl(var(--heroui-danger))":
                           getChangeType() === "negative",
-                        "hsl(var(--nextui-warning))":
+                        "hsl(var(--heroui-warning))":
                           getChangeType() === "neutral",
                       })}
                       stopOpacity={0.4}
@@ -170,11 +170,11 @@ export default function DataCard({
                     <stop
                       offset="60%"
                       stopColor={cn({
-                        "hsl(var(--nextui-success))":
+                        "hsl(var(--heroui-success))":
                           getChangeType() === "positive",
-                        "hsl(var(--nextui-danger))":
+                        "hsl(var(--heroui-danger))":
                           getChangeType() === "negative",
-                        "hsl(var(--nextui-warning))":
+                        "hsl(var(--heroui-warning))":
                           getChangeType() === "neutral",
                       })}
                       stopOpacity={0}
@@ -189,10 +189,10 @@ export default function DataCard({
                   dataKey="value"
                   fill={`url(#colorUv${type})`}
                   stroke={cn({
-                    "hsl(var(--nextui-success))":
+                    "hsl(var(--heroui-success))":
                       getChangeType() === "positive",
-                    "hsl(var(--nextui-danger))": getChangeType() === "negative",
-                    "hsl(var(--nextui-warning))": getChangeType() === "neutral",
+                    "hsl(var(--heroui-danger))": getChangeType() === "negative",
+                    "hsl(var(--heroui-warning))": getChangeType() === "neutral",
                   })}
                 />
               </AreaChart>

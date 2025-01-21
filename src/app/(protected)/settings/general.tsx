@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Session } from "next-auth";
 import { format } from "date-fns";
-import { useSearchParams } from "next/navigation";
-import { CardBody, CardHeader } from "@nextui-org/card";
-import { Button } from "@nextui-org/button";
-import { Accordion, AccordionItem } from "@nextui-org/accordion";
+import { CardBody, CardHeader } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Accordion, AccordionItem } from "@heroui/accordion";
 import { STRIPE_PLANS } from "@/lib/stripe";
 import { Icon } from "@iconify/react";
 import SubscriptionButton from "./subscription-button";
+import { useModal } from "@/app/providers/modal";
 
 interface GeneralProps {
   user: Session["user"];
@@ -20,17 +20,15 @@ export default function General({ user }: GeneralProps) {
   const subscription = STRIPE_PLANS.find(
     (plan) => plan.priceId === user.subscription?.priceId
   );
-  const searchParams = useSearchParams();
-  const cta = searchParams.get("cta");
   const [selectedKeys, setSelectedKeys] = useState(new Set([""]));
   const handleManageSubscription = () => {
     window.location.href = `https://billing.stripe.com/p/login/${process.env.NEXT_PUBLIC_STRIPE_MANAGE_ID}?prefilled_email=${user.email}`;
   };
-  useEffect(() => {
-    if (cta === "subscribe") {
-      setSelectedKeys(new Set(["1"]));
-    }
-  }, [cta]);
+  const handleAddBankAccount = () => {};
+  const { onOpen } = useModal();
+  const showPaywallWindow = () => {
+    onOpen();
+  };
   return (
     <>
       <CardHeader className="flex flex-col items-start p-4">
@@ -51,7 +49,7 @@ export default function General({ user }: GeneralProps) {
               key="1"
               aria-label="Subscriptions"
               startContent={
-                <Icon icon="solar:medal-ribbon-star-linear" width={32} />
+                <Icon icon="solar:box-minimalistic-linear" width={32} />
               }
               subtitle={
                 <div className="flex items-center">
@@ -62,7 +60,7 @@ export default function General({ user }: GeneralProps) {
               title="Subscriptions"
             >
               <div className="grid grid-col-1 gap-y-2">
-                {STRIPE_PLANS.map((plan, i) => (
+                {STRIPE_PLANS.map((plan) => (
                   <div
                     key={plan.priceId}
                     className="flex items-center justify-between"
@@ -75,7 +73,6 @@ export default function General({ user }: GeneralProps) {
                       <SubscriptionButton
                         key={plan.priceId}
                         priceId={plan.priceId || ""}
-                        highlight={cta ? !i : false}
                       />
                     </div>
                   </div>
@@ -88,7 +85,7 @@ export default function General({ user }: GeneralProps) {
           <CardBody className="p-0">
             <div className="flex items-start md:items-center flex-col md:flex-row gap-y-2 md:gap-y-0 justify-between bg-none rounded-medium p-4 border-medium border-divider">
               <div className="flex items-center gap-x-2">
-                <Icon icon="solar:medal-ribbon-star-linear" width={32} />
+                <Icon icon="solar:box-minimalistic-linear" width={32} />
                 <div>
                   Current Plan:
                   <div className="text-small text-default-500 flex gap-x-1 flex-col md:flex-row">
@@ -129,6 +126,47 @@ export default function General({ user }: GeneralProps) {
           </CardBody>
         )}
         <CardBody className="p-0">
+          <div className="flex items-start md:items-center flex-col md:flex-row gap-y-2 md:gap-y-0 justify-between bg-none rounded-medium p-4 border-medium border-divider">
+            <div className="flex items-center gap-x-2">
+              <Icon icon="solar:wallet-money-outline" width={32} />
+              <div>
+                Connected bank accounts
+                <div className="text-small text-default-500 flex gap-x-1 flex-col md:flex-row">
+                  Add your bank card to track your transactions automatically.
+                </div>
+              </div>
+            </div>
+            <Button
+              className="w-full md:w-auto"
+              color="primary"
+              onPress={
+                user?.hasActiveStripeSubscription
+                  ? handleAddBankAccount
+                  : showPaywallWindow
+              }
+            >
+              Add
+            </Button>
+          </div>
+        </CardBody>
+        <Accordion variant="bordered" className="cursor-pointer">
+          <AccordionItem
+            className="p-0"
+            onPress={() => {
+              console.log("clicked");
+            }}
+            key="1"
+            aria-label="Connected bank accounts"
+            startContent={<Icon icon="solar:wallet-money-outline" width={32} />}
+            subtitle={
+              <div className="flex items-center">
+                No bank accounts connected
+              </div>
+            }
+            title="Connected bank accounts"
+          />
+        </Accordion>
+        {/* <CardBody className="p-0">
           <div className="flex items-center justify-between bg-content2 rounded-medium p-4">
             <div>
               Bank Account
@@ -140,7 +178,7 @@ export default function General({ user }: GeneralProps) {
               <Button color="primary">Connect</Button>
             </div>
           </div>
-        </CardBody>
+        </CardBody> */}
       </div>
     </>
   );

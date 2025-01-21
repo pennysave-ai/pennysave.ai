@@ -1,7 +1,7 @@
 "use client";
 
-import { CardBody, CardHeader } from "@nextui-org/card";
-import { Button } from "@nextui-org/button";
+import { CardBody, CardHeader } from "@heroui/card";
+import { Button } from "@heroui/button";
 import SwitchCell from "./switch-cell";
 
 export default function Notifications() {
