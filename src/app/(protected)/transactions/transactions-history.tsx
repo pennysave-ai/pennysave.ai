@@ -70,6 +70,10 @@ export default function TransactionsHistory({
         symbol: "",
         name: "",
       },
+      mask: "",
+      institution: {
+        name: "",
+      },
     },
     category: {
       id: "",
@@ -90,6 +94,10 @@ export default function TransactionsHistory({
           name: "",
           currency: {
             symbol: "",
+            name: "",
+          },
+          mask: "",
+          institution: {
             name: "",
           },
         },
@@ -113,6 +121,10 @@ export default function TransactionsHistory({
             currency: {
               symbol: accountsData?.data[0]?.currencySymbol || "",
               name: accountsData?.data[0]?.currency || "",
+            },
+            mask: accountsData?.data[0].institution.mask || "",
+            institution: {
+              name: accountsData?.data[0]?.institution.name || "",
             },
           },
           category: {
@@ -141,6 +153,10 @@ export default function TransactionsHistory({
         currency: {
           symbol: account.currency.symbol,
           name: account.currency.name,
+        },
+        mask: account.mask,
+        institution: {
+          name: account.institution.name,
         },
       },
       category: {
@@ -289,6 +305,7 @@ export default function TransactionsHistory({
                   setFormState({
                     ...formState,
                     account: {
+                      ...formState.account,
                       id: (id as string) || "",
                       name:
                         accountsData?.data.find((a) => a.id === id)?.name || "",
