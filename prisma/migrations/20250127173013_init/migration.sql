@@ -36,8 +36,15 @@ CREATE TABLE "User" (
     "email" TEXT,
     "emailVerified" TIMESTAMP(3),
     "image" TEXT,
+    "plaidUserToken" TEXT,
+    "plaidUserId" TEXT,
     "password" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'USER',
+    "stripeCustomerId" TEXT,
+    "stripeSubscriptionEndDate" TIMESTAMP(3),
+    "stripeSubscriptionCancelAtDate" TIMESTAMP(3),
+    "stripePriceId" TEXT,
+    "hasActiveStripeSubscription" BOOLEAN DEFAULT false,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -102,10 +109,39 @@ CREATE TABLE "UserAccount" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "plaidId" TEXT,
+    "plaidAccountId" TEXT,
+    "plaidItemId" TEXT,
+    "plaidMask" TEXT,
+    "plaidBalance" DOUBLE PRECISION,
+    "plaidType" TEXT,
     "currencyId" TEXT NOT NULL,
 
     CONSTRAINT "UserAccount_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PlaidItem" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "accessToken" TEXT NOT NULL,
+    "plaidItemId" TEXT NOT NULL,
+    "institutionId" TEXT NOT NULL,
+    "institutionName" TEXT NOT NULL,
+    "institutionPrimaryColor" TEXT,
+    "institutionUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "transactionCursor" TEXT,
+
+    CONSTRAINT "PlaidItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PlaidLinkToken" (
+    "userId" TEXT NOT NULL,
+    "linkToken" TEXT NOT NULL,
+
+    CONSTRAINT "PlaidLinkToken_pkey" PRIMARY KEY ("userId")
 );
 
 -- CreateIndex
@@ -139,7 +175,13 @@ CREATE UNIQUE INDEX "PasswordResetToken_token_key" ON "PasswordResetToken"("toke
 CREATE UNIQUE INDEX "PasswordResetToken_email_token_key" ON "PasswordResetToken"("email", "token");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "UserAccount_plaidAccountId_key" ON "UserAccount"("plaidAccountId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserAccount_id_key" ON "UserAccount"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PlaidItem_plaidItemId_key" ON "PlaidItem"("plaidItemId");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -160,4 +202,13 @@ ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "UserAccount" ADD CONSTRAINT "UserAccount_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "UserAccount" ADD CONSTRAINT "UserAccount_plaidItemId_fkey" FOREIGN KEY ("plaidItemId") REFERENCES "PlaidItem"("plaidItemId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "UserAccount" ADD CONSTRAINT "UserAccount_currencyId_fkey" FOREIGN KEY ("currencyId") REFERENCES "Currency"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlaidItem" ADD CONSTRAINT "PlaidItem_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlaidLinkToken" ADD CONSTRAINT "PlaidLinkToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

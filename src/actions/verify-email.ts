@@ -42,7 +42,7 @@ export async function verifyEmail(token: string) {
   });
   return {
     success: {
-      _form: ["Email verified"],
+      _form: ["Your email has been verified"],
     },
   };
 }

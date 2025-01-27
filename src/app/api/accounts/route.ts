@@ -13,16 +13,37 @@ export async function GET() {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const accounts = await db.userAccount.findMany({
+  const data = await db.userAccount.findMany({
     select: {
       id: true,
       name: true,
       currency: {
         select: { id: true, name: true, symbol: true },
       },
+      plaidMask: true,
+      plaidItem: {
+        select: {
+          institutionName: true,
+          institutionPrimaryColor: true,
+        },
+      },
     },
     where: { userId: user.id },
   });
+  const accounts = data.map((account) => ({
+    id: account.id,
+    name: account.name,
+    currency: {
+      id: account.currency.id,
+      name: account.currency.name,
+      symbol: account.currency.symbol,
+    },
+    institution: {
+      name: account?.plaidItem?.institutionName || null,
+      color: account?.plaidItem?.institutionPrimaryColor || null,
+      mask: account.plaidMask,
+    },
+  }));
   const count = await db.userAccount.count({ where: { userId: user.id } });
   return NextResponse.json({ data: accounts, meta: { count } });
 }
@@ -52,7 +73,7 @@ export async function POST(req: NextRequest) {
       id: uuid(),
       name: body.name,
       userId: user.id,
-      plaidId: body.plaidId,
+      plaidItemId: body.plaidId,
       currencyId: body.currencyId,
     },
   });

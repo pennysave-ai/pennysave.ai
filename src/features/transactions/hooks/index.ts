@@ -78,6 +78,10 @@ export type TransactionResponseItem = {
       symbol: string;
       name: string;
     };
+    institution: {
+      name: string | null;
+    };
+    mask: string | null;
   };
   category: {
     id: string | null;

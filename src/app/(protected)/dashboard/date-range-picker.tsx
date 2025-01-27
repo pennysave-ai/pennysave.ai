@@ -51,7 +51,7 @@ export default function RangePicker() {
       query.set("to", to);
     }
     router.push(`${pathname}?${query.toString()}`);
-  }, [value?.end, value?.start]);
+  }, [value?.end, value?.start]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col gap-4 w-full">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -30,11 +30,11 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
+import { ArrowUp, ArrowDown } from "@/app/icons";
 import { Spinner } from "@heroui/spinner";
 
 import { Input } from "@heroui/input";
-import { Button, useButton } from "@heroui/button";
+import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Pagination } from "@heroui/pagination";
 import { SearchIcon } from "@heroui/shared-icons";
@@ -43,11 +43,13 @@ import { cn } from "@heroui/theme";
 import { useMemoizedCallback } from "@/hooks";
 import { parseISO, format } from "date-fns";
 import { AmountCell } from "./amount-cell";
+import { AccountName } from "@/components/common";
 
 export type ColumnsKey =
   | "createdAt"
   | "amount"
   | "account.name"
+  | "account.institution.name"
   | "category.name"
   | "payee"
   | "notes"
@@ -57,6 +59,7 @@ const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
   "createdAt",
   "amount",
   "account.name",
+  "account.institution.name",
   "category.name",
   "payee",
   "notes",
@@ -77,6 +80,11 @@ export const columns = [
   {
     name: "Account",
     uid: "account.name",
+    sortDirection: "ascending",
+  },
+  {
+    name: "Institution",
+    uid: "account.institution.name",
     sortDirection: "ascending",
   },
   {
@@ -232,10 +240,6 @@ export default function TransactionsTable({
     return resultKeys;
   }, [selectedKeys, filteredItems, filterValue]);
 
-  const editRef = useRef<HTMLButtonElement | null>(null);
-  const deleteRef = useRef<HTMLButtonElement | null>(null);
-  const { getButtonProps: getEditProps } = useButton({ ref: editRef });
-  const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
   const getColumnProps = useMemoizedCallback((columnName) => ({
     onClick: () => handleColumnNameClick(columnName),
   }));
@@ -259,8 +263,15 @@ export default function TransactionsTable({
           );
         case "account.name":
           return (
+            <AccountName
+              name={transaction.account.name}
+              mask={transaction.account.mask}
+            />
+          );
+        case "account.institution.name":
+          return (
             <div className="capitalize text-default-foreground">
-              {transaction.account.name}
+              {transaction.account.institution.name}
             </div>
           );
         case "category.name":
@@ -283,30 +294,34 @@ export default function TransactionsTable({
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
-              <Edit
-                {...getEditProps()}
-                className="cursor-pointer text-default-400"
-                height={18}
-                width={18}
-                onClick={() => {
+              <Button
+                isIconOnly
+                size="sm"
+                color="primary"
+                aria-label="edit account"
+                variant="light"
+                onPress={() => {
                   onOpenSidebar(transaction);
                 }}
-              />
-              <div className="text-danger">
-                <Delete
-                  {...getDeleteProps()}
-                  className="cursor-pointer"
-                  height={18}
-                  width={18}
-                  onClick={() => {
-                    setDeleteCategoriesData({
-                      type: "individual",
-                      categoriesToDelete: [transaction.id],
-                    });
-                    onOpen();
-                  }}
-                />
-              </div>
+              >
+                <Icon icon="solar:pen-2-bold" width={22} />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                color="danger"
+                aria-label="delete account"
+                variant="light"
+                onPress={() => {
+                  setDeleteCategoriesData({
+                    type: "individual",
+                    categoriesToDelete: [transaction.id],
+                  });
+                  onOpen();
+                }}
+              >
+                <Icon icon="solar:close-circle-bold" width={22} />
+              </Button>
             </div>
           );
         default:

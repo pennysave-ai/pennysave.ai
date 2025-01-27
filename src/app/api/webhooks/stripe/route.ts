@@ -1,7 +1,9 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
+import { WebSocket } from "ws";
 import { STRIPE_PLANS } from "@/lib/stripe";
 import { db } from "@/db";
+import { BroadcastType } from "@/wstypes";
 
 const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
@@ -24,6 +26,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: err?.message }, { status: 400 });
   }
 
+  const hostname = req.url?.split("/")[2].split(":")[0];
+  const port = process.env.NEXT_PUBLIC_WEBSOCKET_PORT;
+
+  console.log("Stripe event type", stripeEvent.type);
   switch (stripeEvent.type) {
     // First payment is successful and subscription is created
     case "checkout.session.completed": {
@@ -53,6 +59,19 @@ export async function POST(req: NextRequest) {
         },
       });
       // TODO: Send email to user
+
+      // Notify user of successful subscription
+      const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+      ws.on("open", function open() {
+        ws.send(
+          JSON.stringify({
+            type: BroadcastType.SUBSCRIPTION_CREATED,
+            recipient: userId,
+          })
+        );
+        ws.close();
+      });
+      break;
     }
     // Subscription is deleted
     case "customer.subscription.deleted": {
@@ -82,6 +101,17 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log("Subscription canceled", user.id);
+        const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+        ws.on("open", function open() {
+          ws.send(
+            JSON.stringify({
+              type: BroadcastType.SUBSCRIPTION_DELETED,
+              recipient: user.id,
+            })
+          );
+          ws.close();
+        });
+        break;
       } catch (e) {
         console.log("Error canceling subscription", e);
       }
@@ -115,6 +145,17 @@ export async function POST(req: NextRequest) {
               : null,
           },
         });
+        const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+        ws.on("open", function open() {
+          ws.send(
+            JSON.stringify({
+              type: BroadcastType.SUBSCRIPTION_UPDATED,
+              recipient: user.id,
+            })
+          );
+          ws.close();
+        });
+        break;
       }
     }
   }

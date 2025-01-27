@@ -6,6 +6,7 @@ export const publicRoutes = [
   "/auth/verify-email",
   "/api/webhooks/cron",
   "/api/webhooks/stripe",
+  "/api/webhooks/plaid",
 ];
 
 /**

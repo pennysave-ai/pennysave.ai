@@ -1,7 +1,9 @@
 const { withSentryConfig } = require("@sentry/nextjs");
 
 const nextConfig = {
-  // Your existing Next.js configuration
+  // Forcefully disable reactStrictMode on development
+  // to prevent UseEffect running twice which closing websocket connection
+  reactStrictMode: process.env.NODE_ENV !== "development",
 };
 
 // Make sure adding Sentry options is the last code to run before exporting

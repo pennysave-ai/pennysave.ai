@@ -2,6 +2,7 @@ import { Header } from "@/components/common";
 import Sidebar from "@/components/sidebar";
 import { auth } from "@/auth";
 import { PaywallModal } from "@/components/common/paywall-modal";
+import WebSocketClient from "./websocket-client";
 
 export default async function ProtectedRoadsLayout({
   children,
@@ -16,6 +17,7 @@ export default async function ProtectedRoadsLayout({
         <Sidebar user={session?.user || null} />
         {children}
         <PaywallModal />
+        <WebSocketClient userId={session?.user?.id || null} />
       </main>
       <footer></footer>
     </div>

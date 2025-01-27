@@ -8,3 +8,4 @@ export { ArrowUp } from "./arrow-up";
 export { ArrowDown } from "./arrow-down";
 export { Edit } from "./edit";
 export { Delete } from "./delete";
+export { Loader } from "./loader";
