@@ -40,7 +40,7 @@ const SimplePlaidLink = ({
     : data?.createToken;
   const { open, ready } = usePlaidLink({
     token,
-    onSuccess: (puplicToken, meta) => {
+    onSuccess: (puplicToken) => {
       // if there is a public token, means that we are updating the plaid item
       if (puplicToken) {
         console.log("mutating....");
