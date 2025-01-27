@@ -5,7 +5,16 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "UserAccount" DROP CONSTRAINT "UserAccount_plaidId_fkey";
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'UserAccount_plaidId_fkey'
+  ) THEN
+    ALTER TABLE "UserAccount" DROP CONSTRAINT "UserAccount_plaidId_fkey";
+  END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "UserAccount" DROP COLUMN "plaidId",
