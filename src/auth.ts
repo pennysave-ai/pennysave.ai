@@ -57,9 +57,6 @@ export const {
       if (token.sub && session.user) {
         session.user.id = token.sub;
       }
-      if (token.role && session.user) {
-        session.user.role = token.role as UserRole;
-      }
       if (token.activeSubscription && session.user) {
         session.user.subscription = {
           priceId: token.priceId as string,
@@ -76,7 +73,6 @@ export const {
       // Adding the user role to the token
       const existingUser = await db.user.findUnique({
         select: {
-          role: true,
           hasActiveStripeSubscription: true,
           stripePriceId: true,
           stripeSubscriptionEndDate: true,
@@ -85,7 +81,6 @@ export const {
         where: { id: token.sub },
       });
       if (!existingUser) return token;
-      token.role = existingUser.role;
       token.activeSubscription = existingUser.hasActiveStripeSubscription;
       token.priceId = existingUser.stripePriceId;
       token.expires = existingUser.stripeSubscriptionEndDate;

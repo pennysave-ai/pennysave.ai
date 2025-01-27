@@ -2,16 +2,12 @@
 
 import { Tab, Tabs } from "@heroui/tabs";
 import { Icon } from "@iconify/react";
-import { Session } from "next-auth";
-
-import General from "./general";
-import Notifications from "./notifications";
 
 interface SettingTabsProps {
-  user: Session["user"];
+  children: React.ReactNode[];
 }
 
-export default function SettingTabs({ user }: SettingTabsProps) {
+export default function SettingTabs({ children }: SettingTabsProps) {
   return (
     <>
       <Tabs
@@ -30,7 +26,7 @@ export default function SettingTabs({ user }: SettingTabsProps) {
             </div>
           }
         >
-          <General user={user} />
+          {children[0]}
         </Tab>
         <Tab
           key="profile"
@@ -41,7 +37,7 @@ export default function SettingTabs({ user }: SettingTabsProps) {
             </div>
           }
         >
-          <Notifications />
+          {children[1]}
         </Tab>
       </Tabs>
     </>

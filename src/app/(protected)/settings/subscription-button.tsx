@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@heroui/button";
+import { Loader } from "@/app/icons";
 
 interface SubscriptionButtonProps {
   priceId: string;
@@ -35,8 +36,19 @@ export default function SubscriptionButton({
     }
   };
   return (
-    <Button isLoading={loading} color="primary" onPress={handleCheckout}>
-      Subscribe
+    <Button
+      isDisabled={loading}
+      color="primary"
+      onPress={handleCheckout}
+      className="items-center justify-center"
+    >
+      {loading ? (
+        <div className="w-[28px]">
+          <Loader />
+        </div>
+      ) : (
+        "Subscribe"
+      )}
     </Button>
   );
 }

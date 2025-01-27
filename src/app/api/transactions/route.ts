@@ -49,6 +49,10 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           name: true,
+          plaidMask: true,
+          plaidItem: {
+            select: { institutionName: true },
+          },
           currency: { select: { symbol: true, name: true } },
         },
       },
@@ -74,6 +78,17 @@ export async function GET(req: NextRequest) {
     ...transaction,
     payee: transaction.payee ?? "",
     notes: transaction.notes ?? "",
+    account: {
+      id: transaction.account.id,
+      name: transaction.account.name,
+      currency: {
+        ...transaction.account.currency,
+      },
+      mask: transaction.account.plaidMask,
+      institution: {
+        name: transaction.account.plaidItem?.institutionName,
+      },
+    },
   }));
 
   const count = await db.transaction.count({

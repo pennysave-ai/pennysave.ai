@@ -46,10 +46,14 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  plaidUserToken String?
+  plaidUserId    String?
   accounts      Account[]
   sessions      Session[]
   category      Category[]
   userAccounts  UserAccount[]
+  plaidItems    PlaidItem[]
+  linkTokens    PlaidLinkToken[]
   password      String?
   role          UserRole @default(USER)
   stripeCustomerId String?
@@ -78,7 +82,7 @@ model Category {
   name        String
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plaidId     String?
+  plaidId     String?  // Plaid category id determined by the plaid API
   description String?
   transactions Transaction[]
 
@@ -122,9 +126,40 @@ model UserAccount {
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
-  plaidId    String?
+  plaidAccountId String? @unique
+  plaidItemId    String?
+  plaidMask      String?
+  plaidBalance   Float?
+  plaidType      String?
+  plaidItem  PlaidItem? @relation(fields: [plaidItemId], references: [plaidItemId], onDelete: Cascade)   
   transactions Transaction[]
   currencyId String
   currency   Currency  @relation(fields: [currencyId], references: [id])
   @@unique([id])
+}
+
+// A model to store the plaid item details
+model PlaidItem {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String
+  plaidItemId String  @unique
+  institutionId String
+  institutionName String
+  institutionPrimaryColor String?
+  institutionUrl String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  transactionCursor String?
+
+  UserAccount UserAccount[]
+}
+
+// A model to temporarily store the link_token associated with user id
+// We need this model to support enable_multi_item_link in plaid
+model PlaidLinkToken {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  linkToken  String
 }

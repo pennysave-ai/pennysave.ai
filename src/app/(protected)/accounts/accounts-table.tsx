@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -27,11 +27,11 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
+import { ArrowUp, ArrowDown } from "@/app/icons";
 import { Spinner } from "@heroui/spinner";
 
 import { Input } from "@heroui/input";
-import { Button, useButton } from "@heroui/button";
+import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Pagination } from "@heroui/pagination";
 
@@ -39,15 +39,26 @@ import { SearchIcon } from "@heroui/shared-icons";
 import { Icon } from "@iconify/react";
 import { cn } from "@heroui/theme";
 import { useMemoizedCallback } from "@/hooks";
+import { AccountName } from "@/components/common";
 
-export type ColumnsKey = "name" | "currency" | "actions";
+export type ColumnsKey = "name" | "currency" | "actions" | "institution";
 
-const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = ["name", "currency", "actions"];
+const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
+  "name",
+  "currency",
+  "actions",
+  "institution",
+];
 
 export const columns = [
   {
     name: "Account Name",
     uid: "name",
+    sortDirection: "acending",
+  },
+  {
+    name: "Institution",
+    uid: "institution",
     sortDirection: "acending",
   },
   {
@@ -146,6 +157,12 @@ export default function AccountsTable({
   const sortedItems = useMemo(() => {
     return [...items].sort((a: Account, b: Account) => {
       const col = sortDescriptor.column as keyof Account;
+      if (sortDescriptor.column === "institution") {
+        const first = typeof a[col] === "object" ? a[col]?.name || "" : "";
+        const second = typeof b[col] === "object" ? b[col]?.name || "" : "";
+        const cmp = first < second ? -1 : first > second ? 1 : 0;
+        return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      }
       const first = a[col] as string;
       const second = b[col] as string;
 
@@ -174,10 +191,6 @@ export default function AccountsTable({
     return resultKeys;
   }, [selectedKeys, filteredItems, filterValue]);
 
-  const editRef = useRef<HTMLButtonElement | null>(null);
-  const deleteRef = useRef<HTMLButtonElement | null>(null);
-  const { getButtonProps: getEditProps } = useButton({ ref: editRef });
-  const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
   const getColumnProps = useMemoizedCallback((columnName) => ({
     onClick: () => handleColumnNameClick(columnName),
   }));
@@ -187,39 +200,55 @@ export default function AccountsTable({
       const accountKey = columnKey as ColumnsKey;
       switch (accountKey) {
         case "currency":
+          return (
+            <div className="flex gap-x-1 text-nowrap text-small capitalize text-default-foreground">
+              {account[accountKey]}
+            </div>
+          );
         case "name":
           return (
+            <AccountName
+              name={account[accountKey]}
+              mask={account.institution.mask}
+            />
+          );
+        case "institution":
+          return (
             <div className="text-nowrap text-small capitalize text-default-foreground">
-              {account[accountKey]}
+              {account[accountKey].name}
             </div>
           );
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
-              <Edit
-                {...getEditProps()}
-                className="cursor-pointer text-default-400"
-                height={18}
-                width={18}
-                onClick={() => {
+              <Button
+                isIconOnly
+                size="sm"
+                color="primary"
+                aria-label="edit account"
+                variant="light"
+                onPress={() => {
                   onOpenSidebar(account);
                 }}
-              />
-              <div className="text-danger">
-                <Delete
-                  {...getDeleteProps()}
-                  className="cursor-pointer"
-                  height={18}
-                  width={18}
-                  onClick={() => {
-                    setDeleteAccountsData({
-                      type: "individual",
-                      accountsToDelete: [account.id],
-                    });
-                    onOpen();
-                  }}
-                />
-              </div>
+              >
+                <Icon icon="solar:pen-2-bold" width={22} />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                color="danger"
+                aria-label="delete account"
+                variant="light"
+                onPress={() => {
+                  setDeleteAccountsData({
+                    type: "individual",
+                    accountsToDelete: [account.id],
+                  });
+                  onOpen();
+                }}
+              >
+                <Icon icon="solar:close-circle-bold" width={22} />
+              </Button>
             </div>
           );
         default:
@@ -243,7 +272,6 @@ export default function AccountsTable({
         const resultKeys = new Set(
           filteredItems.map((item) => String(item.id))
         );
-
         setSelectedKeys(resultKeys);
       } else {
         setSelectedKeys(keys);
@@ -480,7 +508,9 @@ export default function AccountsTable({
                   : "",
               ])}
             >
-              {column.uid === "name" || column.uid === "currency" ? (
+              {column.uid === "name" ||
+              column.uid === "currency" ||
+              column.uid === "institution" ? (
                 <div
                   {...getColumnProps(column.uid)}
                   className="flex w-full cursor-pointer items-center"

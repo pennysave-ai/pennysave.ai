@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
 import {
   Navbar,
@@ -33,6 +34,7 @@ export default function NavbarCustomMenu({
 }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { theme } = useTheme();
   useEffect(() => {
     if (isMenuOpen) {
       setIsMenuOpen(false);
@@ -127,7 +129,15 @@ export default function NavbarCustomMenu({
       >
         <ModalContent>
           <ModalBody>
-            <div className="py-10 px-6 flex flex-col flex-1">
+            <div
+              className="py-10 px-6 flex flex-col flex-1"
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? "var(--background)"
+                    : "var(--heroui-content1)",
+              }}
+            >
               <SidebarItems user={user} />
             </div>
           </ModalBody>

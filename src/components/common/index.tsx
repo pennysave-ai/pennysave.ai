@@ -5,3 +5,4 @@ export { Hero } from "./hero";
 export { Header } from "./header";
 export { RightSidebar } from "./right-sidebar";
 export { SidebarItems } from "./sidebar-items";
+export { AccountName } from "./cells/account-name";

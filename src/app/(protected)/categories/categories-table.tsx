@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -27,11 +27,11 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { ArrowUp, ArrowDown, Edit, Delete } from "@/app/icons";
+import { ArrowUp, ArrowDown } from "@/app/icons";
 import { Spinner } from "@heroui/spinner";
 
 import { Input } from "@heroui/input";
-import { Button, useButton } from "@heroui/button";
+import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Pagination } from "@heroui/pagination";
 import { SearchIcon } from "@heroui/shared-icons";
@@ -179,10 +179,6 @@ export default function CategoriesTable({
     return resultKeys;
   }, [selectedKeys, filteredItems, filterValue]);
 
-  const editRef = useRef<HTMLButtonElement | null>(null);
-  const deleteRef = useRef<HTMLButtonElement | null>(null);
-  const { getButtonProps: getEditProps } = useButton({ ref: editRef });
-  const { getButtonProps: getDeleteProps } = useButton({ ref: deleteRef });
   const getColumnProps = useMemoizedCallback((columnName) => ({
     onClick: () => handleColumnNameClick(columnName),
   }));
@@ -202,30 +198,34 @@ export default function CategoriesTable({
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
-              <Edit
-                {...getEditProps()}
-                className="cursor-pointer text-default-400"
-                height={18}
-                width={18}
-                onClick={() => {
+              <Button
+                isIconOnly
+                size="sm"
+                color="primary"
+                aria-label="edit category"
+                variant="light"
+                onPress={() => {
                   onOpenSidebar(category);
                 }}
-              />
-              <div className="text-danger">
-                <Delete
-                  {...getDeleteProps()}
-                  className="cursor-pointer"
-                  height={18}
-                  width={18}
-                  onClick={() => {
-                    setDeleteCategoriesData({
-                      type: "individual",
-                      categoriesToDelete: [category.id],
-                    });
-                    onOpen();
-                  }}
-                />
-              </div>
+              >
+                <Icon icon="solar:pen-2-bold" width={22} />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                color="danger"
+                aria-label="delete account"
+                variant="light"
+                onPress={() => {
+                  setDeleteCategoriesData({
+                    type: "individual",
+                    categoriesToDelete: [category.id],
+                  });
+                  onOpen();
+                }}
+              >
+                <Icon icon="solar:close-circle-bold" width={22} />
+              </Button>
             </div>
           );
         default:

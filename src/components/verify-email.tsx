@@ -1,7 +1,9 @@
 "use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { Spinner } from "@heroui/spinner";
 import { useSearchParams } from "next/navigation";
+import { Button } from "@heroui/button";
 import * as actions from "@/actions";
 
 export default function VerifyEmail() {
@@ -15,15 +17,13 @@ export default function VerifyEmail() {
       setError("Missing token");
       return;
     }
-    actions
-      .verifyEmail(token)
-      .then((data) => {
-        setSuccess(data?.success?._form?.join(", "));
-        setError(data?.errors?._form?.join(", "));
-      })
-      .catch(() => {
-        setError("Something went wrong");
-      });
+    try {
+      const data = await actions.verifyEmail(token);
+      setSuccess(data?.success?._form?.join(", "));
+      setError(data?.errors?._form?.join(", "));
+    } catch {
+      setError("Something went wrong");
+    }
   }, [token]);
 
   useEffect(() => {
@@ -34,19 +34,29 @@ export default function VerifyEmail() {
     <>
       {!error && !success && (
         <div className="flex justify-center flex-col items-center">
-          <div className="text-sm mb-4">Confirming your verification...</div>
+          <div className="text-sm mb-4">Confirming your email...</div>
           <Spinner />
         </div>
       )}
-      <div className="flex justify-center mt-4 flex-1">
+      <div className="flex justify-center mt-0 flex-1">
         {error && (
           <div className="w-full text-center rounded-xl text-sm px-3 py-2 bg-red-200 dark:bg-red-800">
             {error}
           </div>
         )}
         {success && (
-          <div className="rounded-xl text-sm px-3 py-2 bg-green-400 dark:bg-green-800">
-            {success}
+          <div className="flex flex-col gap-y-3">
+            <h1 className="text-center text-success">Congratilations!</h1>
+            <div className="text-sm px-3 py-2">{success}</div>
+            <Button
+              color="primary"
+              className="w-full"
+              onPress={() => {
+                window.location.href = "/";
+              }}
+            >
+              Go back to home page
+            </Button>
           </div>
         )}
       </div>

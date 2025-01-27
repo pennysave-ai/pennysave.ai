@@ -60,6 +60,11 @@ export type Account = {
   currency: string;
   currencyId: string;
   currencySymbol: string;
+  institution: {
+    name: string | null;
+    color: string | null;
+    mask: string | null;
+  };
 };
 
 export const useGetAccounts = () => {
