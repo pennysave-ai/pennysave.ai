@@ -7,6 +7,7 @@ import { BroadcastType } from "@/wstypes";
 
 const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -61,7 +62,9 @@ export async function POST(req: NextRequest) {
       // TODO: Send email to user
 
       // Notify user of successful subscription
-      const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+      const ws = new WebSocket(
+        `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+      );
       ws.on("open", function open() {
         ws.send(
           JSON.stringify({
@@ -101,7 +104,9 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log("Subscription canceled", user.id);
-        const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+        const ws = new WebSocket(
+          `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+        );
         ws.on("open", function open() {
           ws.send(
             JSON.stringify({
@@ -145,7 +150,9 @@ export async function POST(req: NextRequest) {
               : null,
           },
         });
-        const ws = new WebSocket(`ws://${hostname}:${port}?id=STRIPE_WEBHOOK`);
+        const ws = new WebSocket(
+          `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+        );
         ws.on("open", function open() {
           ws.send(
             JSON.stringify({

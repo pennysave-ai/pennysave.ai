@@ -11,6 +11,9 @@ import {
 interface WebSocketClientProps {
   userId: string | null;
 }
+
+const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
+
 export default function WebSocketClient({ userId }: WebSocketClientProps) {
   const socketRef = useRef<WebSocket | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -21,7 +24,7 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
 
   const connectWebSocket = () => {
     const socket = new WebSocket(
-      `ws://${window.location.hostname}:${process.env.NEXT_PUBLIC_WEBSOCKET_PORT}?id=${userId}`
+      `${PROTOCOL}://${window.location.hostname}:${process.env.NEXT_PUBLIC_WEBSOCKET_PORT}?id=${userId}`
     );
 
     socket.onopen = () => {

@@ -15,6 +15,7 @@ import { PlaidItem } from "@prisma/client";
 import { BroadcastType } from "@/wstypes";
 
 export async function POST(req: NextRequest) {
+  const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
   const body = await req.json();
   console.log("@body", body);
   switch (body.webhook_code) {
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
             const port = process.env.NEXT_PUBLIC_WEBSOCKET_PORT;
 
             const ws = new WebSocket(
-              `ws://${hostname}:${port}?id=PLAID_WEBHOOK`
+              `${PROTOCOL}://${hostname}:${port}?id=PLAID_WEBHOOK`
             );
             ws.on("open", function open() {
               ws.send(

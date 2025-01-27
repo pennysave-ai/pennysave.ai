@@ -3,8 +3,9 @@ import { WebSocketServer, type WebSocket } from "ws";
 import { parse } from "url";
 import { createServer } from "http";
 
-const PORT = process.env.NEXT_PUBLIC_WEBSOCKET_PORT || 8082;
+const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
 const HOST = os.hostname();
+const PORT = process.env.NEXT_PUBLIC_WEBSOCKET_PORT || 8082;
 
 let serverInstance: WebSocketServer | null = null;
 
@@ -63,7 +64,9 @@ const createWebSocketServer = () => {
   };
   try {
     server.listen(PORT, () => {
-      console.log(`WebSocket server is running on ws://${HOST}:${PORT}`);
+      console.log(
+        `WebSocket server is running on ${PROTOCOL}://${HOST}:${PORT}`
+      );
     });
   } catch (error) {
     console.error("Error in WebSocket server", error);
