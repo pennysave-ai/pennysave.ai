@@ -113,7 +113,7 @@ export default function BanksSection({
                         background: bank.color,
                       }}
                     >
-                      {bank.name[0].toUpperCase()}
+                      {bank.name[0]?.toUpperCase()}
                     </div>
                     <div className="flex flex-col overflow-hidden text-ellipsis">
                       <div className="truncate block">{bank.name}</div>
