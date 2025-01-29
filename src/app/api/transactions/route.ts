@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
       payee: true,
       notes: true,
       createdAt: true,
+      logo: true,
       account: {
         select: {
           id: true,
@@ -78,6 +79,7 @@ export async function GET(req: NextRequest) {
     ...transaction,
     payee: transaction.payee ?? "",
     notes: transaction.notes ?? "",
+    logo: transaction.logo,
     account: {
       id: transaction.account.id,
       name: transaction.account.name,

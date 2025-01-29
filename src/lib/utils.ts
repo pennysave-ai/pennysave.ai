@@ -5,6 +5,7 @@ import {
   getLocalTimeZone,
   CalendarDate,
 } from "@internationalized/date";
+
 import {
   format,
   parseISO,
@@ -13,15 +14,31 @@ import {
   startOfDay,
 } from "date-fns";
 
-export function convertAmountToMilliunits(amount: number) {
+/**
+ * Converts an amount to milliunits.
+ * @param amount
+ * @returns {number}
+ */
+export function convertAmountToMilliunits(amount: number): number {
   return Math.round(amount * 1000);
 }
 
-export function convertAmountFromMilliunits(amount: number) {
+/**
+ * Converts an amount from milliunits.
+ * @param amount
+ * @returns {number}
+ */
+export function convertAmountFromMilliunits(amount: number): number {
   return amount / 1000;
 }
 
-export function formatCurrency(value: number, currency: string) {
+/**
+ * Formats a number to a certain currency.
+ * @param value
+ * @param currency
+ * @returns {string}
+ */
+export function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,

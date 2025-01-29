@@ -68,6 +68,19 @@ model Transaction {
   amount      Int
   payee       String
   notes       String?
+  logo        String?
+  plaidCategoryConfidenceLeveL String?
+  plaidCategoryPrimary String?
+  plaidCategoryDetailed String?
+  plaidPaymentChannel String?
+  plaidAdress String?
+  plaidCity String?
+  plaidCountry String?
+  plaidLatitude Float?
+  plaidLongitude Float?
+  plaidPostalCode String?
+  plaidRegion String?
+  plaidStoreNumber String?
   accountId   String
   account     UserAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId  String?

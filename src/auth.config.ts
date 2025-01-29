@@ -1,4 +1,3 @@
-import { db } from "@/db";
 import type { User } from "@prisma/client";
 
 import bcrypt from "bcryptjs";
@@ -10,6 +9,7 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { THIRD_PARTY_ERROR } from "@/constants";
 import { signInSchema } from "@/schemas";
+import { getUserByEmail } from "@/data/user";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
@@ -49,9 +49,7 @@ export default {
           };
 
           // Validate the form data
-          const user = await db.user.findUnique({
-            where: { email },
-          });
+          const user = await getUserByEmail(email);
           if (!user) return null;
 
           // User might be authenticated with a third-party provider and not have a password

@@ -30,6 +30,8 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
+import { Image } from "@heroui/image";
+
 import { ArrowUp, ArrowDown } from "@/app/icons";
 import { Spinner } from "@heroui/spinner";
 
@@ -285,10 +287,28 @@ export default function TransactionsTable({
             </div>
           );
         case "notes":
+          return (
+            <div className="text-default-foreground">
+              {transaction[transactionKey]}
+            </div>
+          );
         case "payee":
           return (
-            <div className=" text-default-foreground">
-              {transaction[transactionKey]}
+            <div className="flex items-center gap-x-2 text-default-foreground">
+              {transaction?.logo ? (
+                <Image
+                  width={20}
+                  height={20}
+                  src={transaction.logo}
+                  alt={transaction.payee}
+                  radius="full"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
+                  {transaction?.payee[0].toUpperCase()}
+                </div>
+              )}
+              <div>{transaction[transactionKey]}</div>
             </div>
           );
         case "actions":

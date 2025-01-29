@@ -71,6 +71,7 @@ export type TransactionResponseItem = {
   payee: string;
   notes?: string;
   createdAt: string;
+  logo: string | null;
   account: {
     id: string;
     name: string;

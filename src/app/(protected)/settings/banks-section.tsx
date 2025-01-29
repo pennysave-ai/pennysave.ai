@@ -211,7 +211,7 @@ export default function BanksSection({
           </div>
         </div>
         {hasActiveSubscription ? (
-          <PlaidLink title="Connect" />
+          <PlaidLink className="w-full md:w-auto" title="Connect" />
         ) : (
           <Button
             className="w-full md:w-auto"
