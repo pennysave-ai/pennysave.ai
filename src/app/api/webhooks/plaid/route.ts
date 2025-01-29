@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ItemWithConsentFields } from "plaid";
+import jwt from "jsonwebtoken";
 
 import { db } from "@/db";
 import { encrypt, decrypt } from "@/utils/crypto";
@@ -9,16 +10,43 @@ import {
   getItem,
   deleteItem,
   getAccounts,
+  verifyWebhookSignature,
 } from "@/lib/plaid";
-import { WebSocket } from "ws";
 import { PlaidItem } from "@prisma/client";
-import { BroadcastType } from "@/wstypes";
+import { updateTransactionsAndCategories } from "@/data/transactions";
 
 export async function POST(req: NextRequest) {
-  const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
+  // Verify the webhook signature
+  const plaidVerificationHeader = req.headers.get("plaid-verification");
+  if (!plaidVerificationHeader) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+
+  // Decode the JWT header
+  const decodedHeader = jwt.decode(plaidVerificationHeader, {
+    complete: true,
+  })?.header;
+
+  if (!decodedHeader) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+  // if the algorithm is not ES256, return unauthorized
+  if (decodedHeader.alg !== "ES256" || !decodedHeader.kid) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+
+  // Verify the kid
+  const { kid } = decodedHeader;
+  try {
+    await verifyWebhookSignature(kid);
+  } catch {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+
   const body = await req.json();
   console.log("@body", body);
   switch (body.webhook_code) {
+    // Fired when a user has successfully connected Plaid Item
     case "SESSION_FINISHED": {
       if (body.status === "success") {
         try {
@@ -42,7 +70,7 @@ export async function POST(req: NextRequest) {
           }
 
           // Getting the existing user items
-          const userItems: PlaidItem[] = await db.plaidItem.findMany({
+          const plaidItems: PlaidItem[] = await db.plaidItem.findMany({
             where: {
               userId: user.userId,
             },
@@ -73,8 +101,8 @@ export async function POST(req: NextRequest) {
               continue;
             }
             // Check if the user has already linked an item at this institution
-            const institutionExists = userItems.find(
-              (userItem) => userItem.institutionId === item.institution_id
+            const institutionExists = plaidItems.find(
+              (plaidItem) => plaidItem.institutionId === item.institution_id
             );
 
             // If the user has already linked an item at this institution
@@ -122,6 +150,7 @@ export async function POST(req: NextRequest) {
                 })),
               });
             } else {
+              // Institution plaidItem does not exist in db
               // Get institution details
               const institution = await getInstitution(
                 item?.institution_id as string
@@ -160,22 +189,6 @@ export async function POST(req: NextRequest) {
                 })),
               });
             }
-            // Update invalidate current user state using websocket
-            const hostname = req.url?.split("/")[2].split(":")[0];
-            const port = process.env.NEXT_PUBLIC_WEBSOCKET_PORT;
-
-            const ws = new WebSocket(
-              `${PROTOCOL}://${hostname}:${port}?id=PLAID_WEBHOOK`
-            );
-            ws.on("open", function open() {
-              ws.send(
-                JSON.stringify({
-                  type: BroadcastType.BANK_DATA_UPDATED,
-                  recipient: user.userId,
-                })
-              );
-              ws.close();
-            });
           }
         } catch (error) {
           console.error("Error in SESSION_FINISHED webhook", error);
@@ -183,23 +196,43 @@ export async function POST(req: NextRequest) {
       }
       break;
     }
-    case "NEW_ACCOUNTS_AVAILABLE": {
-    }
+    // Fired when new transactions data becomes available.
     case "SYNC_UPDATES_AVAILABLE": {
+      const { webhook_type, item_id } = body;
+      if (webhook_type === "TRANSACTIONS") {
+        console.log(
+          `WEBHOOK: TRANSACTIONS: Plaid_item_id ${item_id}: New transactions available`
+        );
+        try {
+          // get the access token based on the plaid item id
+          const data = await db.plaidItem.findFirst({
+            where: {
+              plaidItemId: item_id,
+            },
+            select: {
+              accessToken: true,
+              transactionCursor: true,
+              userId: true,
+            },
+          });
+          if (!data) {
+            console.error("No data found for plaid item id");
+            return NextResponse.json({ data: "success" });
+          }
+          const accessToken = decrypt(data.accessToken);
+          updateTransactionsAndCategories(
+            accessToken,
+            data.transactionCursor,
+            data.userId,
+            item_id
+          );
+        } catch (err) {
+          console.error(`Error fetching transactions: ${err}`);
+        }
+      }
       console.log("Sync updates available");
       break;
     }
-    case "INITIAL_UPDATE":
-      console.log("Initial update");
-      break;
-    case "HISTORICAL_UPDATE":
-      console.log("Historical update");
-      break;
-    case "DEFAULT_UPDATE":
-      console.log("Default update");
-      break;
-    default:
-      console.log("Unknown webhook code");
   }
   return NextResponse.json({ data: "success" });
 }

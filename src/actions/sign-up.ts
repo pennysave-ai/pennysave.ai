@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { signUpSchema } from "@/schemas";
 import { generateVerificationToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/mail";
+import { getUserByEmail } from "@/data/user";
 
 interface SignUserUpErrors {
   errors: {
@@ -42,9 +43,7 @@ export async function signUp(
     };
   }
   // Check if user already exists
-  const user = await db.user.findUnique({
-    where: { email } as { email: string },
-  });
+  const user = await getUserByEmail(email as string);
   if (user) {
     return {
       errors: {

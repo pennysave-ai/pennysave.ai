@@ -63,6 +63,7 @@ export default function TransactionsHistory({
     payee: "",
     notes: "",
     createdAt: now("UTC").toDate().toISOString(),
+    logo: "",
     account: {
       id: "",
       name: "",
@@ -147,6 +148,7 @@ export default function TransactionsHistory({
       payee,
       notes,
       createdAt,
+      logo: "",
       account: {
         id: account.id,
         name: account.name,

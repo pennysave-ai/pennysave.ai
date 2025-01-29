@@ -6,6 +6,7 @@ import {
   createPlaidUser,
   getUpdateLinkToken,
 } from "@/lib/plaid";
+import { getUserById } from "@/data/user";
 import { decrypt, encrypt } from "@/utils/crypto";
 
 export async function GET() {
@@ -17,11 +18,7 @@ export async function GET() {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const userData = await db.user.findFirst({
-    where: {
-      id: user.id,
-    },
-  });
+  const userData = await getUserById(user.id);
   if (!userData) {
     return NextResponse.json("User not found", { status: 404 });
   }
@@ -65,7 +62,7 @@ export async function GET() {
   }[] = [];
   if (userItems.length) {
     for (const item of userItems) {
-      console.log("Decrupted Access Token ->", decrypt(item.accessToken));
+      console.log("Decripted Access Token ->", decrypt(item.accessToken));
       const token = await getUpdateLinkToken(
         user.id,
         userToken,

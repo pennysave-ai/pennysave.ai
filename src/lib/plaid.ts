@@ -4,6 +4,8 @@ import {
   PlaidEnvironments,
   Products,
   CountryCode,
+  Transaction,
+  RemovedTransaction,
 } from "plaid";
 
 const CLIENT_ID = process.env.PLAID_CLIENT_ID;
@@ -29,7 +31,14 @@ const configuration = new Configuration({
   },
 });
 
+const RETRIEVE_TRANSACTIONS_BATCH_SIZE = 100;
 const plaidClient = new PlaidApi(configuration);
+
+type GetTransactionParams = {
+  accessToken: string;
+  cursor?: string;
+  count: number;
+};
 
 /**
  * Creates a Plaid user.
@@ -177,59 +186,87 @@ export const getAccounts = async (accessToken: string) => {
   return response.data;
 };
 
-export const getTransactions = async (accessToken: string) => {
-  const response = await plaidClient.transactionsSync({
-    access_token: accessToken,
+/**
+ * Verifty webhook signature
+ * @param kid
+ * @returns {Promise<Object<WebhookVerificationKeyGetResponse>>}
+ */
+export const verifyWebhookSignature = async (kid: string) => {
+  const response = await plaidClient.webhookVerificationKeyGet({
+    client_id: CLIENT_ID,
+    secret: SECRET,
+    key_id: kid,
   });
   return response.data;
 };
 
-// /**
-//  * Fetches transactions from the Plaid API for a given item.
-//  *
-//  * @param {string} plaidItemId the Plaid ID for the item.
-//  * @returns {Object{}} an object containing transactions and a cursor.
-//  */
-// const fetchTransactionUpdates = async (plaidItemId: string) => {
-//   // the transactions endpoint is paginated, so we may need to hit it multiple times to
-//   // retrieve all available transactions.
+/**
+ * Get transactions by access token
+ * @param {Object} params - The parameters to pass to the API
+ * @param {String} params.accessToken - The access token
+ * @param {String} params.cursor - The cursor
+ * @param {String} params.count - The count
+ * @returns {Promise<Object<TransactionsGetResponse>>}
+ */
+export const getTransactions = async (params: GetTransactionParams) => {
+  const response = await plaidClient.transactionsSync({
+    client_id: CLIENT_ID,
+    secret: SECRET,
+    access_token: params.accessToken,
+    cursor: params.cursor,
+    count: params.count,
+  });
+  return response.data;
+};
 
-//   // get the access token based on the plaid item id
-//   const { plaid_access_token: accessToken, transactions_cursor: lastCursor } =
-//     await retrieveItemByPlaidItemId(plaidItemId);
+type GetAllTransactionsResponse = {
+  added: Transaction[];
+  modified: Transaction[];
+  removed: RemovedTransaction[];
+  cursor: string | null;
+};
 
-//   let cursor = lastCursor;
+/**
+ * Get all transactions by access token
+ * @param accessToken
+ * @param cursor
+ * @returns {Promise<Object<GetAllTransactionsResponse>>}
+ */
+export const getAllTransactions = async (
+  accessToken: string,
+  lastCursor: null | string = null
+): Promise<GetAllTransactionsResponse> => {
+  let cursor = lastCursor;
+  let added: Transaction[] = [];
+  let modified: Transaction[] = [];
+  // Removed transaction ids
+  let removed: RemovedTransaction[] = [];
+  let hasMore = true;
+  try {
+    // Iterate through each page of new transaction updates for item
+    /* eslint-disable no-await-in-loop */
+    while (hasMore) {
+      const request: GetTransactionParams = {
+        accessToken: accessToken,
+        count: RETRIEVE_TRANSACTIONS_BATCH_SIZE,
+      };
+      if (cursor) {
+        request.cursor = cursor;
+      }
+      const response = await getTransactions(request);
 
-//   // New transaction updates since "cursor"
-//   let added = [];
-//   let modified = [];
-//   // Removed transaction ids
-//   let removed = [];
-//   let hasMore = true;
+      // Add this page of results
+      added = added.concat(response.added);
+      modified = modified.concat(response.modified);
+      removed = removed.concat(response.removed);
+      hasMore = response.has_more;
 
-//   const batchSize = 100;
-//   try {
-//     // Iterate through each page of new transaction updates for item
-//     /* eslint-disable no-await-in-loop */
-//     while (hasMore) {
-//       const request = {
-//         access_token: accessToken,
-//         cursor: cursor,
-//         count: batchSize,
-//       };
-//       const response = await plaidClient.transactionsSync(request);
-//       const data = response.data;
-//       // Add this page of results
-//       added = added.concat(data.added);
-//       modified = modified.concat(data.modified);
-//       removed = removed.concat(data.removed);
-//       hasMore = data.has_more;
-//       // Update cursor to the next cursor
-//       cursor = data.next_cursor;
-//     }
-//   } catch (err) {
-//     console.error(`Error fetching transactions: ${err?.message}`);
-//     cursor = lastCursor;
-//   }
-//   return { added, modified, removed, cursor, accessToken };
-// };
+      // Update cursor to the next cursor
+      cursor = response?.next_cursor;
+    }
+  } catch (err) {
+    console.error(`Error fetching transactions: ${err}`);
+    cursor = lastCursor;
+  }
+  return { added, modified, removed, cursor };
+};

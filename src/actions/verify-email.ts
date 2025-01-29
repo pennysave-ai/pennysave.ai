@@ -37,9 +37,6 @@ export async function verifyEmail(token: string) {
   await db.verificationToken.delete({
     where: { id: verificationToken.id },
   });
-  await db.verificationToken.delete({
-    where: { id: verificationToken.id },
-  });
   return {
     success: {
       _form: ["Your email has been verified"],

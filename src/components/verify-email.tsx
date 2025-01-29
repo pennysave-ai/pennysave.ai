@@ -55,7 +55,7 @@ export default function VerifyEmail() {
                 window.location.href = "/";
               }}
             >
-              Go back to home page
+              Go back to the home page
             </Button>
           </div>
         )}
