@@ -305,7 +305,7 @@ export default function TransactionsTable({
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
-                  {transaction?.payee[0].toUpperCase()}
+                  {transaction?.payee[0]?.toUpperCase()}
                 </div>
               )}
               <div>{transaction[transactionKey]}</div>
