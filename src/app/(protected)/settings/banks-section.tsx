@@ -91,6 +91,8 @@ export default function BanksSection({
                   startContent={
                     <Icon icon="solar:add-circle-bold" width={20} />
                   }
+                  hasActiveSubscription={hasActiveSubscription}
+                  openPaywall={onPaywallModalOpen}
                 />
               </div>
             }
@@ -99,6 +101,8 @@ export default function BanksSection({
               className="w-full md:hidden mb-3"
               title="Connect"
               startContent={<Icon icon="solar:add-circle-bold" width={20} />}
+              hasActiveSubscription={hasActiveSubscription}
+              openPaywall={onPaywallModalOpen}
             />
             <div className="flex flex-col">
               {banks.map((bank, i) => (
@@ -132,6 +136,8 @@ export default function BanksSection({
                       plaidItemId={bank.id}
                       className="md:flex w-full"
                       variant={isMobile ? "flat" : "light"}
+                      hasActiveSubscription={hasActiveSubscription}
+                      openPaywall={onPaywallModalOpen}
                     />
                     <Button
                       isIconOnly
@@ -210,17 +216,13 @@ export default function BanksSection({
             </div>
           </div>
         </div>
-        {hasActiveSubscription ? (
-          <PlaidLink className="w-full md:w-auto" title="Connect" />
-        ) : (
-          <Button
-            className="w-full md:w-auto"
-            color="primary"
-            onPress={onPaywallModalOpen}
-          >
-            Connect
-          </Button>
-        )}
+        <PlaidLink
+          className="w-full md:w-auto"
+          title="Connect"
+          startContent={<Icon icon="solar:add-circle-bold" width={20} />}
+          hasActiveSubscription={hasActiveSubscription}
+          openPaywall={onPaywallModalOpen}
+        />
       </div>
     </CardBody>
   );

@@ -49,7 +49,6 @@ export async function GET() {
     userToken = decrypt(userData.plaidUserToken);
   }
   const createToken = await getCreateLinkToken(user.id, userToken);
-
   // Check if user has linked items and create a link tokens with edit mode for this items
   const userItems = await db.plaidItem.findMany({
     where: {
@@ -74,20 +73,6 @@ export async function GET() {
       });
     }
   }
-  // Associate link token with user id
-  // to exchange public token for access token in a plaid webhook
-  await db.plaidLinkToken.upsert({
-    where: {
-      userId: user.id,
-    },
-    create: {
-      userId: user.id,
-      linkToken: createToken,
-    },
-    update: {
-      linkToken: createToken,
-    },
-  });
 
   return NextResponse.json({ createToken, update });
 }

@@ -53,7 +53,6 @@ model User {
   category      Category[]
   userAccounts  UserAccount[]
   plaidItems    PlaidItem[]
-  linkTokens    PlaidLinkToken[]
   password      String?
   role          UserRole @default(USER)
   stripeCustomerId String?
@@ -139,6 +138,7 @@ model UserAccount {
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
+  institutionName String?
   plaidAccountId String? @unique
   plaidItemId    String?
   plaidMask      String?
@@ -167,12 +167,4 @@ model PlaidItem {
   transactionCursor String?
 
   UserAccount UserAccount[]
-}
-
-// A model to temporarily store the link_token associated with user id
-// We need this model to support enable_multi_item_link in plaid
-model PlaidLinkToken {
-  userId     String   @id
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  linkToken  String
 }

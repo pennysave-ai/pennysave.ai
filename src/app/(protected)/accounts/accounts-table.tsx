@@ -481,7 +481,7 @@ export default function AccountsTable({
       <Table
         color="primary"
         isHeaderSticky
-        aria-label="Example table with custom cells, pagination and sorting"
+        aria-label="Accounts Table"
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         classNames={{

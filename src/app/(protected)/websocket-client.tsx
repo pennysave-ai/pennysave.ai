@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BroadcastType } from "@/wstypes";
 import { useGetEntities } from "@/features/entities/hooks";
-import {
-  useGetPlaidItems,
-  useGetLinkTokens,
-} from "@/features/plaidItems/hooks";
+import { useGetPlaidItems } from "@/features/plaidItems/hooks";
 
 interface WebSocketClientProps {
   userId: string | null;
@@ -20,7 +17,6 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
 
   const { refetch: updateEntities } = useGetEntities();
   const { refetch: banksRefetch } = useGetPlaidItems();
-  const { refetch: tokensRefetch } = useGetLinkTokens();
 
   const connectWebSocket = () => {
     const socket = new WebSocket(
@@ -39,7 +35,6 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
         case BroadcastType.BANK_DATA_UPDATED:
           banksRefetch();
           updateEntities();
-          tokensRefetch();
           break;
         case BroadcastType.SUBSCRIPTION_CREATED:
         case BroadcastType.SUBSCRIPTION_DELETED:

@@ -36,7 +36,7 @@ export const useUpdatePlaidItem = () => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (publicToken: string) => {
-      const response = await fetch("/api/plaid/exchange-token", {
+      const response = await fetch("/api/plaid", {
         method: "PATCH",
         body: JSON.stringify({ publicToken }),
         headers: {
@@ -66,6 +66,7 @@ export const useGetPlaidItems = () => {
 
 export const useGetLinkTokens = () => {
   const query = useQuery({
+    enabled: false,
     queryKey: ["linkTokens"],
     queryFn: async () => {
       const response = await fetch("/api/plaid/link-tokens");

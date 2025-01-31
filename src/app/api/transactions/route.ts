@@ -51,9 +51,7 @@ export async function GET(req: NextRequest) {
           id: true,
           name: true,
           plaidMask: true,
-          plaidItem: {
-            select: { institutionName: true },
-          },
+          institutionName: true,
           currency: { select: { symbol: true, name: true } },
         },
       },
@@ -88,7 +86,7 @@ export async function GET(req: NextRequest) {
       },
       mask: transaction.account.plaidMask,
       institution: {
-        name: transaction.account.plaidItem?.institutionName,
+        name: transaction.account.institutionName,
       },
     },
   }));
