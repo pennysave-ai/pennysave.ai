@@ -84,8 +84,7 @@ model Transaction {
   account     UserAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt   DateTime  @default(now())        
-  
+  createdAt   DateTime  @default(now())
   @@unique([id])
 }
 
@@ -94,10 +93,9 @@ model Category {
   name        String
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plaidId     String?  // Plaid category id determined by the plaid API
+  plaidId     String?   // Plaid category id determined by the plaid API
   description String?
   transactions Transaction[]
-
   @@unique([id])
 }
 
@@ -108,7 +106,6 @@ model Currency {
   symbol      String
   userAccounts UserAccount[]
   exchangeRate Float
-
   @@unique([id])
 }
 
@@ -153,7 +150,7 @@ model UserAccount {
 
 // A model to store the plaid item details
 model PlaidItem {
-  id         String  @id @default(uuid())
+  id         String   @id @default(uuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken String
@@ -165,6 +162,14 @@ model PlaidItem {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   transactionCursor String?
-
   UserAccount UserAccount[]
+}
+
+// A model to store Plaid transaction categories
+model PlaidCategory {
+  id          String    @id @default(uuid())
+  primary     String
+  detailed    String
+  description String
+  @@unique([id])
 }

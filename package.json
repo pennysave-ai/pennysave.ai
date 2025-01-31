@@ -10,6 +10,8 @@
     "build:dev": "dotenv -e .env.local prisma migrate deploy && next build",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "concurrently \"npm run next:start\" \"npm run start:prod:websocket\"",
+    "populate:db:dev": "dotenv -e .env.local -- ts-node --project tsconfig.websocket.json populate_db.ts",
+    "populate:db:prod": "dotenv -e .env.prod -- ts-node --project tsconfig.websocket.json populate_db.ts",
     "next:start": "next start",
     "lint": "next lint",
     "test": "jest --coverage",
