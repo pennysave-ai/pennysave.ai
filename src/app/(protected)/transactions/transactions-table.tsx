@@ -206,7 +206,16 @@ export default function TransactionsTable({
       (a: TransactionResponseItem, b: TransactionResponseItem) => {
         const col = sortDescriptor.column as keyof TransactionResponseItem;
         if (col.includes(".")) {
-          const [first, second] = col.split(".");
+          const [first, second, third] = col.split(".");
+          if (third) {
+            // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'TransactionResponseItem'
+            const firstValue = a[first][second][third] ?? "";
+            // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'TransactionResponseItem'
+            const secondValue = b[first][second][third] ?? "";
+            const cmp =
+              firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
+            return sortDescriptor.direction === "descending" ? -cmp : cmp;
+          }
           const firstValue =
             (a[first as keyof TransactionResponseItem] as any)?.[second] ?? ""; // eslint-disable-line
           const secondValue =

@@ -6,7 +6,9 @@ import {
   CountryCode,
   Transaction,
   RemovedTransaction,
+  AccountsGetResponse,
 } from "plaid";
+import { AxiosResponse } from "axios";
 
 const CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const SECRET = process.env.PLAID_SECRET;
@@ -75,7 +77,7 @@ export const getCreateLinkToken = async (
     country_codes: COUNTRY_CODES,
     language: "en",
     enable_multi_item_link: true,
-    webhook: `https://${PLAID_WEBHOOK_HOST}/api/webhooks/plaid`,
+    webhook: `https://${PLAID_WEBHOOK_HOST}/api/webhooks/plaid?userId=${userId}`,
   });
   return response.data.link_token;
 };
@@ -174,15 +176,24 @@ export const getInstitution = async (institutionId: string) => {
   return response.data;
 };
 
+export type ExtendedAccountResponseType = AccountsGetResponse & {
+  item: {
+    institution_name?: string;
+  };
+};
+
 /**
  * Get accounts by access token
  * @param accessToken
- * @returns
+ * @returns {Promise<Object<ExtendedAccountResponseType>>}
  */
-export const getAccounts = async (accessToken: string) => {
-  const response = await plaidClient.accountsGet({
-    access_token: accessToken,
-  });
+export const getAccounts = async (
+  accessToken: string
+): Promise<ExtendedAccountResponseType> => {
+  const response: AxiosResponse<ExtendedAccountResponseType> =
+    await plaidClient.accountsGet({
+      access_token: accessToken,
+    });
   return response.data;
 };
 

@@ -10,6 +10,7 @@ import {
 export type CreateAccount = {
   name: string;
   currencyId: string;
+  institutionName: string;
 };
 
 const onSuccess = (queryClient: QueryClient) => {
@@ -114,14 +115,14 @@ export const useUpdateAccount = () => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (payload: {
-      id: string | null;
+      id: string;
       name: string;
       currencyId: string;
+      institutionName: string;
     }) => {
-      const { id, name, currencyId } = payload;
       const response = await fetch("/api/accounts", {
         method: "PATCH",
-        body: JSON.stringify({ id, name, currencyId }),
+        body: JSON.stringify(payload),
         headers: {
           "Content-Type": "application/json",
         },

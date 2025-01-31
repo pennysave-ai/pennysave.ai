@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { Icon } from "@iconify/react";
 import { Button } from "@heroui/button";
@@ -23,6 +23,8 @@ interface SimplePlaidLinkProps {
     | "faded"
     | "shadow"
     | "ghost";
+  hasActiveSubscription: boolean;
+  openPaywall: () => void;
 }
 
 const SimplePlaidLink = ({
@@ -31,29 +33,52 @@ const SimplePlaidLink = ({
   className,
   plaidItemId,
   variant,
+  hasActiveSubscription,
+  openPaywall,
 }: SimplePlaidLinkProps) => {
-  const { data, isLoading: isLinkTokensLoading } = useGetLinkTokens();
+  const [linkToken, setLinkToken] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { refetch } = useGetLinkTokens();
   const updatePlaidItem = useUpdatePlaidItem();
-  const token = plaidItemId
-    ? data?.update.filter(({ id }: { id: string }) => id === plaidItemId)[0]
-        ?.token
-    : data?.createToken;
-  const { open, ready } = usePlaidLink({
-    token,
-    onSuccess: (puplicToken) => {
-      // if there is a public token, means that we are updating the plaid item
-      if (puplicToken) {
-        console.log("mutating....");
-        updatePlaidItem.mutateAsync(puplicToken);
+  const config = {
+    token: linkToken,
+    onSuccess: async (publicToken: string | null) => {
+      // If there is a public token, means that we are updating the plaid item
+      // Updating acess token in the database for the plaid item
+      if (publicToken) {
+        setIsLoading(true);
+        await updatePlaidItem.mutateAsync(publicToken);
+        setIsLoading(false);
       }
-      // console.log("puplicToken", puplicToken);
-      // console.log("meta", meta);
     },
-    // onEvent
-    // onExit
-  });
+    onExit: () => {
+      setIsLoading(false);
+    },
+    onLoad: () => {
+      setIsLoading(false);
+    },
+  };
+  const { open, ready } = usePlaidLink(config);
 
-  const isLoading = !ready || isLinkTokensLoading;
+  useEffect(() => {
+    if (ready && linkToken) {
+      open();
+    }
+  }, [linkToken, ready, open]);
+
+  const handlePress = async () => {
+    if (!hasActiveSubscription) {
+      openPaywall();
+      return;
+    }
+    setIsLoading(true);
+    const { data } = await refetch();
+    const token = plaidItemId
+      ? data?.update.filter(({ id }: { id: string }) => id === plaidItemId)[0]
+          ?.token
+      : data?.createToken;
+    setLinkToken(token);
+  };
 
   return (
     <Button
@@ -61,11 +86,7 @@ const SimplePlaidLink = ({
       className={className}
       size={!!plaidItemId ? "sm" : "md"}
       variant={!!plaidItemId ? variant ?? "light" : "solid"}
-      onPress={() => {
-        if (ready) {
-          open();
-        }
-      }}
+      onPress={handlePress}
       isDisabled={isLoading}
       color="primary"
       type="button"

@@ -24,6 +24,7 @@ import {
   type CurrencyItem,
 } from "@/features/currencies/hooks";
 import { accountSchema } from "@/schemas";
+import { Skeleton } from "@heroui/skeleton";
 
 const AccountsCard = () => {
   const { data, isLoading } = useGetAccounts();
@@ -33,19 +34,29 @@ const AccountsCard = () => {
   const updateAccount = useUpdateAccount();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [formState, setFormState] = useState<{
-    id: null | string;
+    id: string;
     name: string;
     currencyId: string;
+    institutionName: string;
+    mask: string | null;
   }>({
-    id: null,
+    id: "",
     name: "",
     currencyId: "",
+    institutionName: "",
+    mask: "",
   });
   const [formError, setFormError] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (!isOpen) {
-      setFormState({ id: "", name: "", currencyId: "" });
+      setFormState({
+        id: "",
+        name: "",
+        currencyId: "",
+        institutionName: "",
+        mask: "",
+      });
       setFormError({});
     }
   }, [isOpen]);
@@ -57,6 +68,8 @@ const AccountsCard = () => {
       id: account.id,
       name: account.name,
       currencyId: account.currencyId,
+      institutionName: account.institution?.name || "",
+      mask: account.institution?.mask,
     });
     onOpenChange();
   };
@@ -73,6 +86,7 @@ const AccountsCard = () => {
       await createAccount.mutateAsync({
         name: formState.name,
         currencyId: formState?.currencyId || "",
+        institutionName: formState.institutionName,
       });
       onOpenChange();
     }
@@ -147,7 +161,7 @@ const AccountsCard = () => {
                 isInvalid={!!formError?.name}
                 errorMessage={formError?.name?.join(", ")}
               />
-              {currencies && currencies?.data && (
+              {currencies && currencies?.data ? (
                 <Select
                   isInvalid={!!formError?.currencyId}
                   errorMessage={formError?.currencyId?.join(", ")}
@@ -167,7 +181,27 @@ const AccountsCard = () => {
                     <SelectItem key={currency.id}>{currency.name}</SelectItem>
                   ))}
                 </Select>
+              ) : (
+                <Skeleton className="h-[56px]rounded-xl" />
               )}
+              <Input
+                label="Institution"
+                name="institutionName"
+                placeholder="e.g Standard Chartered, Barclays"
+                type="text"
+                variant="bordered"
+                validationBehavior="aria"
+                value={formState.institutionName}
+                onChange={(e) =>
+                  setFormState({
+                    ...formState,
+                    institutionName: e.target.value,
+                  })
+                }
+                isDisabled={!!formState.mask}
+                isInvalid={!!formError?.institutionName}
+                errorMessage={formError?.institutionName?.join(", ")}
+              />
             </div>
           </DrawerBody>
           <DrawerFooter>

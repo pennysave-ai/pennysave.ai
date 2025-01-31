@@ -3,18 +3,18 @@ import { ItemWithConsentFields } from "plaid";
 import jwt from "jsonwebtoken";
 
 import { db } from "@/db";
-import { encrypt, decrypt } from "@/utils/crypto";
-import {
-  exchangeToken,
-  getInstitution,
-  getItem,
-  deleteItem,
-  getAccounts,
-  verifyWebhookSignature,
-} from "@/lib/plaid";
+import { exchangeToken, getItem, verifyWebhookSignature } from "@/lib/plaid";
 import { PlaidItem } from "@prisma/client";
-import { updateTransactionsAndCategories } from "@/data/transactions";
 
+import {
+  processNewTransactions,
+  processNewPlaidItem,
+  processExistingPlaidItem,
+} from "@/data/plaid";
+
+// NOTE: We are not waiting for the promises to resolve
+// in order to speed up the process and reduce the time of response from the webhook
+// since the webhook has a timeout of 10 seconds only
 export async function POST(req: NextRequest) {
   // Verify the webhook signature
   const plaidVerificationHeader = req.headers.get("plaid-verification");
@@ -43,36 +43,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
 
+  // Getting the user id from the url
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("userId");
+
+  // if there is no user id in the url, return success
+  if (!userId) {
+    console.error(`No user ${userId} found in the url`);
+    return NextResponse.json({ data: "success" });
+  }
+
+  // Check if the user has an active stripe subscription
+  // if not do not process the webhook
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      hasActiveStripeSubscription: true,
+    },
+  });
+  if (!user) {
+    console.error(`User ${userId} not found`);
+    return NextResponse.json({ data: "success" });
+  }
+  if (!user.hasActiveStripeSubscription) {
+    console.error(`User ${userId} does not have an active stripe subscription`);
+    return NextResponse.json({ data: "success" });
+  }
   const body = await req.json();
   console.log("@body", body);
+
   switch (body.webhook_code) {
     // Fired when a user has successfully connected Plaid Item
+    // The user went through Connect Button Flow
     case "SESSION_FINISHED": {
       if (body.status === "success") {
         try {
-          // Get User by link_token
-          // When we have created a link token, we store it in the database with the user id
-          // because we need to know which user the link token belongs to
-          // as onSuccess callback do not provide needed information in case of
-          // enable_multi_item_link = true
-          const linkToken = body.link_token;
-          const user = await db.plaidLinkToken.findFirst({
-            where: {
-              linkToken,
-            },
-            select: {
-              userId: true,
-            },
-          });
-          if (!user) {
-            console.error("No user found for link token");
-            return NextResponse.json({ data: "success" });
-          }
-
           // Getting the existing user items
           const plaidItems: PlaidItem[] = await db.plaidItem.findMany({
             where: {
-              userId: user.userId,
+              userId,
             },
           });
 
@@ -105,89 +116,28 @@ export async function POST(req: NextRequest) {
               (plaidItem) => plaidItem.institutionId === item.institution_id
             );
 
-            // If the user has already linked an item at this institution
+            // If user went through connect button flow
+            // and picked the same institution what was connected before
             if (institutionExists) {
-              // Deleting the old accounts
-              await db.userAccount.deleteMany({
-                where: {
-                  plaidItemId: institutionExists.plaidItemId,
-                },
-              });
-
-              // Update the Item with the new access token
-              await db.plaidItem.update({
-                where: {
-                  id: institutionExists.id,
-                  userId: user.userId,
-                },
-                data: {
-                  accessToken: encrypt(response.access_token),
-                  transactionCursor: null,
-                  plaidItemId: response.item_id,
-                },
-              });
-              // Removing the old item from the Plaid API
-              await deleteItem(decrypt(institutionExists.accessToken));
-
-              // Updating the accounts
-              const accountsData = await getAccounts(response.access_token);
-
-              // Saving the new accounts
-              await db.userAccount.createMany({
-                data: accountsData?.accounts.map((account) => ({
-                  plaidAccountId: account.account_id,
-                  userId: user.userId,
-                  name: account.name,
-                  plaidItemId: accountsData.item.item_id,
-                  plaidMask: account.mask,
-                  plaidBalance: account.balances.current,
-                  plaidType: account.type,
-                  currencyId:
-                    currencies?.find(
-                      (currency) =>
-                        currency.name === account.balances?.iso_currency_code
-                    )?.id || "",
-                })),
-              });
+              processExistingPlaidItem(
+                institutionExists.plaidItemId,
+                response.item_id,
+                response.access_token,
+                institutionExists.accessToken,
+                institutionExists.id,
+                userId,
+                currencies
+              );
             } else {
               // Institution plaidItem does not exist in db
-              // Get institution details
-              const institution = await getInstitution(
-                item?.institution_id as string
+              processNewPlaidItem(
+                response.access_token,
+                userId,
+                currencies,
+                item.institution_id as string,
+                item.institution_name as string,
+                response.item_id
               );
-              // Saving the new item to the database
-              await db.plaidItem.create({
-                data: {
-                  plaidItemId: response.item_id,
-                  userId: user.userId,
-                  accessToken: encrypt(response.access_token),
-                  institutionId: item.institution_id as string,
-                  institutionName: item?.institution_name as string,
-                  institutionUrl: institution.institution.url,
-                  institutionPrimaryColor:
-                    institution.institution.primary_color,
-                },
-              });
-              // Get Accounts details
-              const accountsData = await getAccounts(response.access_token);
-
-              // Saving plaid accounts to the database
-              await db.userAccount.createMany({
-                data: accountsData?.accounts.map((account) => ({
-                  plaidAccountId: account.account_id,
-                  userId: user.userId,
-                  name: account.name,
-                  plaidItemId: accountsData.item.item_id,
-                  plaidMask: account.mask,
-                  plaidBalance: account.balances.current,
-                  plaidType: account.type,
-                  currencyId:
-                    currencies?.find(
-                      (currency) =>
-                        currency.name === account.balances?.iso_currency_code
-                    )?.id || "",
-                })),
-              });
             }
           }
         } catch (error) {
@@ -200,37 +150,8 @@ export async function POST(req: NextRequest) {
     case "SYNC_UPDATES_AVAILABLE": {
       const { webhook_type, item_id } = body;
       if (webhook_type === "TRANSACTIONS") {
-        console.log(
-          `WEBHOOK: TRANSACTIONS: Plaid_item_id ${item_id}: New transactions available`
-        );
-        try {
-          // get the access token based on the plaid item id
-          const data = await db.plaidItem.findFirst({
-            where: {
-              plaidItemId: item_id,
-            },
-            select: {
-              accessToken: true,
-              transactionCursor: true,
-              userId: true,
-            },
-          });
-          if (!data) {
-            console.error("No data found for plaid item id");
-            return NextResponse.json({ data: "success" });
-          }
-          const accessToken = decrypt(data.accessToken);
-          updateTransactionsAndCategories(
-            accessToken,
-            data.transactionCursor,
-            data.userId,
-            item_id
-          );
-        } catch (err) {
-          console.error(`Error fetching transactions: ${err}`);
-        }
+        processNewTransactions(item_id);
       }
-      console.log("Sync updates available");
       break;
     }
   }

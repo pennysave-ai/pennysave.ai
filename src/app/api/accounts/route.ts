@@ -20,6 +20,7 @@ export async function GET() {
       currency: {
         select: { id: true, name: true, symbol: true },
       },
+      institutionName: true,
       plaidMask: true,
       plaidItem: {
         select: {
@@ -39,7 +40,7 @@ export async function GET() {
       symbol: account.currency.symbol,
     },
     institution: {
-      name: account?.plaidItem?.institutionName || null,
+      name: account.institutionName,
       color: account?.plaidItem?.institutionPrimaryColor || null,
       mask: account.plaidMask,
     },
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       plaidItemId: body.plaidId,
       currencyId: body.currencyId,
+      institutionName: body.institutionName,
     },
   });
   return NextResponse.json({ data: account });
@@ -126,7 +128,11 @@ export async function PATCH(req: NextRequest) {
 
   const accounts = await db.userAccount.update({
     where: { id: body.id, userId: user.id },
-    data: { name: body.name, currencyId: body.currencyId },
+    data: {
+      name: body.name,
+      currencyId: body.currencyId,
+      institutionName: body.institutionName,
+    },
   });
 
   return NextResponse.json({ data: accounts });
