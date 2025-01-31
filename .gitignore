@@ -43,3 +43,9 @@ next-env.d.ts
 
 # private files
 backup_codes
+
+# Idea files
+*.idea
+
+# Data seed scripts
+populate_db.ts

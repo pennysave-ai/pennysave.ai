@@ -57,6 +57,9 @@ const SimplePlaidLink = ({
     onLoad: () => {
       setIsLoading(false);
     },
+    onError: () => {
+      console.log("Error from plaid link");
+    },
   };
   const { open, ready } = usePlaidLink(config);
 
