@@ -61,7 +61,7 @@ export async function GET() {
   }[] = [];
   if (userItems.length) {
     for (const item of userItems) {
-      console.log("Decripted Access Token ->", decrypt(item.accessToken));
+      console.log("Decrypted Access Token ->", decrypt(item.accessToken));
       const token = await getUpdateLinkToken(
         user.id,
         userToken,

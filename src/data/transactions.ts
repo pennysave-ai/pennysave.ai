@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { convertAmountToMilliunits } from "@/lib/utils";
 import { getAllTransactions } from "../lib/plaid";
+import { getCategoiresMappings } from "./categories";
 /**
  * Fetch all transactions by acess token and write them to the database
  * @param accessToken {String} - Plaid access token
@@ -32,6 +33,62 @@ export async function syncTransactions(
       plaidAccountId: true,
     },
   });
+  const userAccountsMap = new Map(
+    userAccounts.map(({ plaidAccountId, id }) => [plaidAccountId, id])
+  );
+
+  // Get all user categories to populate transaction categoryId relation field
+  const currentCategories = await db.category.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      plaidId: true,
+      plaidPrimary: true,
+    },
+  });
+
+  const currentCategoriesMap = new Map(
+    currentCategories.map((category) => {
+      const { plaidPrimary, ...rest } = category;
+      return [plaidPrimary || "", { ...rest }];
+    })
+  );
+
+  // Get all Plaid categories to populate transaction categoryId relation field
+  const plaidCategories = await db.plaidCategory.findMany({
+    select: {
+      id: true,
+      description: true,
+      detailed: true,
+      primary: true,
+    },
+  });
+
+  // Convert transactions to Map a map of personal finance categories
+  const transactionsMap = new Map(
+    transactions.map(({ transaction_id, personal_finance_category }) => [
+      transaction_id,
+      {
+        id: transaction_id,
+        ...personal_finance_category,
+      },
+    ])
+  );
+
+  const mappedCategories = await getCategoiresMappings(
+    transactionsMap,
+    currentCategoriesMap,
+    plaidCategories,
+    userId
+  );
+
+  // personal_finance_category: {
+  //   confidence_level: 'VERY_HIGH',
+  //   detailed: 'TRANSPORTATION_TAXIS_AND_RIDE_SHARES',
+  //   primary: 'TRANSPORTATION'
+  // },
 
   // Payload to upsert transactions
   const upsertPayload = transactions.map((transaction) => ({
@@ -41,9 +98,7 @@ export async function syncTransactions(
       : new Date(transaction.date).toISOString(),
     amount: convertAmountToMilliunits(transaction.amount),
     payee: transaction.merchant_name || transaction.name,
-    accountId: userAccounts.find(
-      ({ plaidAccountId }) => plaidAccountId === transaction.account_id
-    )?.id as string,
+    accountId: userAccountsMap.get(transaction.account_id) as string,
     logo: transaction.logo_url,
     plaidCategoryConfidenceLeveL:
       transaction.personal_finance_category?.confidence_level,
@@ -58,7 +113,7 @@ export async function syncTransactions(
     plaidPostalCode: transaction.location?.postal_code,
     plaidRegion: transaction.location?.region,
     plaidStoreNumber: transaction.location?.store_number,
-    //   categoryId: transaction.personal_finance_category?.primary,
+    categoryId: mappedCategories.get(transaction.transaction_id),
   }));
   // Upsert transactions Promises
   const upsertTransactionsPromises = upsertPayload.map((transaction) =>

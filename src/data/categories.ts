@@ -1,0 +1,94 @@
+import { v4 as uuid } from "uuid";
+import { db } from "@/db";
+
+enum PlaidCategoryConfidenceLevel {
+  VERY_HIGH = "VERY_HIGH", // We are more than 98% confident that this category reflects the intent of the transaction.
+  HIGH = "HIGH", // We are more than 90% confident that this category reflects the intent of the transaction.
+  MEDIUM = "MEDIUM", // We are moderately confident that this category reflects the intent of the transaction.
+  LOW = "LOW", // This category may reflect the intent, but there may be other categories that are more accurate.
+  UNKNOWN = "UNKNOWN", // We don’t know the confidence level for this category.
+}
+/**
+ * Assign the categories to the transactions
+ * TODO Implement an ai model here to take into account user created categories
+ * and assign them to the transactions
+ * @param transactionsMap - A map of transactions with their personal finance categories
+ * @param currentCategoriesMap - A map of existing user categories
+ * @param plaidCategories - A list of plaid categories
+ * @param userId - User ID
+ * @returns {Promise<Map<(string, string)>>}
+ */
+export async function getCategoiresMappings(
+  transactions: Map<
+    string,
+    {
+      id: string;
+      primary?: string | undefined;
+      detailed?: string | undefined;
+      confidence_level?: string | null;
+    }
+  >,
+  currentCategoriesMap: Map<
+    string,
+    {
+      name: string;
+      description: string | null;
+      plaidId: string | null;
+      id: string;
+    }
+  >,
+  plaidCategories: {
+    id: string;
+    description: string;
+    detailed: string;
+    primary: string;
+  }[],
+  userId: string
+): Promise<Map<string, string | null>> {
+  const mappedCategories = new Map();
+  const newCategories = new Map();
+  transactions.forEach((transaction) => {
+    const confidenceLevel =
+      (transaction?.confidence_level as PlaidCategoryConfidenceLevel) ||
+      PlaidCategoryConfidenceLevel.UNKNOWN;
+    // If the confidence level is LOW or UNKNOWN, mark transaction as uncategorized
+    if (confidenceLevel === PlaidCategoryConfidenceLevel.UNKNOWN) {
+      mappedCategories.set(transaction.id, null);
+      return;
+    }
+    // Check if the transaction has a primary category and exists in the current categories map
+    const primaryCategory = transaction.primary as string;
+    const existingCategory = currentCategoriesMap.get(primaryCategory);
+    if (existingCategory) {
+      mappedCategories.set(transaction.id, existingCategory.id);
+      return;
+    } else {
+      // Add a new category
+      if (!newCategories.get(transaction.primary)) {
+        const newCategoryUUID = uuid();
+        mappedCategories.set(transaction.id, newCategoryUUID);
+        const plaidCategory = plaidCategories.find(
+          ({ primary, detailed }) =>
+            primary === transaction.primary && detailed === transaction.detailed
+        );
+        newCategories.set(transaction.primary, {
+          id: newCategoryUUID,
+          plaidPrimary: transaction.primary,
+          description: plaidCategory?.description,
+          plaidId: plaidCategory?.id,
+          name: transaction?.primary
+            ?.toLowerCase()
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase()),
+          userId,
+        });
+      }
+    }
+  });
+  // Add new categories to db
+  await db.category.createMany({
+    data: Array.from(newCategories.values()),
+  });
+  console.log("@mappedCategories", mappedCategories);
+  return mappedCategories;
+}

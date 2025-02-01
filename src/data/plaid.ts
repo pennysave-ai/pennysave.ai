@@ -2,13 +2,7 @@ import { db } from "@/db";
 import { WebSocket } from "ws";
 import { encrypt, decrypt } from "@/utils/crypto";
 import { BroadcastType } from "@/wstypes";
-import {
-  getAllTransactions,
-  deleteItem,
-  getInstitution,
-  getAccounts,
-} from "../lib/plaid";
-import { convertAmountToMilliunits } from "@/lib/utils";
+import { deleteItem, getInstitution, getAccounts } from "../lib/plaid";
 import { deleteAccountsByPlaidItemId } from "./accounts";
 import { syncTransactions } from "./transactions";
 
@@ -80,7 +74,7 @@ export async function processNewTransactions(itemId: string) {
  * Process newly connected Plaid Item/Bank Institution
  * @param {String} accessToken - Plaid access Token
  * @param {String} userId - User ID
- * @param {Array<{id: string, name: string}>} currencies - Currencies data
+ * @param {Map<string, string>} currenciesMap - Currencies data
  * @param {String} institutionId - Plaid Institution ID
  * @param {String} institutionName - Plaid Institution Name
  * @param {String} plaidItemId - Plaid Item ID
@@ -90,7 +84,7 @@ export async function processNewTransactions(itemId: string) {
 export async function processNewPlaidItem(
   accessToken: string,
   userId: string,
-  currencies: { id: string; name: string }[],
+  currenciesMap: Map<string, string>,
   institutionId: string,
   institutionName: string,
   plaidItemId: string
@@ -103,13 +97,6 @@ export async function processNewPlaidItem(
     const institutionDetails = await getInstitution(institutionId);
     // Get Accounts details
     const accountsData = await getAccounts(accessToken);
-    // Get Transactions from Plaid
-    const {
-      added,
-      modified,
-      cursor: lastCursor,
-    } = await getAllTransactions(accessToken);
-    const transactions = added.concat(modified);
 
     // Payload to create a new Plaid Item
     const createPlaidItemPromise = db.plaidItem.create({
@@ -134,10 +121,9 @@ export async function processNewPlaidItem(
         plaidBalance: account.balances.current,
         plaidType: account.type,
         institutionName,
-        currencyId:
-          currencies?.find(
-            (currency) => currency.name === account.balances?.iso_currency_code
-          )?.id || "",
+        currencyId: currenciesMap.get(
+          account?.balances?.iso_currency_code || ""
+        ) as string,
       })),
     });
 
@@ -146,60 +132,8 @@ export async function processNewPlaidItem(
     // combine both operations in a single transaction to make sure all operations are made or none
     await db.$transaction([createPlaidItemPromise, createPlaidAccountsPromise]);
 
-    // Get all user accounts to populate transaction accountId relation field
-    const userAccounts = await db.userAccount.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        plaidAccountId: true,
-      },
-    });
-
-    // Payload to upsert transactions
-    const upsertPayload = transactions.map((transaction) => ({
-      id: transaction.transaction_id,
-      createdAt: transaction.datetime
-        ? new Date(transaction.datetime).toISOString()
-        : new Date(transaction.date).toISOString(),
-      amount: convertAmountToMilliunits(transaction.amount),
-      payee: transaction.merchant_name || transaction.name,
-      accountId: userAccounts.find(
-        ({ plaidAccountId }) => plaidAccountId === transaction.account_id
-      )?.id as string,
-      logo: transaction.logo_url,
-      plaidCategoryConfidenceLeveL:
-        transaction.personal_finance_category?.confidence_level,
-      plaidCategoryPrimary: transaction.personal_finance_category?.primary,
-      plaidCategoryDetailed: transaction.personal_finance_category?.detailed,
-      plaidPaymentChannel: transaction.payment_channel,
-      plaidAdress: transaction.location?.address,
-      plaidCity: transaction.location?.city,
-      plaidCountry: transaction.location?.country,
-      plaidLatitude: transaction.location?.lat,
-      plaidLongitude: transaction.location?.lon,
-      plaidPostalCode: transaction.location?.postal_code,
-      plaidRegion: transaction.location?.region,
-      plaidStoreNumber: transaction.location?.store_number,
-      //   categoryId: transaction.personal_finance_category?.primary,
-    }));
-
-    const upsertTransactionsPromises = upsertPayload.map((transaction) =>
-      db.transaction.upsert({
-        where: { id: transaction.id },
-        update: transaction,
-        create: transaction,
-      })
-    );
-
-    // Update the cursor Promise
-    const updateCursorPromise = db.plaidItem.update({
-      where: { plaidItemId },
-      data: { transactionCursor: lastCursor },
-    });
-
-    // Combine upsert transactions and update cursor operations in a single transaction
-    // to make sure all operations are made or none
-    await db.$transaction([...upsertTransactionsPromises, updateCursorPromise]);
+    // Process Transactions and categories
+    await syncTransactions(accessToken, plaidItemId, userId);
     notifyUser(userId);
   } catch (err) {
     console.error(`Error creating new Plaid Item ${plaidItemId} - ${err}`);
@@ -224,7 +158,7 @@ export async function processExistingPlaidItem(
   previousAccessToken: string,
   plaidId: string,
   userId: string,
-  currencies: { id: string; name: string }[]
+  currenciesMap: Map<string, string>
 ) {
   // Deleting all previous plaid accounts along with transactions
   await deleteAccountsByPlaidItemId(prevPlaidId);
@@ -253,10 +187,9 @@ export async function processExistingPlaidItem(
       plaidBalance: account.balances.current,
       plaidType: account.type,
       institutionName: accountsData.item.institution_name,
-      currencyId:
-        currencies?.find(
-          (currency) => currency.name === account.balances?.iso_currency_code
-        )?.id || "",
+      currencyId: currenciesMap.get(
+        account?.balances?.iso_currency_code || ""
+      ) as string,
     })),
   });
   await syncTransactions(accessToken, plaidItemId, userId);

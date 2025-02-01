@@ -43,7 +43,6 @@ export default function TransactionsHistory({
   onBulkUpload,
 }: TransactionsHistoryProps) {
   const { data, isLoading } = useGetTransactions();
-  console.log("data", data);
   const deleteTransaction = useDeleteTransaction();
   const updateTransaction = useUpdateTransaction();
   const createTransaction = useCreateTransaction();
