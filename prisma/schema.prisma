@@ -94,6 +94,7 @@ model Category {
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plaidId     String?   // Plaid category id determined by the plaid API
+  plaidPrimary String?  // Plaid primary category
   description String?
   transactions Transaction[]
   @@unique([id])
@@ -115,7 +116,6 @@ model VerificationToken {
   email      String
   token      String   @unique
   expires    DateTime
-
   @@unique([email, token])
 }
 
@@ -125,7 +125,6 @@ model PasswordResetToken {
   email      String
   token      String   @unique
   expires    DateTime
-
   @@unique([email, token])
 }
 

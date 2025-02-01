@@ -94,6 +94,9 @@ export async function POST(req: NextRequest) {
               name: true,
             },
           });
+          const currenciesMap = new Map(
+            currencies.map(({ name, id }) => [name, id])
+          );
 
           // Exchanging public tokens for access tokens
           // and check if the user has already linked an item at this institution
@@ -126,14 +129,14 @@ export async function POST(req: NextRequest) {
                 institutionExists.accessToken,
                 institutionExists.id,
                 userId,
-                currencies
+                currenciesMap
               );
             } else {
               // Institution plaidItem does not exist in db
               processNewPlaidItem(
                 response.access_token,
                 userId,
-                currencies,
+                currenciesMap,
                 item.institution_id as string,
                 item.institution_name as string,
                 response.item_id
