@@ -10,6 +10,7 @@ import Top5Chart from "./top-5-chart";
 import DataCard from "./data-card";
 import TransactionsChart from "./transactions-chart";
 import BaseCurrencyFilter from "./base-currency-filter";
+import FloatingButton from "./float-button";
 
 export default function DashboardPage() {
   const { data, isLoading } = useGetSummary();
@@ -76,7 +77,7 @@ export default function DashboardPage() {
           prevPeriod={data?.meta.prevPeriod}
         />
       </div>
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
         <TransactionsChart
           data={transactionsData || []}
           isLoading={isLoading}
@@ -88,6 +89,7 @@ export default function DashboardPage() {
           data={data?.categories || []}
           currency={data?.meta.currency.name || ""}
         />
+        <FloatingButton />
       </div>
     </div>
   );

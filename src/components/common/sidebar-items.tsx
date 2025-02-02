@@ -102,7 +102,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
           "items-center": isCompact,
         })}
       >
-        {/* <Tooltip
+        <Tooltip
           content="Help & Feedback"
           isDisabled={!isCompact}
           placement="right"
@@ -137,7 +137,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
               "Help & Information"
             )}
           </Button>
-        </Tooltip> */}
+        </Tooltip>
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             onPress={() => signOut()}

@@ -56,7 +56,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 "w-0 opacity-0": isCompact,
               })}
             >
-              LOGO
+              PENNYSAVE.<span className="text-primary">AI</span>
             </span>
             <div className="flex h-8 w-8 items-center justify-center">
               <Button isIconOnly variant="light" onPress={onToggle}>
