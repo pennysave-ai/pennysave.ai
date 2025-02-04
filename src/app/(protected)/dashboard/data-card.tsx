@@ -103,7 +103,7 @@ export default function DataCard({
         <section className="flex flex-nowrap justify-between">
           <div className="flex flex-col justify-between gap-y-2 p-4 truncate">
             <div className="flex flex-col gap-y-4">
-              <dt className="text-sm font-medium text-default-600">{title}</dt>
+              <dt className="text-sm font-medium text-default-500">{title}</dt>
               <dd className="text-3xl font-semibold text-default-700">
                 <CountUp
                   decimals={2}

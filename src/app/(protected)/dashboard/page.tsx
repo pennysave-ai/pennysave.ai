@@ -11,6 +11,8 @@ import DataCard from "./data-card";
 import TransactionsChart from "./transactions-chart";
 import BaseCurrencyFilter from "./base-currency-filter";
 import FloatingButton from "./float-button";
+import Notifications from "./notifications";
+import FinancialGoals from "./financial-goals";
 
 export default function DashboardPage() {
   const { data, isLoading } = useGetSummary();
@@ -32,9 +34,9 @@ export default function DashboardPage() {
     expences: Math.abs(day.expences),
   }));
   return (
-    <div className="relative z-10 flex flex-col w-full">
+    <div className="relative z-10 flex flex-col w-full gap-y-4">
       <Hero description="Analyze, your expenses and income" />
-      <div className="-mt-[72px] lg:-mt-[216px] grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full mb-4 place-content-end">
+      <div className="-mt-[72px] lg:-mt-[216px] grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full place-content-end">
         <div className="grid w-full col-start-1 lg:col-start-3 gap-y-4">
           <div className="grid w-full">
             <DateRangePicker />
@@ -45,7 +47,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full mb-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full">
         <DataCard
           isLoading={isLoading}
           title="Income"
@@ -85,11 +87,14 @@ export default function DashboardPage() {
         />
         <Top5Chart
           isLoading={isLoading}
-          title="Top 5 Spending Categories"
           data={data?.categories || []}
           currency={data?.meta.currency.name || ""}
         />
         <FloatingButton />
+      </div>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
+        <Notifications />
+        <FinancialGoals />
       </div>
     </div>
   );
