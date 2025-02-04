@@ -7,3 +7,6 @@ export const BASE_CURRENCY = "usd";
 
 // Default data period for data analitics
 export const DEFAULT_DATA_PERIOD = 30;
+
+// User input characters limit
+export const USER_INPUT_LIMIT = 2000;

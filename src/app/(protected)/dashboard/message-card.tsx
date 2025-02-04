@@ -1,6 +1,10 @@
 "use client";
 
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+import { Spinner } from "@heroui/spinner";
 import { Avatar } from "@heroui/avatar";
 import { Badge } from "@heroui/badge";
 import { Button } from "@heroui/button";
@@ -10,10 +14,12 @@ import { cn } from "@heroui/theme";
 
 export type MessageCardProps = React.HTMLAttributes<HTMLDivElement> & {
   avatar?: string;
-  showFeedback?: boolean;
+  showCopy?: boolean;
   message?: React.ReactNode;
   status?: "success" | "failed";
   messageClassName?: string;
+  isTyping: boolean;
+  role: string;
   onMessageCopy?: (content: string | string[]) => void;
 };
 
@@ -21,9 +27,11 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
   (
     {
       avatar,
+      isTyping,
       message,
-      showFeedback,
+      showCopy,
       status,
+      role,
       onMessageCopy,
       className,
       messageClassName,
@@ -75,23 +83,38 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
     return (
       <div {...props} ref={ref} className={cn("flex gap-3", className)}>
         <div className="relative flex-none">
-          <Badge
-            isOneChar
-            color="danger"
-            content={
+          {role === "assistant" ? (
+            <div className="realtive flex items-center justify-center w-8">
+              {isTyping ? (
+                <Spinner size="lg" className="absolute" />
+              ) : (
+                <div className="w-10 h-10 rounded-full border-solid absolute border-primary border-2" />
+              )}
               <Icon
-                className="text-background"
-                icon="gravity-ui:circle-exclamation-fill"
+                width={28}
+                icon="solar:star-fall-line-duotone"
+                className="text-primary"
               />
-            }
-            isInvisible={!hasFailed}
-            placement="bottom-right"
-            shape="circle"
-          >
-            <Avatar src={avatar} />
-          </Badge>
+            </div>
+          ) : (
+            <Badge
+              isOneChar
+              color="danger"
+              content={
+                <Icon
+                  className="text-background"
+                  icon="gravity-ui:circle-exclamation-fill"
+                />
+              }
+              isInvisible={!hasFailed}
+              placement="bottom-right"
+              shape="circle"
+            >
+              <Avatar src={avatar} />
+            </Badge>
+          )}
         </div>
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <div
             className={cn(
               "relative w-full rounded-medium bg-content2 px-4 py-3 text-default-600",
@@ -99,10 +122,19 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
               messageClassName
             )}
           >
-            <div ref={messageRef} className={"pr-20 text-small"}>
-              {hasFailed ? failedMessage : message}
+            <div
+              ref={messageRef}
+              className={cn("text-small", role === "assistant" && "pr-8")}
+            >
+              {hasFailed ? (
+                failedMessage
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message?.toString()}
+                </ReactMarkdown>
+              )}
             </div>
-            {showFeedback && !hasFailed && (
+            {showCopy && !hasFailed && (
               <div className="absolute right-2 top-2 flex rounded-full bg-content2 shadow-small">
                 <Button
                   isIconOnly

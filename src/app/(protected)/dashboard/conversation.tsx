@@ -1,11 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-
+import { Spinner } from "@heroui/spinner";
 import { Icon } from "@iconify/react";
-import { Avatar } from "@heroui/avatar";
-import { Badge } from "@heroui/badge";
 import MessageCard from "./message-card";
 
 interface Conversation {
@@ -14,10 +12,22 @@ interface Conversation {
     content: string;
   }[];
   isLoading: boolean;
+  isTyping: boolean;
+  responseStarted: boolean;
 }
 
-export default function Conversation({ messages, isLoading }: Conversation) {
+export default function Conversation({
+  messages,
+  isLoading,
+  isTyping,
+  responseStarted,
+}: Conversation) {
   const { data } = useSession();
+  const [lastMessageIndex, setLastMessageIndex] = useState<number>(0);
+  useEffect(() => {
+    const index = messages.findLastIndex(({ role }) => role === "assistant");
+    setLastMessageIndex(index + 2);
+  }, [responseStarted]);
   const handleMessageCopy = (content: string | string[]) => {
     navigator.clipboard.writeText(
       Array.isArray(content) ? content.join("") : content
@@ -29,6 +39,8 @@ export default function Conversation({ messages, isLoading }: Conversation) {
         <MessageCard
           onMessageCopy={handleMessageCopy}
           key={index}
+          isTyping={isTyping && index === lastMessageIndex}
+          role={role}
           avatar={
             role === "assistant"
               ? "https://nextuipro.nyc3.cdn.digitaloceanspaces.com/components-images/avatar_ai.png"
@@ -38,27 +50,20 @@ export default function Conversation({ messages, isLoading }: Conversation) {
           messageClassName={
             role === "user" ? "bg-content3 text-content3-foreground" : ""
           }
-          showFeedback={role === "assistant"}
+          showCopy={role === "assistant"}
           className={role === "user" ? "flex-row-reverse" : ""}
         />
       ))}
       {isLoading && (
-        <div className="flex gap-3 items-center">
-          <div>
-            <Badge
-              isOneChar
-              color="danger"
-              content={
-                <Icon
-                  className="text-background"
-                  icon="gravity-ui:circle-exclamation-fill"
-                />
-              }
-              placement="bottom-right"
-              shape="circle"
-            >
-              <Avatar src="https://nextuipro.nyc3.cdn.digitaloceanspaces.com/components-images/avatar_ai.png" />
-            </Badge>
+        <div className="realtive flex items-center justify-start gap-2">
+          <div className="w-10 h-10 flex items-center justify-center relative">
+            <Spinner size="lg" className="absolute" />
+            <Icon
+              width={28}
+              height={28}
+              icon="solar:star-fall-line-duotone"
+              className="text-primary relative"
+            />
           </div>
           <div className="text-sm text-default-400">Analyzing...</div>
         </div>
