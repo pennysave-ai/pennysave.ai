@@ -37,7 +37,7 @@ export default function BarGraph({ data, colors, currency }: BarProps) {
       <g>
         <text
           x={Number(width) + 8}
-          y={Number(y) + 17}
+          y={Number(y) + 23}
           fontSize={12}
           fill={`hsl(var(--heroui-default-900))`}
         >
@@ -57,10 +57,7 @@ export default function BarGraph({ data, colors, currency }: BarProps) {
         data={data}
         layout="vertical"
         margin={{
-          top: 12,
-          right: 0,
-          left: 0,
-          bottom: 64,
+          bottom: 0,
         }}
       >
         <CartesianGrid
@@ -75,6 +72,7 @@ export default function BarGraph({ data, colors, currency }: BarProps) {
           type="number"
         />
         <YAxis
+          height={300}
           dataKey="name"
           hide
           strokeOpacity={0.25}
@@ -119,7 +117,7 @@ export default function BarGraph({ data, colors, currency }: BarProps) {
         <Bar
           animationDuration={450}
           animationEasing="ease"
-          barSize={26}
+          barSize={38}
           dataKey="amount"
           layout="vertical"
           radius={[0, 8, 8, 0]}

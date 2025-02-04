@@ -2,7 +2,7 @@ import { formatCurrency } from "@/lib/utils";
 
 interface DonutLegend {
   payload?: {
-    value?: number;
+    value?: number | string;
     payload?: {
       amount?: number;
     };
