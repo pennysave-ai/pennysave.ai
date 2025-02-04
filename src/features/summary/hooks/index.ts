@@ -62,7 +62,9 @@ export const useGetSummary = () => {
         remainingAmount: convertAmountFromMilliunits(data.remainingAmount),
         categories: data.categories.map((category: CategoryResponse) => ({
           ...category,
-          amount: convertAmountFromMilliunits(category.amount),
+          amount: parseFloat(
+            convertAmountFromMilliunits(category.amount).toFixed(2)
+          ),
         })),
         days: data.days.map((day: DailyDataResponse) => ({
           ...day,

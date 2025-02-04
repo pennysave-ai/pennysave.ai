@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { format, subDays } from "date-fns";
 import {
@@ -10,8 +10,12 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  Legend,
 } from "recharts";
 import { Button } from "@heroui/button";
+import { Select, SelectItem } from "@heroui/select";
+import type { Selection } from "@heroui/table";
+
 import { Card } from "@heroui/card";
 import { Skeleton } from "@heroui/skeleton";
 import {
@@ -21,6 +25,7 @@ import {
   DropdownTrigger,
 } from "@heroui/dropdown";
 import { formatCurrency } from "@/lib/utils";
+import AreaChartLegend from "./area-chart-legend";
 
 type ChartData = {
   date: string;
@@ -39,6 +44,9 @@ export default function TransactionsChart({
   isLoading,
   currency,
 }: TransactionsChartProps) {
+  const [chartType, setChartType] = useState<Selection>(
+    new Set(["income-and-expences"])
+  );
   const isEmptyData = !!data && !isLoading && data.length === 0;
   const emptyDataPayload = [
     {
@@ -87,7 +95,23 @@ export default function TransactionsChart({
                 {isLoading ? (
                   <Skeleton className="h-6 w-64 rounded" />
                 ) : (
-                  "Income and Expenses"
+                  <div className="flex items-center">
+                    <Select
+                      size="sm"
+                      selectedKeys={chartType}
+                      onSelectionChange={setChartType}
+                      classNames={{
+                        base: "max-w-xs p-0 w-52",
+                      }}
+                    >
+                      <SelectItem key="income-and-expences">
+                        Income and Expenses
+                      </SelectItem>
+                      <SelectItem key="by-expence-category">
+                        Expences by Category
+                      </SelectItem>
+                    </Select>
+                  </div>
                 )}
               </dt>
             </div>
@@ -100,12 +124,10 @@ export default function TransactionsChart({
           <AreaChart
             accessibilityLayer
             data={isEmptyData ? emptyDataPayload : data}
-            height={300}
             margin={{
               left: 0,
               right: 0,
             }}
-            width={500}
           >
             <defs>
               <linearGradient
@@ -164,17 +186,15 @@ export default function TransactionsChart({
               </linearGradient>
             </defs>
             <CartesianGrid
-              horizontalCoordinatesGenerator={() => [200, 150, 100, 50]}
               stroke="hsl(var(--heroui-default-200))"
               strokeDasharray="3 3"
-              vertical={false}
             />
             <XAxis
+              tickSize={12}
               axisLine={false}
               dataKey="date"
               style={{
                 fontSize: "var(--heroui-font-size-tiny)",
-                transform: "translateX(-40px)",
               }}
               tickLine={false}
             />
@@ -189,31 +209,32 @@ export default function TransactionsChart({
                             key={index}
                             className="flex w-full items-center gap-x-2"
                           >
-                            <div className="flex w-full items-center gap-x-1 text-small text-foreground-500 capitalize">
+                            <div className="flex w-full items-center gap-x-1 text-xs text-foreground-500 capitalize">
                               {p.dataKey && (
-                                <>
-                                  <span
-                                    className={
-                                      p.dataKey === "income"
-                                        ? "text-success"
-                                        : "text-danger"
-                                    }
-                                  >
-                                    {p.dataKey}
-                                  </span>
-                                  <span>
+                                <div className="flex w-full items-center gap-x-2">
+                                  <div
+                                    className="h-2 w-2 flex-none rounded-full"
+                                    style={{
+                                      backgroundColor:
+                                        p.dataKey === "income"
+                                          ? "hsl(var(--heroui-success))"
+                                          : "hsl(var(--heroui-danger))",
+                                    }}
+                                  />
+                                  <div>{p.dataKey}</div>
+                                  <div className="text-default-700">
                                     {formatCurrency(
                                       p.payload[p.dataKey],
                                       currency
                                     )}
-                                  </span>
-                                </>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
                         );
                       })}
-                      <span className="text-small font-medium text-foreground-400">
+                      <span className="text-xs font-medium text-default-500">
                         {label}
                       </span>
                     </div>
@@ -277,35 +298,44 @@ export default function TransactionsChart({
                 </text>
               </>
             )}
+            <Legend
+              layout="radial"
+              verticalAlign="top"
+              align="right"
+              content={({ payload }) =>
+                isLoading ? null : <AreaChartLegend payload={payload} />
+              }
+            />
           </AreaChart>
         </ResponsiveContainer>
-        <Dropdown
-          classNames={{
-            content: "min-w-[120px]",
-          }}
-          placement="bottom-end"
-        >
-          <DropdownTrigger>
-            <Button
-              isIconOnly
-              className="absolute right-2 top-2 w-auto rounded-full"
-              size="sm"
-              variant="light"
-            >
-              <Icon height={16} icon="solar:menu-dots-bold" width={16} />
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            itemClasses={{
-              title: "text-tiny",
+        {!isLoading && (
+          <Dropdown
+            classNames={{
+              content: "min-w-[120px]",
             }}
-            variant="flat"
+            placement="bottom-end"
           >
-            <DropdownItem key="view-details">View Details</DropdownItem>
-            <DropdownItem key="export-data">Export Data</DropdownItem>
-            <DropdownItem key="set-alert">Set Alert</DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
+            <DropdownTrigger>
+              <Button
+                isIconOnly
+                className="absolute right-2 top-2 w-auto rounded-full"
+                size="sm"
+                variant="light"
+              >
+                <Icon height={16} icon="solar:menu-dots-bold" width={16} />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              itemClasses={{
+                title: "text-tiny",
+              }}
+              variant="flat"
+            >
+              <DropdownItem key="export-data">Export Data</DropdownItem>
+              <DropdownItem key="set-alert">Set Alert</DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        )}
       </section>
     </Card>
   );

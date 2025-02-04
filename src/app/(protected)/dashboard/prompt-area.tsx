@@ -21,7 +21,7 @@ export default function PromptArea({
 }: PromptAreaProps) {
   const ideas = [
     {
-      title: "What is my current financial status?",
+      title: "What is my current financial health status?",
       description: "explain it in simple terms",
     },
   ];
