@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { Tooltip } from "@heroui/tooltip";
 import { cn } from "@heroui/theme";
 import PromptInput from "./prompt-input";
+import { USER_INPUT_LIMIT } from "@/constants";
 
 interface PromptAreaProps {
   input: string;
@@ -19,12 +20,33 @@ export default function PromptArea({
   handleSubmit,
   handleInputChange,
 }: PromptAreaProps) {
-  const ideas = [
+  const prompts = [
     {
-      title: "What is my current financial health status?",
-      description: "explain it in simple terms",
+      title: "What are my main spending patterns?",
+      description: "Help me to understand my spending habits.",
+    },
+    {
+      title: "Identify my unnecessary expenses",
+      description:
+        "Find unneeded recurring subscriptions or transactions that might be avoided.",
+    },
+    {
+      title: "What is my current financial status",
+      description: "Explain my current financial situation",
     },
   ];
+
+  const handlePromptClick = (promptIndex: number) => {
+    const form = document.querySelector("#prompt-submit-form");
+    if (form) {
+      const prompt = prompts[promptIndex];
+      handleInputChange({
+        target: {
+          value: `${prompt.title} ${prompt.description}`,
+        } as EventTarget & HTMLInputElement,
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
   return (
     <div className="flex w-full flex-col gap-4">
       <ScrollShadow
@@ -33,11 +55,12 @@ export default function PromptArea({
         orientation="horizontal"
       >
         <div className="flex gap-2">
-          {ideas.map(({ title, description }, index) => (
+          {prompts.map(({ title, description }, index) => (
             <Button
               key={index}
               className="flex h-14 flex-col items-start gap-0"
               variant="flat"
+              onPress={() => handlePromptClick(index)}
             >
               <p>{title}</p>
               <p className="text-default-500">{description}</p>
@@ -46,6 +69,7 @@ export default function PromptArea({
         </div>
       </ScrollShadow>
       <form
+        id="prompt-submit-form"
         className="flex w-full flex-col items-start rounded-medium bg-default-100 transition-colors hover:bg-default-200/70"
         onSubmit={handleSubmit}
       >
@@ -101,22 +125,9 @@ export default function PromptArea({
           }}
         />
         <div className="flex w-full items-center justify-between  gap-2 overflow-scroll px-4 pb-4">
-          <div className="flex w-full gap-1 md:gap-3">
-            <Button
-              size="sm"
-              startContent={
-                <Icon
-                  className="text-default-500"
-                  icon="solar:paperclip-linear"
-                  width={18}
-                />
-              }
-              variant="flat"
-            >
-              Attach
-            </Button>
-          </div>
-          <p className="py-1 text-tiny text-default-400">{input.length}/2000</p>
+          <p className="py-1 text-tiny text-default-400">
+            {input.length}/{USER_INPUT_LIMIT}
+          </p>
         </div>
       </form>
     </div>

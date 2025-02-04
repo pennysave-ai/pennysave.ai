@@ -33,7 +33,12 @@ const FloatingButton = () => {
           variant="flat"
           onPress={() => setIsExpanded(true)}
         >
-          <Icon icon="solar:star-fall-line-duotone" width={26} height={26} />
+          <Icon
+            icon="solar:star-fall-line-duotone"
+            width={26}
+            height={26}
+            className="text-primary"
+          />
         </Button>
       )}
     </motion.div>
