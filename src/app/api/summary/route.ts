@@ -202,7 +202,7 @@ const fetchSpendingByCategory = async (
           "Currency"."exchangeRate" AS "exchangeRate"
         FROM
           "Transaction"
-        INNER JOIN
+        LEFT JOIN
           "Category" ON "Transaction"."categoryId" = "Category"."id"
         INNER JOIN
           "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"

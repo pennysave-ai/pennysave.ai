@@ -8,7 +8,7 @@ import DateRangePicker from "./date-range-picker";
 import AccountsFilter from "./account-filter";
 import Top5Chart from "./top-5-chart";
 import DataCard from "./data-card";
-import TransactionsChart from "./transactions-chart";
+import TransactionsAreaChart from "./charts/area";
 import BaseCurrencyFilter from "./base-currency-filter";
 import FloatingButton from "./float-button";
 import Notifications from "./notifications";
@@ -80,7 +80,7 @@ export default function DashboardPage() {
         />
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
-        <TransactionsChart
+        <TransactionsAreaChart
           data={transactionsData || []}
           isLoading={isLoading}
           currency={data?.meta.currency.name || ""}
