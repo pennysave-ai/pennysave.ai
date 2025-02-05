@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
-import { format, subDays } from "date-fns";
+import { eachDayOfInterval, format, parseISO } from "date-fns";
+import { useSearchParams } from "next/navigation";
 import {
   Area,
   AreaChart,
@@ -10,6 +11,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  YAxis,
   Legend,
 } from "recharts";
 import { Button } from "@heroui/button";
@@ -25,7 +27,7 @@ import {
   DropdownTrigger,
 } from "@heroui/dropdown";
 import { formatCurrency } from "@/lib/utils";
-import AreaChartLegend from "./area-chart-legend";
+import AreaChartLegend from "../area-chart-legend";
 
 type ChartData = {
   date: string;
@@ -39,49 +41,28 @@ interface TransactionsChartProps {
   currency: string;
 }
 
-export default function TransactionsChart({
+export default function TransactionsAreaChart({
   data,
   isLoading,
   currency,
 }: TransactionsChartProps) {
+  const searchParams = useSearchParams();
+  const from = searchParams?.get("from") || new Date();
+  const to = searchParams?.get("to") || new Date();
+  const dataRange = eachDayOfInterval({
+    start: parseISO(format(from, "yyyy-MM-dd")),
+    end: parseISO(format(to, "yyyy-MM-dd")),
+  });
+  console.log("dataRange", dataRange);
   const [chartType, setChartType] = useState<Selection>(
     new Set(["income-and-expences"])
   );
   const isEmptyData = !!data && !isLoading && data.length === 0;
-  const emptyDataPayload = [
-    {
-      date: format(subDays(new Date(), 8), "PP"),
-      noData: 10,
-    },
-    {
-      date: format(subDays(new Date(), 7), "PP"),
-      noData: 200,
-    },
-    {
-      date: format(subDays(new Date(), 6), "PP"),
-      noData: 90,
-    },
-    {
-      date: format(subDays(new Date(), 5), "PP"),
-      noData: 10,
-    },
-    {
-      date: format(subDays(new Date(), 4), "PP"),
-      noData: 150,
-    },
-    {
-      date: format(subDays(new Date(), 3), "PP"),
-      noData: 30,
-    },
-    {
-      date: format(subDays(new Date(), 2), "PP"),
-      noData: 110,
-    },
-    {
-      date: format(subDays(new Date(), 1), "PP"),
-      noData: 40,
-    },
-  ];
+  const emptyDataPayload = dataRange.map((date) => ({
+    date: format(date, "PP"),
+    noDataIncome: Math.floor(Math.random() * 200),
+    noDataExpences: Math.floor(Math.random() * 200),
+  }));
   return (
     <Card
       as="dl"
@@ -119,7 +100,8 @@ export default function TransactionsChart({
         </div>
         <ResponsiveContainer
           className="[&_.recharts-surface]:outline-none"
-          height={300}
+          height={330}
+          width="100%"
         >
           <AreaChart
             accessibilityLayer
@@ -197,6 +179,11 @@ export default function TransactionsChart({
                 fontSize: "var(--heroui-font-size-tiny)",
               }}
               tickLine={false}
+            />
+
+            <YAxis
+              strokeOpacity={0.25}
+              style={{ fontSize: "var(--heroui-font-size-tiny)" }}
             />
             {!isEmptyData && (
               <Tooltip
@@ -281,7 +268,17 @@ export default function TransactionsChart({
                   activeDot={false}
                   animationDuration={1000}
                   animationEasing="ease"
-                  dataKey="noData"
+                  dataKey="noDataIncome"
+                  fill="url(#colorGradientNoData)"
+                  stroke={`hsl(var(--heroui-default-100))`}
+                  strokeWidth={2}
+                  type="monotone"
+                />
+                <Area
+                  activeDot={false}
+                  animationDuration={1000}
+                  animationEasing="ease"
+                  dataKey="noDataExpences"
                   fill="url(#colorGradientNoData)"
                   stroke={`hsl(var(--heroui-default-100))`}
                   strokeWidth={2}
@@ -303,7 +300,12 @@ export default function TransactionsChart({
               verticalAlign="top"
               align="right"
               content={({ payload }) =>
-                isLoading ? null : <AreaChartLegend payload={payload} />
+                isLoading ? null : (
+                  <AreaChartLegend
+                    isEmptyData={isEmptyData}
+                    payload={payload}
+                  />
+                )
               }
             />
           </AreaChart>

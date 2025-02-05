@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { type CategoryResponse } from "@/app/api/summary/route";
 import { PieSectorDataItem } from "recharts/types/polar/Pie";
-import DonutLegend from "./donut-legend";
+import ChartLegend from "./chart-legend";
 
 const COLORS = [
   "#9333ea",
@@ -35,6 +35,11 @@ export default function Donut({ data, isLoading, currency }: DonutProps) {
     setActiveIndex(index);
   };
   const isEmptyData = !!data && !isLoading && data.length === 0;
+  const emptyDataPayload = Array.from({ length: 5 })
+    .map(() => ({
+      amount: Math.floor(Math.random() * 200),
+    }))
+    .sort((a, b) => b.amount - a.amount);
   return (
     <>
       <ResponsiveContainer
@@ -47,41 +52,43 @@ export default function Donut({ data, isLoading, currency }: DonutProps) {
           margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
         >
           <Pie
-            data={
-              isEmptyData
-                ? [
-                    {
-                      id: "empty",
-                      name: "No expences in this period",
-                      amount: 100,
-                    },
-                  ]
-                : data
-            }
+            data={isEmptyData ? emptyDataPayload : data}
             activeIndex={activeIndex}
             dataKey="amount"
             innerRadius="50%"
             nameKey="name"
             strokeWidth={0}
-            activeShape={renderActiveShape}
-            onMouseEnter={onPieEnter}
+            activeShape={!isEmptyData && renderActiveShape}
+            onMouseEnter={!isEmptyData ? onPieEnter : () => {}}
           >
-            {isEmptyData ? (
-              <Cell fill="hsl(var(--heroui-default-100))" />
-            ) : (
-              data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))
-            )}
+            {isEmptyData
+              ? emptyDataPayload.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill="url(#gradient1)" />
+                ))
+              : data.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                ))}
           </Pie>
+          {isEmptyData && (
+            <text
+              className="text-cente text-sm z-10"
+              fill="hsl(var(--heroui-default-400))"
+              textAnchor="middle"
+              x="50%"
+              y="50%"
+            >
+              No expenses in this period
+            </text>
+          )}
           <Legend
             layout="centric"
             verticalAlign="top"
             align="left"
             content={({ payload }) =>
               isLoading ? null : (
-                <DonutLegend
+                <ChartLegend
                   className="rounded-br-[14px]"
+                  isEmptyData={isEmptyData}
                   payload={payload?.map(({ value, payload }) => ({
                     value,
                     payload: {
@@ -94,6 +101,24 @@ export default function Donut({ data, isLoading, currency }: DonutProps) {
               )
             }
           />
+          <defs>
+            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop
+                offset="0%"
+                style={{
+                  stopColor: "hsl(var(--heroui-default-100))",
+                  stopOpacity: 1,
+                }}
+              />
+              <stop
+                offset="100%"
+                style={{
+                  stopColor: "hsl(var(--heroui-default-200))",
+                  stopOpacity: 1,
+                }}
+              />
+            </linearGradient>
+          </defs>
         </PieChart>
       </ResponsiveContainer>
     </>
@@ -101,7 +126,7 @@ export default function Donut({ data, isLoading, currency }: DonutProps) {
 }
 
 const truncateText = (text: string, maxLength: number) => {
-  if (text.length > maxLength) {
+  if (text?.length > maxLength) {
     return text.substring(0, maxLength) + "...";
   }
   return text;
