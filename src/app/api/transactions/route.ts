@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { subDays, parse, endOfDay } from "date-fns";
+
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { v4 as uuid } from "uuid";
-import {
-  getTransactionsSchema,
-  updateTransactionSchema,
-  createTransactionSchema,
-} from "@/schemas";
-import { subDays, parse, endOfDay } from "date-fns";
+import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
+import { createTransaction } from "@/data/transactions";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -107,43 +104,21 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const { amount, payee, notes, accountId, categoryId, createdAt } =
-    await req.json();
-  const id = uuid();
-
-  const validationResult = createTransactionSchema.safeParse({
-    id,
-    amount,
-    payee,
-    notes,
-    accountId,
-    categoryId,
-    createdAt,
-  });
-  if (!validationResult.success) {
-    console.log(validationResult.error.flatten().fieldErrors);
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json("Unautorized", { status: 401 });
+    }
+    const user = session.user;
+    if (!user.id) {
+      return NextResponse.json("Unautorized", { status: 401 });
+    }
+    const payload = await req.json();
+    const newTransaction = await createTransaction(payload);
+    return NextResponse.json({ data: newTransaction });
+  } catch {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-  const transaction = await db.transaction.create({
-    data: {
-      id,
-      amount,
-      payee,
-      notes,
-      accountId,
-      categoryId,
-      createdAt,
-    },
-  });
-  return NextResponse.json({ data: transaction });
 }
 
 export async function DELETE(req: NextRequest) {

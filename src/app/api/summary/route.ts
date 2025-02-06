@@ -11,7 +11,11 @@ import { auth } from "@/auth";
 import { convertCurrency } from "@/lib/utils";
 import { type Currency } from "@prisma/client";
 import { BASE_CURRENCY, DEFAULT_DATA_PERIOD } from "@/constants";
-import { calculatePercentageChange, fillMissingDates } from "@/lib/utils";
+import {
+  calculatePercentageChange,
+  fillMissingDates,
+  fillMissingDatesForExpenceCategories,
+} from "@/lib/utils";
 
 type FinancialDataResponse = {
   income: number;
@@ -364,6 +368,113 @@ const dailyData = async (
   }
 };
 
+/**
+ * Fetch daily expences by category
+ * @param {string} userId - The ID of the user.
+ * @param {Date} startDate - The start date of the period.
+ * @param {Date} endDate - The end date of the period.
+ * @param {string | null} accountId - Optional account ID to filter transactions.
+ * @param {Currency} targetCurrency - Optional target currency to convert the amounts to.
+ * @returns {Promise<Map<{ [key: string]: string | number }>>}
+ */
+const dailyExpences = async (
+  userId: string = "",
+  startDate: Date,
+  endDate: Date,
+  accountId: string | null,
+  targetCurrency: Currency
+): Promise<Map<string, { [key: string]: string | number }>> => {
+  try {
+    const query = `
+        SELECT
+          "Transaction"."createdAt" AS "date",
+          "Category"."name" AS "categoryName",
+          "Category"."id" as "categoryId",
+          COALESCE(SUM(-"Transaction"."amount"), 0) AS "amount",
+          "Currency"."id" AS "currencyId",
+          "Currency"."exchangeRate" AS "exchangeRate"
+        FROM
+          "Transaction"
+        LEFT JOIN
+          "Category" ON "Transaction"."categoryId" = "Category"."id"
+        INNER JOIN
+          "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
+        INNER JOIN
+          "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
+        WHERE
+          "Transaction"."createdAt" BETWEEN $1 AND $2
+          AND "Transaction"."amount" < 0
+          AND "UserAccount"."userId" = $3
+          ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
+        GROUP BY
+          "date",
+          "Category"."name",
+          "Category"."id",
+          "Currency"."id",
+          "Currency"."exchangeRate"
+        ORDER BY
+          "date" ASC;
+      `;
+    const params = accountId
+      ? [startDate, endDate, userId, accountId]
+      : [startDate, endDate, userId];
+
+    const queryResult = await db.$queryRawUnsafe<
+      {
+        date: string;
+        categoryId: string;
+        categoryName: string;
+        amount: number;
+        currencyId: string;
+        exchangeRate: number;
+      }[]
+    >(query, ...params);
+
+    // Get all transactions categories
+    const allTransactionsCategories = new Map(
+      queryResult.map(({ categoryId, categoryName }) => [
+        categoryId,
+        categoryName ? categoryName.replace(/ /g, "_") : "Uncategorized",
+      ]) as [string, string][]
+    );
+
+    const dateMap = new Map();
+    queryResult.map((item) => {
+      const targetCurrencyAmount = item.currencyId === targetCurrency.id;
+      const amount = targetCurrencyAmount
+        ? Number(item.amount)
+        : convertCurrency(
+            item.amount,
+            item.exchangeRate,
+            targetCurrency.exchangeRate
+          );
+      const existingDay = dateMap.get(endOfDay(item.date).toISOString());
+      if (existingDay) {
+        const existingEntity = dateMap.get(endOfDay(item.date).toISOString());
+        const categoryName = allTransactionsCategories.get(
+          item.categoryId
+        ) as string;
+        dateMap.set(endOfDay(item.date).toISOString(), {
+          ...existingEntity,
+          [categoryName]: existingEntity[categoryName] + amount,
+        });
+      } else {
+        dateMap.set(endOfDay(item.date).toISOString(), {
+          ...Object.fromEntries(
+            Array.from(allTransactionsCategories.entries()).map(
+              ([key, value]) => [value, item.categoryId === key ? amount : 0]
+            )
+          ),
+        });
+      }
+    });
+    return dateMap;
+  } catch {
+    console.error("Error fetching daily expences:");
+    throw new Error("Failed to fetch daily expences.");
+  }
+};
+
 export async function GET(req: NextRequest) {
   const TOP_CATEGORIES = 5;
   const session = await auth();
@@ -411,6 +522,14 @@ export async function GET(req: NextRequest) {
       targetCurrency
     );
 
+    const dailyExpencesMap = await dailyExpences(
+      user.id,
+      startDate,
+      endDate,
+      accountId || null,
+      targetCurrency
+    );
+
     const dailyTransactions = await dailyData(
       user.id,
       startDate,
@@ -426,10 +545,10 @@ export async function GET(req: NextRequest) {
       0
     );
     const spentByCategory = topCategories;
-    if (otherCategories.length > 0) {
+    if (otherCategories.length > 0 && spentByCategory.length < TOP_CATEGORIES) {
       spentByCategory.push({
-        id: "Rest",
-        name: "Rest",
+        id: "other",
+        name: "Other",
         amount: otherCategoriesTotal,
       });
     }
@@ -451,6 +570,12 @@ export async function GET(req: NextRequest) {
       endDate
     );
 
+    const expencesByCategory = fillMissingDatesForExpenceCategories(
+      dailyExpencesMap,
+      startDate,
+      endDate
+    );
+
     return NextResponse.json({
       data: {
         remainingAmount: currentPeriod.remaining,
@@ -460,6 +585,7 @@ export async function GET(req: NextRequest) {
         expensesAmount: currentPeriod.expences,
         expensesChange,
         categories: spentByCategory,
+        expencesByCategory,
         days: dailyTransactionsData,
       },
       meta: {

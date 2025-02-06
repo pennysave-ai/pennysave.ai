@@ -3,24 +3,26 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
-import { Spinner } from "@heroui/spinner";
 import { Avatar } from "@heroui/avatar";
 import { Badge } from "@heroui/badge";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { Icon } from "@iconify/react";
 import { cn } from "@heroui/theme";
+import AiAvatar from "./ai-avatar";
 
 export type MessageCardProps = React.HTMLAttributes<HTMLDivElement> & {
   avatar?: string;
-  showCopy?: boolean;
   message?: React.ReactNode;
   status?: "success" | "failed";
   messageClassName?: string;
   isTyping: boolean;
   role: string;
   onMessageCopy?: (content: string | string[]) => void;
+  currentTool: string | null;
 };
 
 const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
@@ -29,17 +31,32 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
       avatar,
       isTyping,
       message,
-      showCopy,
       status,
       role,
       onMessageCopy,
       className,
       messageClassName,
+      currentTool,
       ...props
     },
     ref
   ) => {
     const messageRef = React.useRef<HTMLDivElement>(null);
+
+    const mapToolToMessage = (tool: string) => {
+      switch (tool) {
+        case "createTransaction":
+          return "Creating transaction";
+        case "createCategory":
+          return "Creating category";
+        case "createAccount":
+          return "Creating account";
+        case "fetchUserTransactions":
+          return "Analyzing transactions";
+        default:
+          return "Thinking";
+      }
+    };
 
     const failedMessageClassName =
       status === "failed"
@@ -85,16 +102,7 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
         <div className="relative flex-none">
           {role === "assistant" ? (
             <div className="realtive flex items-center justify-center w-8">
-              {isTyping ? (
-                <Spinner size="lg" className="absolute" />
-              ) : (
-                <div className="w-10 h-10 rounded-full border-solid absolute border-primary border-2" />
-              )}
-              <Icon
-                width={28}
-                icon="solar:star-fall-line-duotone"
-                className="text-primary"
-              />
+              <AiAvatar loading={isTyping} />
             </div>
           ) : (
             <Badge
@@ -126,15 +134,23 @@ const MessageCard = React.forwardRef<HTMLDivElement, MessageCardProps>(
               ref={messageRef}
               className={cn("text-small", role === "assistant" && "pr-8")}
             >
+              {isTyping && currentTool && (
+                <div className="text-sm text-default-400 thinking-dots">
+                  {mapToolToMessage(currentTool)}
+                </div>
+              )}
               {hasFailed ? (
                 failedMessage
               ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                >
                   {message?.toString()}
                 </ReactMarkdown>
               )}
             </div>
-            {showCopy && !hasFailed && (
+            {role === "assistant" && !hasFailed && !currentTool && (
               <div className="absolute right-2 top-2 flex rounded-full bg-content2 shadow-small">
                 <Button
                   isIconOnly

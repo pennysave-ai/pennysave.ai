@@ -3,21 +3,12 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Card } from "@heroui/card";
-import { cn } from "@heroui/theme";
 import { Skeleton } from "@heroui/skeleton";
 import React from "react";
 import { Select, SelectItem } from "@heroui/select";
 import Donut from "./charts/donut";
 import BarGraph from "./charts/bar";
-
-const COLORS = [
-  "#9333ea",
-  "#fb00b5",
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-];
+import { COLORS } from "@/constants";
 
 type ChartData = {
   id: string;
@@ -34,11 +25,7 @@ interface Top5Chart {
 export default function Top5Chart({ data, isLoading, currency }: Top5Chart) {
   const [chartType, setChartType] = useState(new Set(["bar"]));
   return (
-    <Card
-      className={cn(
-        "h-[400px] border border-transparent dark:border-default-100"
-      )}
-    >
+    <Card className="h-[400px] border border-transparent dark:border-default-100">
       <div className="flex flex-col gap-y-2 p-4">
         <div className="flex items-center justify-between gap-x-2">
           <dt className="w-full">

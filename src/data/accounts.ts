@@ -1,4 +1,6 @@
 import { db } from "@/db";
+import { v4 as uuid } from "uuid";
+import { accountSchema } from "@/schemas";
 import { ExtendedAccountResponseType } from "@/lib/plaid";
 
 /**
@@ -42,4 +44,62 @@ export async function createPlaidAccounts(
         )?.id || "",
     })),
   });
+}
+
+/**
+ * Get user account Name
+ * @param {String} userId - User ID
+ * @param {String} name - Account Name
+ * @returns {Array<{id: string, name: id}>} - Array of account Id's
+ */
+export async function getUserAccountIdsByName(userId: string, name: string) {
+  const accounts = await db.userAccount.findMany({
+    where: {
+      userId,
+      name: {
+        contains: name,
+        mode: "insensitive",
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      institutionName: true,
+    },
+  });
+  return accounts;
+}
+
+/**
+ * Creates a new user account
+ * @param {String} name - Account name
+ * @param {String} userId - User ID
+ * @param {String} currencyId - Currency ID
+ * @param {String} institutionName - Institution Name
+ * @returns {Promise} - Promise object represents the account data
+ * @throws {Error} - If the account creation fails
+ */
+export async function createAccount(
+  name: string,
+  userId: string,
+  currencyId: string,
+  institutionName?: string
+) {
+  const validationResult = accountSchema.safeParse({
+    name,
+    currencyId,
+  });
+  if (!validationResult.success) {
+    throw new Error("Bad Request");
+  }
+  const account = await db.userAccount.create({
+    data: {
+      id: uuid(),
+      name,
+      userId,
+      currencyId,
+      institutionName,
+    },
+  });
+  return { id: account.id };
 }

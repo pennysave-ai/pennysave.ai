@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Icon } from "@iconify/react";
+import { useSession } from "next-auth/react";
 import { useChat } from "ai/react";
 
+import { Icon } from "@iconify/react";
+import { useModal } from "@/app/providers/modal";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
@@ -16,6 +18,9 @@ interface AIHelperProps {
 
 export default function AIHelper({ onClose }: AIHelperProps) {
   const [responseStarted, setResponseStarted] = useState(false);
+  const [currentTool, setCurrentTool] = useState<string | null>(null);
+  const { data } = useSession();
+  const { onOpen: onPaywallModalOpen } = useModal();
   const handleChatScroll = () => {
     const chat = document.querySelector("#chat-wrapper");
     chat?.scrollTo({
@@ -23,20 +28,30 @@ export default function AIHelper({ onClose }: AIHelperProps) {
       behavior: "smooth",
     });
   };
-  const { messages, isLoading, input, handleSubmit, setInput } = useChat({
-    onResponse: () => {
-      setResponseStarted(true);
-    },
-    onFinish: () => {
-      setResponseStarted(false);
-      handleChatScroll();
-    },
-  });
+  const { messages, isLoading, input, handleSubmit, setInput, error } = useChat(
+    {
+      onResponse: () => {
+        setResponseStarted(true);
+      },
+      onFinish: () => {
+        setResponseStarted(false);
+        setCurrentTool(null);
+        handleChatScroll();
+      },
+      onToolCall: ({ toolCall }) => {
+        setCurrentTool(toolCall.toolName);
+      },
+    }
+  );
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSubmit(e);
-    setResponseStarted(false);
+    if (data?.user.hasActiveStripeSubscription) {
+      handleSubmit(e);
+      setResponseStarted(false);
+    } else {
+      onPaywallModalOpen();
+    }
   };
 
   useEffect(() => {
@@ -79,10 +94,13 @@ export default function AIHelper({ onClose }: AIHelperProps) {
               isLoading={isLoading && !responseStarted}
               responseStarted={responseStarted}
               isTyping={responseStarted}
+              error={error}
+              currentTool={currentTool}
             />
           </ScrollShadow>
           <div className="mt-auto flex max-w-full flex-col gap-2">
             <PromptArea
+              disabled={isLoading}
               input={input}
               handleSubmit={handleFormSubmit}
               handleInputChange={(e) => {

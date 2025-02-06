@@ -12,6 +12,7 @@ import {
   eachDayOfInterval,
   isSameDay,
   startOfDay,
+  endOfDay,
 } from "date-fns";
 
 /**
@@ -86,6 +87,47 @@ export const calculatePercentageChange = (
   return ((current - previous) / previous) * 100;
 };
 
+/**
+ * Fills missing dates for expence categories date range
+ * @param {Map<string, {[x:string]: string | number}>} data - The data to fill missing dates for.
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @returns {Array<{date: string, [x:string]: string | number}>}
+ */
+export const fillMissingDatesForExpenceCategories = (
+  data: Map<string, { [x: string]: string | number }>,
+  startDate: Date,
+  endDate: Date
+) => {
+  if (data.size === 0) {
+    return [];
+  }
+  const [firstValue] = data.values();
+  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const emptyData = Object.keys(firstValue).reduce(
+    (acc: { [key: string]: number }, key) => {
+      acc[key] = 0;
+      return acc;
+    },
+    {}
+  );
+  const transactionByDate = allDays.map((day) => {
+    const found = data.get(endOfDay(day).toISOString());
+    if (found) {
+      return {
+        ...found,
+        date: startOfDay(day).toISOString(),
+      };
+    } else {
+      return {
+        date: startOfDay(day).toISOString(),
+        ...emptyData,
+      };
+    }
+  });
+  return transactionByDate;
+};
+
 export const fillMissingDates = (
   data: { date: string; income: number; expences: number }[],
   startDate: Date,
@@ -154,4 +196,24 @@ export const convertDateStringToCalendarDate = (
   } catch {
     return null;
   }
+};
+
+// Function to convert hex to RGBA
+export const convertHexToRgba = (hex: string, alpha: number) => {
+  // Remove the hash at the start if it's there
+  hex = hex.replace(/^#/, "");
+  // Parse the r, g, b values
+  let r, g, b;
+  if (hex.length === 3) {
+    r = parseInt(hex[0] + hex[0], 16);
+    g = parseInt(hex[1] + hex[1], 16);
+    b = parseInt(hex[2] + hex[2], 16);
+  } else if (hex.length === 6) {
+    r = parseInt(hex.substring(0, 2), 16);
+    g = parseInt(hex.substring(2, 4), 16);
+    b = parseInt(hex.substring(4, 6), 16);
+  } else {
+    throw new Error("Invalid hex color format");
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };

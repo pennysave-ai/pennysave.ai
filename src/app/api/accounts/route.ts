@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { v4 as uuid } from "uuid";
+import { createAccount } from "@/data/accounts";
 import { accountSchema } from "@/schemas";
 
 export async function GET() {
@@ -62,24 +62,17 @@ export async function POST(req: NextRequest) {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const validationResult = accountSchema.safeParse({
-    name: body.name,
-    currencyId: body.currencyId,
-  });
-  if (!validationResult.success) {
+  try {
+    const newAccount = await createAccount(
+      body.name,
+      user.id,
+      body.currencyId,
+      body.institutionName
+    );
+    return NextResponse.json({ data: newAccount });
+  } catch {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-  const account = await db.userAccount.create({
-    data: {
-      id: uuid(),
-      name: body.name,
-      userId: user.id,
-      plaidItemId: body.plaidId,
-      currencyId: body.currencyId,
-      institutionName: body.institutionName,
-    },
-  });
-  return NextResponse.json({ data: account });
 }
 
 export async function DELETE(req: NextRequest) {
