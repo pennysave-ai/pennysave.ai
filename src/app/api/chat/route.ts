@@ -21,8 +21,8 @@ import { getUserTransactions, createTransaction } from "@/data/transactions";
 import { createTransactionSchema } from "@/schemas";
 import { convertAmountToMilliunits } from "@/lib/utils";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 90;
+// Allow streaming responses up to 60 seconds
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
