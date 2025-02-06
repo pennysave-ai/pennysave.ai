@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { v4 as uuid } from "uuid";
+import { getUserCategories, createCategory } from "@/data/categories";
 import { categorySchema } from "@/schemas";
 
 export async function GET() {
@@ -10,10 +10,10 @@ export async function GET() {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  const categories = await db.category.findMany({
-    select: { id: true, name: true, description: true },
-    where: { userId: user.id },
-  });
+  if (!user) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+  const categories = await getUserCategories(user.id);
   const count = await db.category.count({ where: { userId: user.id } });
   return NextResponse.json({ data: categories, meta: { count } });
 }
@@ -31,22 +31,16 @@ export async function POST(req: NextRequest) {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const validationResult = categorySchema.safeParse({
-    name: body.name,
-  });
-  if (!validationResult.success) {
+  try {
+    const newCategory = await createCategory(
+      body.name,
+      user.id,
+      body.description
+    );
+    return NextResponse.json({ data: newCategory });
+  } catch {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-  const category = await db.category.create({
-    data: {
-      id: uuid(),
-      name: body.name,
-      userId: user.id,
-      plaidId: body.plaidId,
-      description: body.description,
-    },
-  });
-  return NextResponse.json({ data: category });
 }
 
 export async function DELETE(req: NextRequest) {

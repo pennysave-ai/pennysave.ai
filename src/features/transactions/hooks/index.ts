@@ -19,10 +19,10 @@ const onSuccess = (queryClient: QueryClient) => {
 
 export type CreateTransaction = {
   amount: number;
-  payee: string;
+  payee?: string;
   notes?: string;
   accountId: string;
-  categoryId: string | null;
+  categoryId?: string | null;
   createdAt: string;
 };
 

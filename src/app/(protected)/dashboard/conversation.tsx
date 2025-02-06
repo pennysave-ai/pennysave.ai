@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Spinner } from "@heroui/spinner";
-import { Icon } from "@iconify/react";
 import MessageCard from "./message-card";
+import AiAvatar from "./ai-avatar";
 
 interface Conversation {
   messages: {
@@ -14,6 +13,8 @@ interface Conversation {
   isLoading: boolean;
   isTyping: boolean;
   responseStarted: boolean;
+  error?: Error;
+  currentTool: string | null;
 }
 
 export default function Conversation({
@@ -21,6 +22,8 @@ export default function Conversation({
   isLoading,
   isTyping,
   responseStarted,
+  error,
+  currentTool,
 }: Conversation) {
   const { data } = useSession();
   const [lastMessageIndex, setLastMessageIndex] = useState<number>(0);
@@ -37,6 +40,7 @@ export default function Conversation({
     <div className="flex flex-col gap-4 px-1">
       {messages.map(({ role, content }, index) => (
         <MessageCard
+          currentTool={currentTool}
           onMessageCopy={handleMessageCopy}
           key={index}
           isTyping={isTyping && index === lastMessageIndex}
@@ -50,22 +54,25 @@ export default function Conversation({
           messageClassName={
             role === "user" ? "bg-content3 text-content3-foreground" : ""
           }
-          showCopy={role === "assistant"}
           className={role === "user" ? "flex-row-reverse" : ""}
         />
       ))}
+      {error && (
+        <div className="flex items-center gap-x-2">
+          <AiAvatar error />
+          <div className="relative w-full rounded-medium bg-content2 px-4 py-3 text-sm text-danger-400">
+            An error occurred. - {error.message}
+          </div>
+        </div>
+      )}
       {isLoading && (
         <div className="realtive flex items-center justify-start gap-2">
-          <div className="w-10 h-10 flex items-center justify-center relative">
-            <Spinner size="lg" className="absolute" />
-            <Icon
-              width={28}
-              height={28}
-              icon="solar:star-fall-line-duotone"
-              className="text-primary relative"
-            />
+          <AiAvatar loading />
+          <div className="relative rounded-medium bg-content2 px-4 py-3 text-default-600">
+            <div className="text-sm text-default-400 thinking-dots">
+              Thinking
+            </div>
           </div>
-          <div className="text-sm text-default-400">Analyzing...</div>
         </div>
       )}
     </div>

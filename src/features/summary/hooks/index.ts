@@ -16,6 +16,7 @@ export type Summary = {
   expensesChange: number;
   categories: CategoryResponse[];
   days: DailyDataResponse[];
+  expencesByCategory: { [x: string]: number | string }[];
   meta: {
     currency: {
       name: string;
@@ -71,6 +72,19 @@ export const useGetSummary = () => {
           income: convertAmountFromMilliunits(day.income),
           expences: convertAmountFromMilliunits(day.expences),
         })),
+        expencesByCategory: data.expencesByCategory.map(
+          (category: { date: string; [x: string]: string | number }) => ({
+            date: category.date,
+            ...Object.keys(category).reduce((acc, key) => {
+              if (key !== "date") {
+                acc[key] = parseFloat(
+                  convertAmountFromMilliunits(Number(category[key])).toFixed(2)
+                );
+              }
+              return acc;
+            }, {} as { [key: string]: number }),
+          })
+        ),
         meta,
       } as Summary;
     },

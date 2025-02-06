@@ -4,19 +4,8 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import { useSearchParams } from "next/navigation";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Legend,
-} from "recharts";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
-import type { Selection } from "@heroui/table";
 
 import { Card } from "@heroui/card";
 import { Skeleton } from "@heroui/skeleton";
@@ -26,8 +15,8 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@heroui/dropdown";
-import { formatCurrency } from "@/lib/utils";
-import AreaChartLegend from "../area-chart-legend";
+import AreaIncomeAndExpences from "./area-income-and-expences";
+import AreaExpenceByCategory from "./area-expence-by-category";
 
 type ChartData = {
   date: string;
@@ -39,12 +28,14 @@ interface TransactionsChartProps {
   data: ChartData[];
   isLoading: boolean;
   currency: string;
+  transactionsByExpenses: { [x: string]: string | number }[];
 }
 
 export default function TransactionsAreaChart({
   data,
   isLoading,
   currency,
+  transactionsByExpenses,
 }: TransactionsChartProps) {
   const searchParams = useSearchParams();
   const from = searchParams?.get("from") || new Date();
@@ -53,10 +44,7 @@ export default function TransactionsAreaChart({
     start: parseISO(format(from, "yyyy-MM-dd")),
     end: parseISO(format(to, "yyyy-MM-dd")),
   });
-  console.log("dataRange", dataRange);
-  const [chartType, setChartType] = useState<Selection>(
-    new Set(["income-and-expences"])
-  );
+  const [chartType, setChartType] = useState(new Set(["by-expence-category"]));
   const isEmptyData = !!data && !isLoading && data.length === 0;
   const emptyDataPayload = dataRange.map((date) => ({
     date: format(date, "PP"),
@@ -80,7 +68,9 @@ export default function TransactionsAreaChart({
                     <Select
                       size="sm"
                       selectedKeys={chartType}
-                      onSelectionChange={setChartType}
+                      onSelectionChange={(keys) =>
+                        setChartType(new Set(Array.from(keys) as string[]))
+                      }
                       classNames={{
                         base: "max-w-xs p-0 w-52",
                       }}
@@ -98,218 +88,24 @@ export default function TransactionsAreaChart({
             </div>
           </div>
         </div>
-        <ResponsiveContainer
-          className="[&_.recharts-surface]:outline-none"
-          height={330}
-          width="100%"
-        >
-          <AreaChart
-            accessibilityLayer
-            data={isEmptyData ? emptyDataPayload : data}
-            margin={{
-              left: 0,
-              right: 0,
-            }}
-          >
-            <defs>
-              <linearGradient
-                id="colorGradientIncome"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="10%"
-                  stopColor={`hsl(var(--heroui-success-500))`}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="100%"
-                  stopColor={`hsl(var(--heroui-sucess-100))`}
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient
-                id="colorGradientExpenses"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="10%"
-                  stopColor={`hsl(var(--heroui-danger-500))`}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="100%"
-                  stopColor={`hsl(var(--heroui-danger-100))`}
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient
-                id="colorGradientNoData"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="10%"
-                  stopColor={`hsl(var(--heroui-default-500))`}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="100%"
-                  stopColor={`hsl(var(--heroui-default-100))`}
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              stroke="hsl(var(--heroui-default-200))"
-              strokeDasharray="3 3"
-            />
-            <XAxis
-              tickSize={12}
-              axisLine={false}
-              dataKey="date"
-              style={{
-                fontSize: "var(--heroui-font-size-tiny)",
-              }}
-              tickLine={false}
-            />
-
-            <YAxis
-              strokeOpacity={0.25}
-              style={{ fontSize: "var(--heroui-font-size-tiny)" }}
-            />
-            {!isEmptyData && (
-              <Tooltip
-                content={({ label, payload }) => (
-                  <div className="flex h-auto min-w-[120px] items-center gap-x-2 rounded-medium bg-background p-2 text-tiny shadow-small">
-                    <div className="flex w-full flex-col gap-y-0">
-                      {payload?.map((p, index) => {
-                        return (
-                          <div
-                            key={index}
-                            className="flex w-full items-center gap-x-2"
-                          >
-                            <div className="flex w-full items-center gap-x-1 text-xs text-foreground-500 capitalize">
-                              {p.dataKey && (
-                                <div className="flex w-full items-center gap-x-2">
-                                  <div
-                                    className="h-2 w-2 flex-none rounded-full"
-                                    style={{
-                                      backgroundColor:
-                                        p.dataKey === "income"
-                                          ? "hsl(var(--heroui-success))"
-                                          : "hsl(var(--heroui-danger))",
-                                    }}
-                                  />
-                                  <div>{p.dataKey}</div>
-                                  <div className="text-default-700">
-                                    {formatCurrency(
-                                      p.payload[p.dataKey],
-                                      currency
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <span className="text-xs font-medium text-default-500">
-                        {label}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                cursor={{
-                  strokeWidth: 0,
-                }}
-              />
-            )}
-            <Area
-              activeDot={{
-                stroke: `hsl(var(--heroui-success))`,
-                strokeWidth: 2,
-                fill: "hsl(var(--heroui-background))",
-                r: 5,
-              }}
-              animationDuration={1000}
-              animationEasing="ease"
-              dataKey="income"
-              fill="url(#colorGradientIncome)"
-              stroke={`hsl(var(--heroui-success))`}
-              strokeWidth={2}
-              type="monotone"
-            />
-            <Area
-              activeDot={{
-                stroke: "hsl(var(--heroui-danger))",
-                strokeWidth: 2,
-                fill: "hsl(var(--heroui-background))",
-                r: 5,
-              }}
-              animationDuration={1000}
-              animationEasing="ease"
-              dataKey="expences"
-              fill="url(#colorGradientExpenses)"
-              stroke={`hsl(var(--heroui-danger))`}
-              strokeWidth={2}
-              type="monotone"
-            />
-            {isEmptyData && (
-              <>
-                <Area
-                  activeDot={false}
-                  animationDuration={1000}
-                  animationEasing="ease"
-                  dataKey="noDataIncome"
-                  fill="url(#colorGradientNoData)"
-                  stroke={`hsl(var(--heroui-default-100))`}
-                  strokeWidth={2}
-                  type="monotone"
-                />
-                <Area
-                  activeDot={false}
-                  animationDuration={1000}
-                  animationEasing="ease"
-                  dataKey="noDataExpences"
-                  fill="url(#colorGradientNoData)"
-                  stroke={`hsl(var(--heroui-default-100))`}
-                  strokeWidth={2}
-                  type="monotone"
-                />
-                <text
-                  className="text-cente text-sm z-10"
-                  fill="hsl(var(--heroui-default-400))"
-                  textAnchor="middle"
-                  x="50%"
-                  y="50%"
-                >
-                  No income and expenses in this period
-                </text>
-              </>
-            )}
-            <Legend
-              layout="radial"
-              verticalAlign="top"
-              align="right"
-              content={({ payload }) =>
-                isLoading ? null : (
-                  <AreaChartLegend
-                    isEmptyData={isEmptyData}
-                    payload={payload}
-                  />
-                )
-              }
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {chartType?.has("income-and-expences") && (
+          <AreaIncomeAndExpences
+            data={data}
+            isLoading={isLoading}
+            currency={currency}
+            emptyDataPayload={emptyDataPayload}
+            isEmptyData={isEmptyData}
+          />
+        )}
+        {chartType?.has("by-expence-category") && (
+          <AreaExpenceByCategory
+            data={transactionsByExpenses}
+            isLoading={isLoading}
+            currency={currency}
+            emptyDataPayload={emptyDataPayload}
+            isEmptyData={isEmptyData}
+          />
+        )}
         {!isLoading && (
           <Dropdown
             classNames={{

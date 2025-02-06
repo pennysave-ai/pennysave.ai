@@ -13,12 +13,14 @@ interface PromptAreaProps {
   input: string;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleInputChange: ChangeEventHandler<HTMLInputElement>;
+  disabled: boolean;
 }
 
 export default function PromptArea({
   input,
   handleSubmit,
   handleInputChange,
+  disabled,
 }: PromptAreaProps) {
   const prompts = [
     {
@@ -85,7 +87,7 @@ export default function PromptArea({
                 <Button
                   isIconOnly
                   color={!input ? "default" : "primary"}
-                  isDisabled={!input}
+                  isDisabled={!input || disabled}
                   radius="lg"
                   size="sm"
                   variant="solid"
@@ -125,6 +127,21 @@ export default function PromptArea({
           }}
         />
         <div className="flex w-full items-center justify-between  gap-2 overflow-scroll px-4 pb-4">
+          <div className="flex flex-wrap gap-3">
+            {/* <Button
+              size="sm"
+              startContent={
+                <Icon
+                  className="text-default-500"
+                  icon="solar:paperclip-linear"
+                  width={18}
+                />
+              }
+              variant="flat"
+            >
+              Add Transaction
+            </Button> */}
+          </div>
           <p className="py-1 text-tiny text-default-400">
             {input.length}/{USER_INPUT_LIMIT}
           </p>

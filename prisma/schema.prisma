@@ -65,7 +65,7 @@ model User {
 model Transaction {
   id          String    @id @default(uuid())
   amount      Int
-  payee       String
+  payee       String?
   notes       String?
   logo        String?
   plaidCategoryConfidenceLeveL String?

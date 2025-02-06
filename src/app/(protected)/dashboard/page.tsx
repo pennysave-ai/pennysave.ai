@@ -33,6 +33,10 @@ export default function DashboardPage() {
     income: day.income,
     expences: Math.abs(day.expences),
   }));
+  const transactionsByExpenses = data?.expencesByCategory.map((category) => ({
+    ...category,
+    date: format(parseISO(category.date as string), "PP"),
+  }));
   return (
     <div className="relative z-10 flex flex-col w-full gap-y-4">
       <Hero description="Analyze, your expenses and income" />
@@ -84,6 +88,7 @@ export default function DashboardPage() {
           data={transactionsData || []}
           isLoading={isLoading}
           currency={data?.meta.currency.name || ""}
+          transactionsByExpenses={transactionsByExpenses || []}
         />
         <Top5Chart
           isLoading={isLoading}

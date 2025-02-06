@@ -116,8 +116,17 @@ export const updateTransactionSchema = z.object({
 
 export const createTransactionSchema = z.object({
   id: z.string(),
-  accountId: z.string().min(1, { message: "Account cannot be empty" }),
-  categoryId: z.string().nullable().optional(),
+  accountId: z
+    .string()
+    .uuid()
+    .min(1, { message: "Account cannot be empty" })
+    .describe("an account id from UserAccount table"),
+  categoryId: z
+    .string()
+    .uuid()
+    .nullable()
+    .optional()
+    .describe("category id from Category table"),
   createdAt: z
     .string()
     .min(1, { message: "Date cannot be empty" })
@@ -130,11 +139,14 @@ export const createTransactionSchema = z.object({
         message: "Invalid date, date must be after year 1900",
       }
     ),
-  payee: z.string().optional(),
-  amount: z.number().refine((val) => val !== 0, {
-    message: "Amount must be a non-zero number",
-  }),
-  notes: z.string().optional(),
+  payee: z.string().optional().describe("payee name"),
+  amount: z
+    .number()
+    .refine((val) => val !== 0, {
+      message: "Amount must be a non-zero number",
+    })
+    .describe("transaction amount positive for income or negative for expense"),
+  notes: z.string().optional().describe("transaction notes"),
 });
 
 export const createTransactionsSchema = createTransactionSchema.omit({

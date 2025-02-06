@@ -179,7 +179,7 @@ const renderActiveShape = (props: PieSectorDataItem) => {
         fill={fill}
         className="text-sm font-semibold overflow-hidden"
       >
-        {truncateText(payload.name, 14)}
+        {truncateText(payload.name, 14) || "Uncategorized"}
       </text>
       <text
         x={cx}

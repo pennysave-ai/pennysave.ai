@@ -1,7 +1,13 @@
+import { v4 as uuid } from "uuid";
+
 import { db } from "@/db";
 import { convertAmountToMilliunits } from "@/lib/utils";
 import { getAllTransactions } from "../lib/plaid";
 import { getCategoiresMappings } from "./categories";
+import { convertAmountFromMilliunits } from "@/lib/utils";
+import { CreateTransaction } from "@/features/transactions/hooks";
+import { createTransactionSchema } from "@/schemas";
+
 /**
  * Fetch all transactions by acess token and write them to the database
  * @param accessToken {String} - Plaid access token
@@ -141,4 +147,95 @@ export async function syncTransactions(
     ...upsertTransactionsPromises,
     updateCursorPromise,
   ]);
+}
+
+/**
+ * Fetch user data for AI model context
+ * @param {String}  userId - User ID
+ */
+export async function getUserTransactions(userId: string) {
+  const transactions = await db.transaction.findMany({
+    select: {
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      account: {
+        select: {
+          name: true,
+          institutionName: true,
+          currency: { select: { name: true } },
+          plaidBalance: true,
+        },
+      },
+      category: {
+        select: { name: true },
+      },
+    },
+    where: {
+      account: {
+        userId,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const convertedTransactions = transactions.map((transaction) => ({
+    ...transaction,
+    amount: convertAmountFromMilliunits(transaction.amount),
+    createdAt: transaction.createdAt,
+    account: {
+      name: transaction.account.name,
+      balance: transaction.account.plaidBalance || "unknown",
+      currency: {
+        name: transaction.account.currency.name,
+      },
+    },
+    bank: {
+      name: transaction.account.institutionName,
+    },
+  }));
+
+  return convertedTransactions;
+}
+
+/**
+ * Creates a new transaction
+ * @param {Transaction} payload - Transaction data
+ * @returns {Promise} - Promise object represents the transaction data
+ * @throws {Error} - If the transaction creation fails
+ */
+export async function createTransaction(payload: CreateTransaction) {
+  try {
+    const { amount, payee, notes, accountId, categoryId, createdAt } = payload;
+    const id = uuid();
+    const validationResult = createTransactionSchema.safeParse({
+      id,
+      amount,
+      payee,
+      notes,
+      accountId,
+      categoryId,
+      createdAt,
+    });
+    if (!validationResult.success) {
+      console.log(validationResult.error.flatten().fieldErrors);
+      throw new Error("Invalid transaction data");
+    }
+    const transaction = await db.transaction.create({
+      data: {
+        id,
+        amount,
+        payee: payee || "",
+        notes,
+        accountId,
+        categoryId,
+        createdAt,
+      },
+    });
+    return { id: transaction.id };
+  } catch (error) {
+    console.error("Error creating transaction:", error);
+    throw new Error("Failed to create transaction");
+  }
 }
