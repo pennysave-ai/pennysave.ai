@@ -169,6 +169,7 @@ const AccountsCard = () => {
                   isLoading={isCurrenciesLoading}
                   label="Account Currency"
                   isRequired
+                  disallowEmptySelection
                   defaultSelectedKeys={[formState?.currencyId || ""]}
                   onChange={({ target }) => {
                     setFormState({

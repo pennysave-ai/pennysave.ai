@@ -68,6 +68,7 @@ export default function TransactionsAreaChart({
                     <Select
                       size="sm"
                       selectedKeys={chartType}
+                      disallowEmptySelection
                       onSelectionChange={(keys) =>
                         setChartType(new Set(Array.from(keys) as string[]))
                       }
@@ -88,51 +89,53 @@ export default function TransactionsAreaChart({
             </div>
           </div>
         </div>
-        {chartType?.has("income-and-expences") && (
-          <AreaIncomeAndExpences
-            data={data}
-            isLoading={isLoading}
-            currency={currency}
-            emptyDataPayload={emptyDataPayload}
-            isEmptyData={isEmptyData}
-          />
-        )}
-        {chartType?.has("by-expence-category") && (
-          <AreaExpenceByCategory
-            data={transactionsByExpenses}
-            isLoading={isLoading}
-            currency={currency}
-            emptyDataPayload={emptyDataPayload}
-            isEmptyData={isEmptyData}
-          />
-        )}
         {!isLoading && (
-          <Dropdown
-            classNames={{
-              content: "min-w-[120px]",
-            }}
-            placement="bottom-end"
-          >
-            <DropdownTrigger>
-              <Button
-                isIconOnly
-                className="absolute right-2 top-2 w-auto rounded-full"
-                size="sm"
-                variant="light"
-              >
-                <Icon height={16} icon="solar:menu-dots-bold" width={16} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              itemClasses={{
-                title: "text-tiny",
+          <>
+            {chartType?.has("income-and-expences") && (
+              <AreaIncomeAndExpences
+                data={data}
+                isLoading={isLoading}
+                currency={currency}
+                emptyDataPayload={emptyDataPayload}
+                isEmptyData={isEmptyData}
+              />
+            )}
+            {chartType?.has("by-expence-category") && (
+              <AreaExpenceByCategory
+                data={transactionsByExpenses}
+                isLoading={isLoading}
+                currency={currency}
+                emptyDataPayload={emptyDataPayload}
+                isEmptyData={isEmptyData}
+              />
+            )}
+            <Dropdown
+              classNames={{
+                content: "min-w-[120px]",
               }}
-              variant="flat"
+              placement="bottom-end"
             >
-              <DropdownItem key="export-data">Export Data</DropdownItem>
-              <DropdownItem key="set-alert">Set Alert</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+              <DropdownTrigger>
+                <Button
+                  isIconOnly
+                  className="absolute right-2 top-2 w-auto rounded-full"
+                  size="sm"
+                  variant="light"
+                >
+                  <Icon height={16} icon="solar:menu-dots-bold" width={16} />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                itemClasses={{
+                  title: "text-tiny",
+                }}
+                variant="flat"
+              >
+                <DropdownItem key="export-data">Export Data</DropdownItem>
+                <DropdownItem key="set-alert">Set Alert</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </>
         )}
       </section>
     </Card>

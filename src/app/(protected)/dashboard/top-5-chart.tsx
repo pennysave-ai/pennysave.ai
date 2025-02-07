@@ -38,6 +38,7 @@ export default function Top5Chart({ data, isLoading, currency }: Top5Chart) {
                 </h3>
                 <div className="flex items-center">
                   <Select
+                    disallowEmptySelection
                     size="sm"
                     selectedKeys={chartType}
                     onSelectionChange={(keys) =>

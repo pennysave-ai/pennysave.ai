@@ -53,6 +53,7 @@ model User {
   category      Category[]
   userAccounts  UserAccount[]
   plaidItems    PlaidItem[]
+  budgets       Budget[]
   password      String?
   role          UserRole @default(USER)
   stripeCustomerId String?
@@ -97,6 +98,7 @@ model Category {
   plaidPrimary String?  // Plaid primary category
   description String?
   transactions Transaction[]
+  budgetAllocations BudgetAllocation[]
   @@unique([id])
 }
 
@@ -107,6 +109,7 @@ model Currency {
   symbol      String
   userAccounts UserAccount[]
   exchangeRate Float
+  budget Budget[]
   @@unique([id])
 }
 
@@ -144,6 +147,7 @@ model UserAccount {
   transactions Transaction[]
   currencyId String
   currency   Currency  @relation(fields: [currencyId], references: [id])
+  budgets    BudgetAccount[]
   @@unique([id])
 }
 
@@ -171,4 +175,47 @@ model PlaidCategory {
   detailed    String
   description String
   @@unique([id])
+}
+
+// Join table for Budget and UserAccount
+model BudgetAccount {
+  budgetId      String
+  budget        Budget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  userAccountId String
+  userAccount   UserAccount @relation(fields: [userAccountId], references: [id], onDelete: Cascade)
+  @@id([budgetId, userAccountId])
+}
+
+// Enum to represent budget frequency
+enum BudgetFrequency {
+  MONTHLY
+  WEEKLY
+  YEARLY
+  QUARTERLY
+}
+
+model Budget {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  totalAmount   Float
+  currencyId    String
+  currency      Currency  @relation(fields: [currencyId], references: [id])
+  frequency     BudgetFrequency
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  budgetAllocations BudgetAllocation[]
+  accounts      BudgetAccount[]
+}
+
+// New model for Budget Allocations
+model BudgetAllocation {
+  id            String    @id @default(uuid())
+  budgetId      String
+  budget        Budget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  allocatedAmount Float
+  spentAmount   Float     @default(0)
 }

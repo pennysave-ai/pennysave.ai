@@ -6,12 +6,7 @@ import {
   type Query,
   type QueryClient,
 } from "@tanstack/react-query";
-
-export type CreateAccount = {
-  name: string;
-  currencyId: string;
-  institutionName: string;
-};
+import { CreateAccount } from "@/data/accounts";
 
 const onSuccess = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
