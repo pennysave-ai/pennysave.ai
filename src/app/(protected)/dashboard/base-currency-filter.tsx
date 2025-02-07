@@ -35,6 +35,7 @@ export default function BaseCurrencyFilter({
       isDisabled={!!accointId}
       isLoading={isLoading}
       label="Show in"
+      disallowEmptySelection
       startContent={<Icon icon="solar:dollar-outline" />}
       onChange={({ target }) => onChange(target.value)}
       selectedKeys={[currencyId]}

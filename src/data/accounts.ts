@@ -3,6 +3,12 @@ import { v4 as uuid } from "uuid";
 import { accountSchema } from "@/schemas";
 import { ExtendedAccountResponseType } from "@/lib/plaid";
 
+export type CreateAccount = {
+  name: string;
+  currencyId: string;
+  institutionName: string;
+};
+
 /**
  * Deletes accounts by plaidItemId
  * @param {String} plaidItemId - Plaid Item ID

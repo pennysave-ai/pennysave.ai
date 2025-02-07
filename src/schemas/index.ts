@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseISO, isValid } from "date-fns";
+import { BudgetFrequency } from "@prisma/client";
 
 // Define a schema for the user's sign-in data
 export const signInSchema = z.object({
@@ -155,4 +156,17 @@ export const createTransactionsSchema = createTransactionSchema.omit({
 
 export const bulkCreateTransactionsSchema = createTransactionsSchema.omit({
   categoryId: true,
+});
+
+export const createBudgetSchema = z.object({
+  name: z.string().min(1, { message: "Budget name cannot be empty" }),
+  totalAmount: z
+    .number()
+    .min(0, { message: "Total amount must be a positive number" }),
+  currencyId: z.string().min(1, { message: "Currency cannot be empty" }),
+  frequency: z.nativeEnum(BudgetFrequency),
+  accounts: z.array(z.string().uuid()),
+  budgetAllocations: z.array(
+    z.object({ categoryId: z.string().uuid(), allocatedAmount: z.number() })
+  ),
 });

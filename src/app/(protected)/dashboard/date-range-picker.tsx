@@ -106,11 +106,8 @@ export default function RangePicker() {
           prevButtonProps: {
             variant: "bordered",
           },
-          classNames: {
-            // base: "bg-background-100",
-          },
         }}
-        label="Data range"
+        label="Period"
         value={value}
         onChange={setValue}
       />

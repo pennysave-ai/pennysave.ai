@@ -37,6 +37,7 @@ export default function AccountFilter() {
 
   return (
     <Select
+      disallowEmptySelection
       label="Account"
       isLoading={isLoading}
       disabled={isLoading}
