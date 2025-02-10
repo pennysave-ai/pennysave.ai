@@ -113,5 +113,5 @@ async function handler(req: Request): Promise<NextResponse> {
     await db.$disconnect();
   }
 }
-
+export const maxDuration = 60;
 export const POST = verifySignatureAppRouter(handler);
