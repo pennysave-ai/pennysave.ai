@@ -9,7 +9,7 @@ export interface MonthlyReportData {
 const MonthlyReport = ({ data }: MonthlyReportData) => {
   const {
     income_analysis,
-    expence_analysis,
+    expense_analysis,
     health_analysis,
     income,
     expenses,
@@ -179,7 +179,7 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
               marginBottom: 20,
             }}
           >
-            {expence_analysis}
+            {expense_analysis}
           </div>
           <table width="100%">
             <tbody>
