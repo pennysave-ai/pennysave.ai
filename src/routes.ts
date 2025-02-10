@@ -4,9 +4,10 @@
  */
 export const publicRoutes = [
   "/auth/verify-email",
-  "/api/webhooks/cron",
   "/api/webhooks/stripe",
   "/api/webhooks/plaid",
+  "/api/webhooks/cron/update-exchange-rates",
+  "/api/webhooks/cron/fill-monthly-reports",
   "/api/webhooks/monthly-reports/create",
   "/api/webhooks/monthly-reports/send",
 ];
