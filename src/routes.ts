@@ -7,6 +7,8 @@ export const publicRoutes = [
   "/api/webhooks/cron",
   "/api/webhooks/stripe",
   "/api/webhooks/plaid",
+  "/api/webhooks/monthly-reports/create",
+  "/api/webhooks/monthly-reports/send",
 ];
 
 /**

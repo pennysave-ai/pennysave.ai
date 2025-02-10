@@ -97,7 +97,7 @@ export const getTransactionsSchema = z.object({
 export const updateTransactionSchema = z.object({
   id: z.string(),
   accountId: z.string(),
-  categoryId: z.string().uuid().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
   createdAt: z
     .string()
     .min(1, { message: "Date cannot be empty" })
@@ -124,7 +124,6 @@ export const createTransactionSchema = z.object({
     .describe("an account id from UserAccount table"),
   categoryId: z
     .string()
-    .uuid()
     .nullable()
     .optional()
     .describe("category id from Category table"),

@@ -20,7 +20,7 @@ const PAID_FEATURES = [
   { id: 1, name: "Enable your AI financial advisor." },
   {
     id: 2,
-    name: "Set your financial goals, notifications and alarms about your expences.",
+    name: "Set your financial goals, notifications and alarms about your expenses.",
   },
   {
     id: 3,

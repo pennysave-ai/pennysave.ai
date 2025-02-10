@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/webhooks/cron",
+      "path": "/api/webhooks/cron/update-exchange-rates",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/fill-monthly-reports",
+      "schedule": "0 1 1 * *"
     }
   ]
 }
