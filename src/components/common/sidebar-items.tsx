@@ -75,7 +75,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
               <div className="flex justify-start gap-x-2 items-center">
                 <h3 className="text-medium font-medium text-default-700">
                   Subscribe to the
-                  <span className="ml-2 text-primary">Pro Plan</span>
+                  <span className="ml-1 text-primary">Pro Plan</span>
                 </h3>
               </div>
               <p className="p-4 text-small text-default-500">
@@ -99,7 +99,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
       <Spacer y={2} />
       <div
         className={cn("mt-auto flex flex-col", {
-          "items-center": isCompact,
+          "items-center gap-y-1": isCompact,
         })}
       >
         <Tooltip
@@ -110,7 +110,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
           <Button
             fullWidth
             className={cn(
-              "justify-start truncate text-default-500 data-[hover=true]:text-foreground",
+              "justify-start truncate text-default-500 data-[hover=true]:text-foreground mb-0.5",
               {
                 "justify-center": isCompact,
               }
@@ -134,7 +134,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
                 width={24}
               />
             ) : (
-              "Help & Information"
+              "Help & Feedback"
             )}
           </Button>
         </Tooltip>

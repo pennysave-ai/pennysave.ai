@@ -30,7 +30,7 @@ export function Hero({ description }: HeroProps) {
   const pathname = usePathname();
   const currentPageName = pathname.charAt(1).toUpperCase() + pathname.slice(2);
   return (
-    <div className="sticky top-16 px-4 py-8 pb-36 bg-gradient-to-b dark:from-purple-600 dark:to-purple-400 from-blue-600 to-blue-400">
+    <div className="sticky top-16 px-4 py-8 pb-36 bg-gradient-to-b dark:from-secondary-600 dark:to-secondary-400 from-primary-600 to-primary-400">
       <h1
         className="text-3xl font-bold leading-9 text-white"
         style={{ fontSize: `${fontSize}rem`, opacity }}

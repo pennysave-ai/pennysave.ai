@@ -61,6 +61,8 @@ model User {
   stripeSubscriptionCancelAtDate DateTime?
   stripePriceId String?
   hasActiveStripeSubscription Boolean? @default(false)
+  report Report[]
+  sendMonthlyReport Boolean? @default(false)
 }
 
 model Transaction {
@@ -218,4 +220,15 @@ model BudgetAllocation {
   category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   allocatedAmount Float
   spentAmount   Float     @default(0)
+}
+
+model Report {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data          Json      // JSON data for the report, it might be changed frequently and we don't want to change the schema, indexing and querying is not that important
+  createdAt     DateTime  @default(now())
+  sentAt        DateTime?
+  
+  @@index([userId, createdAt])
 }

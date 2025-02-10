@@ -1,10 +1,11 @@
 import { v4 as uuid } from "uuid";
+import { format } from "date-fns";
 
 import { db } from "@/db";
-import { convertAmountToMilliunits } from "@/lib/utils";
+import { convertAmountToMilliunits, formatCurrency } from "@/lib/utils";
 import { getAllTransactions } from "../lib/plaid";
 import { getCategoiresMappings } from "./categories";
-import { convertAmountFromMilliunits } from "@/lib/utils";
+import { convertAmountFromMilliunits, convertCurrency } from "@/lib/utils";
 import { CreateTransaction } from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
 
@@ -89,12 +90,6 @@ export async function syncTransactions(
     plaidCategories,
     userId
   );
-
-  // personal_finance_category: {
-  //   confidence_level: 'VERY_HIGH',
-  //   detailed: 'TRANSPORTATION_TAXIS_AND_RIDE_SHARES',
-  //   primary: 'TRANSPORTATION'
-  // },
 
   // Payload to upsert transactions
   const upsertPayload = transactions.map((transaction) => ({
@@ -197,6 +192,208 @@ export async function getUserTransactions(userId: string) {
   }));
 
   return convertedTransactions;
+}
+
+/**
+ * Fetch users analytics data for AI model context
+ * @param usersIds {String[]} - Array of user IDs
+ * @param startDate {Date} - Start date
+ * @param endDate {Date} - End date
+ */
+export async function getPrevMonthSummaries(
+  usersIds: string[],
+  startDate: string,
+  endDate: string
+) {
+  type Transaction = {
+    category?: {
+      name: string;
+    };
+    payee?: string;
+    notes?: string;
+    email: string;
+    account: {
+      name: string;
+      currency: {
+        id: string;
+        symbol: string;
+        name: string;
+        exchangeRate: number;
+      };
+      user: {
+        email: string;
+      };
+    };
+    amount: number;
+  };
+  const transactionsData = await db.transaction.findMany({
+    select: {
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      account: {
+        select: {
+          name: true,
+          userId: true,
+          institutionName: true,
+          currency: {
+            select: { name: true, id: true, exchangeRate: true, symbol: true },
+          },
+          user: {
+            select: { email: true },
+          },
+          plaidBalance: true,
+        },
+      },
+      category: {
+        select: { name: true },
+      },
+    },
+    where: {
+      account: {
+        userId: {
+          in: usersIds,
+        },
+      },
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Group transactions by account user ID
+  const groupedTransactionsByUserId = transactionsData.reduce(
+    (acc, transaction) => {
+      const userId = transaction.account.userId;
+      if (acc.has(userId)) {
+        acc.set(userId, [...acc.get(userId), transaction]);
+      } else {
+        acc.set(userId, [transaction]);
+      }
+      return acc;
+    },
+    new Map()
+  );
+  // Iterate over each user id to determine the base currency
+  const usersData = [];
+  for (const [userId, userTransactions] of groupedTransactionsByUserId) {
+    const transactionsByCurrency: Record<
+      string,
+      {
+        count: number;
+        expenses: number;
+        income: number;
+        exchangeRate: number;
+        symbol: string;
+        currency: string;
+        email: string;
+      }
+    > = userTransactions.reduce(
+      (
+        acc: Record<
+          string,
+          {
+            count: number;
+            expenses: number;
+            income: number;
+            exchangeRate: number;
+            symbol: string;
+            currency: string;
+            email: string;
+          }
+        >,
+        transaction: Transaction
+      ) => {
+        if (transaction.account.currency.id in acc) {
+          acc[transaction.account.currency.id] = acc[
+            transaction.account.currency.id
+          ] = {
+            ...acc[transaction.account.currency.id],
+            count: acc[transaction.account.currency.id].count + 1,
+            expenses:
+              transaction.amount < 0
+                ? acc[transaction.account.currency.id].expenses +
+                  transaction.amount
+                : acc[transaction.account.currency.id].expenses,
+            income:
+              transaction.amount > 0
+                ? acc[transaction.account.currency.id].income +
+                  transaction.amount
+                : acc[transaction.account.currency.id].income,
+            symbol: transaction.account.currency.symbol,
+            currency: transaction.account.currency.name,
+            email: transaction.account.user.email,
+          };
+        } else {
+          acc[transaction.account.currency.id] = {
+            count: 1,
+            expenses: transaction.amount < 0 ? transaction.amount : 0,
+            income: transaction.amount > 0 ? transaction.amount : 0,
+            exchangeRate: transaction.account.currency.exchangeRate,
+            symbol: transaction.account.currency.symbol,
+            currency: transaction.account.currency.name,
+            email: transaction.account.user.email,
+          };
+        }
+        return acc;
+      },
+      {}
+    );
+    // sort by count
+    const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
+      (a, b) => b[1].count - a[1].count
+    );
+    // Convert income and expenses to base currency and find a total for income and expences
+    const sum = Object.entries(transactionsByCurrency).reduce(
+      (acc, [currency, { income, expenses, exchangeRate }]) => {
+        if (currency === targetCurrency[0]) {
+          acc.income += Number(income);
+          acc.expenses += Number(expenses);
+        } else {
+          acc.income += convertCurrency(
+            income,
+            exchangeRate,
+            targetCurrency[1].exchangeRate
+          );
+          acc.expenses += convertCurrency(
+            expenses,
+            exchangeRate,
+            targetCurrency[1].exchangeRate
+          );
+        }
+        return acc;
+      },
+      {
+        income: 0,
+        expenses: 0,
+      }
+    );
+    const transactions = userTransactions.map((transaction: Transaction) => ({
+      amount: formatCurrency(
+        convertAmountFromMilliunits(transaction.amount),
+        targetCurrency[1].currency
+      ),
+      category: transaction.category?.name || "Uncategorized",
+      payee: transaction.payee,
+      notes: transaction.notes,
+      account: transaction.account.name,
+    }));
+    usersData.push({
+      userId,
+      email: targetCurrency[1].email,
+      currencySymbol: targetCurrency[1].symbol,
+      currencyName: targetCurrency[1].currency,
+      income: convertAmountFromMilliunits(sum.income),
+      expenses: convertAmountFromMilliunits(sum.expenses),
+      netFlow: convertAmountFromMilliunits(sum.income + sum.expenses),
+      reportDate: format(startDate, "MMMM yyyy"),
+      transactions,
+    });
+  }
+  return usersData;
 }
 
 /**

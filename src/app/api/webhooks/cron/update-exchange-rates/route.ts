@@ -6,9 +6,9 @@ import { BASE_CURRENCY } from "@/constants";
 const CURRENCY_API_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY}.json`;
 
 /**
- * An API route to update the exchange rates in the database
+ * Uupdate the exchange rates in the database
  * runs accoording the schedule defined in vercel.json file
- * twice a day
+ * once a day
  * @param req
  * @returns {Promise<NextResponse>}
  */
@@ -46,7 +46,7 @@ export async function GET(
       })
     );
 
-    const updateOperations = updates.map(
+    const updateTransactions = updates.map(
       (update: { where: { id: string }; data: { exchangeRate: number } }) =>
         db.currency.update({
           where: update.where,
@@ -54,7 +54,7 @@ export async function GET(
         })
     );
 
-    await db.$transaction(updateOperations);
+    await db.$transaction(updateTransactions);
     console.log(`Exchange rates updated successfully on ${new Date()}`);
     return NextResponse.json({ ok: true });
   } catch (error) {
