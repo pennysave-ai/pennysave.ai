@@ -100,7 +100,7 @@ async function handler(req: Request): Promise<NextResponse> {
 
     const ids = results.map((result) => result.userId);
     await qstash.publishJSON({
-      url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/create`,
+      url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/send`,
       body: {
         ids,
       },
