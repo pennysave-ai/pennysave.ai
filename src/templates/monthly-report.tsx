@@ -163,6 +163,7 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
                     fontSize: 16,
                     textAlign: "right",
                     borderBottom: "2px dotted #cecece",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {formatCurrency(Math.abs(expenses), currencyName)}
@@ -207,6 +208,7 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
                     textAlign: "right",
                     borderBottom: "2px dotted #cecece",
                     color: netFlow > 0 ? "#17c964" : "#f31260",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {formatCurrency(netFlow, currencyName)}
