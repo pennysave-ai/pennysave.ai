@@ -62,7 +62,7 @@ model User {
   stripePriceId String?
   hasActiveStripeSubscription Boolean? @default(false)
   report Report[]
-  sendMonthlyReport Boolean? @default(false)
+  sendMonthlyReport Boolean? @default(true)
 }
 
 model Transaction {

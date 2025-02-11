@@ -20,7 +20,7 @@ export default async function Settings() {
         <Card className="p-8 w-full">
           <Tabs>
             <General user={session?.user} />
-            <Notifications />
+            <Notifications user={session?.user} />
           </Tabs>
         </Card>
       </div>

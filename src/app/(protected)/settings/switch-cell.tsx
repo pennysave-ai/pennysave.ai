@@ -22,6 +22,7 @@ const CustomSwitch = extendVariants(Switch, {
 
 export type SwitchCellProps = Omit<SwitchProps, "color"> & {
   label: string;
+  icon: React.ReactNode;
   description: string;
   color?: SwitchProps["color"] | "foreground";
   classNames?: SwitchProps["classNames"] & {
@@ -31,7 +32,7 @@ export type SwitchCellProps = Omit<SwitchProps, "color"> & {
 
 const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
   (
-    { label, description, classNames, ...props },
+    { label, description, classNames, icon, ...props },
     ref // eslint-disable-line
   ) => (
     <CustomSwitch
@@ -45,13 +46,19 @@ const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
       }}
       {...props}
     >
-      <div className="flex flex-col">
-        <p className={cn("text-medium", classNames?.label)}>{label}</p>
-        <p
-          className={cn("text-small text-default-500", classNames?.description)}
-        >
-          {description}
-        </p>
+      <div className="flex items-center gap-x-2">
+        {icon && <div className="flex">{icon}</div>}
+        <div className="flex flex-col">
+          <p className={cn("text-medium", classNames?.label)}>{label}</p>
+          <p
+            className={cn(
+              "text-small text-default-500",
+              classNames?.description
+            )}
+          >
+            {description}
+          </p>
+        </div>
       </div>
     </CustomSwitch>
   )
