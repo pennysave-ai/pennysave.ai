@@ -13,6 +13,9 @@ export type ExtendedUser = DefaultSession["user"] & {
     expires: string;
     cancelAt: string | null;
   };
+  notifications: {
+    monthlyReports: boolean;
+  };
 };
 
 declare module "next-auth" {
@@ -64,6 +67,9 @@ export const {
           cancelAt: token.cancelAt as string | null,
         };
       }
+      session.user.notifications = {
+        monthlyReports: token.monthlyReports as boolean,
+      };
       session.user.hasActiveStripeSubscription =
         token.activeSubscription as boolean;
       return session;
@@ -77,6 +83,7 @@ export const {
           stripePriceId: true,
           stripeSubscriptionEndDate: true,
           stripeSubscriptionCancelAtDate: true,
+          sendMonthlyReport: true,
         },
         where: { id: token.sub },
       });
@@ -85,6 +92,7 @@ export const {
       token.priceId = existingUser.stripePriceId;
       token.expires = existingUser.stripeSubscriptionEndDate;
       token.cancelAt = existingUser.stripeSubscriptionCancelAtDate;
+      token.monthlyReports = existingUser.sendMonthlyReport;
       return token;
     },
   },

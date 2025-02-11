@@ -24,13 +24,12 @@ export async function GET(
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    // Get all the users who have active subscription and enabled monthly reports
+    // Get all the users who has and enabled monthly reports
     const users = await db.user.findMany({
       select: {
         id: true,
       },
       where: {
-        hasActiveStripeSubscription: true,
         sendMonthlyReport: true,
       },
     });

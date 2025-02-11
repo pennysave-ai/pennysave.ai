@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const result = streamText({
       model: openai("gpt-4-turbo"),
       system: `You are an AI assistant specializing in personal finances. 
-      Help me to create financial goals, track expenses, and manage my budget.
+      Help me to create financial goals, track expenses, and manage my budget. 
       Only provide information related to personal finances.
       If a question is outside this theme, politely redirect the conversation 
       back to personal finances or state that you can't answer.`,
@@ -164,6 +164,7 @@ export async function POST(req: Request) {
             return { userAccounts: accounts };
           },
         }),
+        // TODO: improve user data fetching as we have for monthly report
         fetchUserTransactions: tool({
           parameters: z.object({}),
           description: "fetch the user's transactions",
