@@ -11,20 +11,39 @@ import {
 import { Checkbox } from "@heroui/checkbox";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
+import PrivacyPolicyContent from "@/components/common/privacy-policy-content";
 
-export default function TermsAndPrivacyPolicy() {
+interface TermsAndPrivacyPolicyProps {
+  gdprConsent: boolean;
+  setGdprConsent: (value: boolean) => void;
+}
+
+export default function TermsAndPrivacyPolicy({
+  gdprConsent,
+  setGdprConsent,
+}: TermsAndPrivacyPolicyProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <>
-      <div className="flex items-center justify-between px-1 py-2">
-        <Checkbox name="agree" size="sm">
-          I agree with the{" "}
-        </Checkbox>
-        <Link className="cursor-pointer" onPress={onOpen} size="sm">
-          Terms and Privacy Policy
-        </Link>
+      <div className="flex items-start px-1 py-2 flex-col gap-y-2">
+        <div className="flex justify-start items-center gap-x-1">
+          <Checkbox
+            name="gdprConsent"
+            size="sm"
+            checked={gdprConsent}
+            onValueChange={setGdprConsent}
+          >
+            <div className="flex text-sm justify-start gap-x-1">
+              To continue please accept our{" "}
+            </div>
+          </Checkbox>
+          <Link className="cursor-pointer" onPress={onOpen} size="sm">
+            Privacy policy
+          </Link>
+        </div>
       </div>
       <Modal
+        size="2xl"
         backdrop="blur"
         isOpen={isOpen}
         onClose={onClose}
@@ -33,28 +52,9 @@ export default function TermsAndPrivacyPolicy() {
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Terms and Privacy Policy
-              </ModalHeader>
-              <ModalBody>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Nullam pulvinar risus non risus hendrerit venenatis.
-                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
-                </p>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Nullam pulvinar risus non risus hendrerit venenatis.
-                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
-                </p>
-                <p>
-                  Magna exercitation reprehenderit magna aute tempor cupidatat
-                  consequat elit dolor adipisicing. Mollit dolor eiusmod sunt ex
-                  incididunt cillum quis. Velit duis sit officia eiusmod Lorem
-                  aliqua enim laboris do dolor eiusmod. Et mollit incididunt
-                  nisi consectetur esse laborum eiusmod pariatur proident Lorem
-                  eiusmod et. Culpa deserunt nostrud ad veniam.
-                </p>
+              <ModalHeader>Privacy Policy</ModalHeader>
+              <ModalBody className="block gap-0">
+                <PrivacyPolicyContent />
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>

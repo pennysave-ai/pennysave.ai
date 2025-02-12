@@ -38,11 +38,21 @@ export const {
     error: "/auth/error",
   },
   events: {
-    async linkAccount({ user }) {
-      await db.user.update({
-        data: { emailVerified: new Date() },
-        where: { id: user.id },
-      });
+    async linkAccount({ user, account }) {
+      if (account.provider !== "credentials") {
+        await db.user.update({
+          data: {
+            emailVerified: new Date(),
+            gdprConsent: new Date(),
+          },
+          where: { id: user.id },
+        });
+      } else {
+        await db.user.update({
+          data: { emailVerified: new Date() },
+          where: { id: user.id },
+        });
+      }
     },
   },
   callbacks: {

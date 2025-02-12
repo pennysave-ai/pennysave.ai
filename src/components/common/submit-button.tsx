@@ -6,15 +6,20 @@ import { Button } from "@heroui/button";
 interface SubmitButtonProps {
   children: React.ReactNode;
   className?: string;
+  isDisabled?: boolean;
 }
 
-export function SubmitButton({ children, className = "" }: SubmitButtonProps) {
+export function SubmitButton({
+  children,
+  className = "",
+  isDisabled = false,
+}: SubmitButtonProps) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="submit"
       color="primary"
-      disabled={pending}
+      isDisabled={pending || isDisabled}
       isLoading={pending}
       className={className}
     >

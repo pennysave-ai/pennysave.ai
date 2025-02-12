@@ -28,6 +28,13 @@ export async function signUp(
   const email = formData.get("email");
   const password = formData.get("password");
   const password2 = formData.get("password2");
+  if (!formData.has("gdprConsent")) {
+    return {
+      errors: {
+        _form: ["Please agree to the privacy policy"],
+      },
+    };
+  }
 
   // Validate the form data
   const validationResult = signUpSchema.safeParse({
@@ -60,6 +67,7 @@ export async function signUp(
         name: username as string,
         email: email as string,
         password: hashedPassword,
+        gdprConsent: new Date(),
       },
     });
     const verificationToken = await generateVerificationToken(email as string);

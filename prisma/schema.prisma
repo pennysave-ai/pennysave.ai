@@ -62,7 +62,8 @@ model User {
   stripePriceId String?
   hasActiveStripeSubscription Boolean? @default(false)
   report Report[]
-  sendMonthlyReport Boolean? @default(true)
+  sendMonthlyReport Boolean? @default(false)
+  gdprConsent DateTime?
 }
 
 model Transaction {
