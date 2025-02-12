@@ -255,6 +255,15 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
                     }}
                   >
                     <a
+                      href="https://pennysave.ai/settings"
+                      style={{
+                        color: "#454545!important",
+                      }}
+                    >
+                      unsubscribe
+                    </a>
+                    {" | "}
+                    <a
                       href="https://pennysave.ai"
                       style={{
                         color: "#454545!important",

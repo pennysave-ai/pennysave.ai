@@ -3,7 +3,6 @@ import { Card, CardHeader } from "@heroui/card";
 import { Link } from "@heroui/link";
 
 import SignUpForm from "@/components/sign-up-form";
-import { OauthButtons } from "@/components/common";
 
 export default async function SignUp() {
   return (
@@ -13,7 +12,6 @@ export default async function SignUp() {
         <Suspense fallback={<div>Loading...</div>}>
           <SignUpForm />
         </Suspense>
-        <OauthButtons />
         <p className="text-center text-small">
           <span className="mr-1">Already have an account?</span>
           <Link href="/" size="sm">
