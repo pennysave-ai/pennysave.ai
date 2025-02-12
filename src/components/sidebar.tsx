@@ -52,11 +52,15 @@ export default function Sidebar({ user }: SidebarProps) {
             )}
           >
             <span
-              className={cn("text-small font-bold uppercase opacity-100", {
+              className={cn("text-small font-bold opacity-100", {
                 "w-0 opacity-0": isCompact,
               })}
             >
-              PENNYSAVE.<span className="text-primary">AI</span>
+              <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+                P
+              </span>
+              ENNYSAVE.
+              <span className="text-primary">AI</span>
             </span>
             <div className="flex h-8 w-8 items-center justify-center">
               <Button isIconOnly variant="light" onPress={onToggle}>
