@@ -45,6 +45,13 @@ export default {
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
       clientSecret: APPLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "openid email profile",
+          response_type: "code",
+          code_challenge_method: "S256",
+        },
+      },
       userinfo: {
         url: "https://appleid.apple.com/auth/userinfo",
       },
