@@ -2,7 +2,6 @@
 
 import { useFormState } from "react-dom";
 import { Input } from "@heroui/input";
-import { Checkbox } from "@heroui/checkbox";
 import { Link } from "@heroui/link";
 import { useSearchParams } from "next/navigation";
 
@@ -66,9 +65,6 @@ export default function SignInForm() {
       />
       {showErrorMessage()}
       <div className="flex items-center justify-between px-1 py-2">
-        <Checkbox name="remember" size="sm" isDisabled>
-          Remember me
-        </Checkbox>
         <Link size="sm" href="/auth/reset-password">
           Forgot password?
         </Link>
