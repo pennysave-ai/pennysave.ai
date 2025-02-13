@@ -54,7 +54,7 @@ export default {
       authorization: {
         url: "https://appleid.apple.com/auth/authorize",
         params: {
-          scope: "",
+          scope: "name email",
           response_type: "code",
           response_mode: "query",
           state: crypto.randomUUID(),
