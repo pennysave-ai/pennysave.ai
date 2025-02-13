@@ -45,13 +45,23 @@ export default {
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
       clientSecret: APPLE_CLIENT_SECRET!,
+      wellKnown: "https://appleid.apple.com/.well-known/openid-configuration",
       authorization: {
         params: {
           scope: "email name",
+          response_mode: "form_post",
         },
       },
       userinfo: {
         url: "https://appleid.apple.com/auth/userinfo",
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: null,
+        };
       },
     }),
     Credentials({
