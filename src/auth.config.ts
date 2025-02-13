@@ -11,7 +11,6 @@ import Credentials from "next-auth/providers/credentials";
 import { THIRD_PARTY_ERROR } from "@/constants";
 import { signInSchema } from "@/schemas";
 import { getUserByEmail } from "@/data/user";
-import { url } from "inspector";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
