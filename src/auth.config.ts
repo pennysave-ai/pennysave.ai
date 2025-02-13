@@ -6,6 +6,7 @@ import type { NextAuthConfig } from "next-auth";
 
 import Github from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+import AppleProvider from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import { THIRD_PARTY_ERROR } from "@/constants";
 import { signInSchema } from "@/schemas";
@@ -15,6 +16,8 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
+const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
   throw new Error("Missing github oauth credentials");
@@ -38,6 +41,10 @@ export default {
     Github({
       clientId: GITHUB_CLIENT_ID,
       clientSecret: GITHUB_CLIENT_SECRET,
+    }),
+    AppleProvider({
+      clientId: APPLE_CLIENT_ID,
+      clientSecret: APPLE_CLIENT_SECRET!,
     }),
     Credentials({
       async authorize(credentials): Promise<User | null | ThirdPartyError> {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { Divider } from "@heroui/divider";
 
 import {
   Navbar,
@@ -42,41 +43,54 @@ export default function NavbarCustomMenu({
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!user)
     return (
-      <>
-        <Navbar isBlurred isBordered>
-          <NavbarContent justify="start">
-            <NavbarMenuToggle
-              className="sm:hidden"
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            />
-            {navItems?.map((item, i) => (
-              <NavbarMenuItem key={i} className="hidden sm:block">
-                <Link
-                  className="w-full"
-                  color={item.href === pathname ? "primary" : "foreground"}
-                  href={item.href}
-                >
-                  {item.name}
-                </Link>
-              </NavbarMenuItem>
-            ))}
-          </NavbarContent>
-          <NavbarMenu>
-            {navItems?.map((item, i) => (
-              <NavbarMenuItem key={i}>
-                <Link
-                  className="w-full"
-                  color={item.href === pathname ? "primary" : "foreground"}
-                  href={item.href}
-                >
-                  {item.name}
-                </Link>
-              </NavbarMenuItem>
-            ))}
-          </NavbarMenu>
-          {children}
-        </Navbar>
-      </>
+      <Navbar isBlurred isBordered>
+        <NavbarContent justify="start">
+          <NavbarMenuToggle
+            className="sm:hidden"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          />
+          <span className="text-small font-bold opacity-100 hidden sm:block">
+            <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+              P
+            </span>
+            ENNYSAVE.
+            <span className="text-primary">AI</span>
+          </span>
+          {navItems?.map((item, i) => (
+            <NavbarMenuItem key={i} className="hidden sm:block">
+              <Link
+                className="w-full"
+                color={item.href === pathname ? "primary" : "foreground"}
+                href={item.href}
+              >
+                {item.name}
+              </Link>
+            </NavbarMenuItem>
+          ))}
+        </NavbarContent>
+        <NavbarMenu>
+          <span className="text-small font-bold opacity-100">
+            <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+              P
+            </span>
+            ENNYSAVE.
+            <span className="text-primary">AI</span>
+          </span>
+          <Divider />
+          {navItems?.map((item, i) => (
+            <NavbarMenuItem key={i}>
+              <Link
+                className="w-full "
+                color={item.href === pathname ? "primary" : "foreground"}
+                href={item.href}
+              >
+                {item.name}
+              </Link>
+            </NavbarMenuItem>
+          ))}
+        </NavbarMenu>
+        {children}
+      </Navbar>
     );
   return (
     <>

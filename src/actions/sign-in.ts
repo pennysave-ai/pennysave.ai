@@ -111,3 +111,7 @@ export async function githubSignIn() {
 export async function googleSignIn() {
   return signIn("google", { redirectTo: DEFAULT_LOGGED_IN_REDIRECT });
 }
+
+export async function appleSignIn() {
+  return signIn("apple", { redirectTo: DEFAULT_LOGGED_IN_REDIRECT });
+}

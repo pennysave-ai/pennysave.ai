@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 
-import { Github, Google } from "@/app/icons";
+import { Github, Google, Apple } from "@/app/icons";
 import * as actions from "@/actions";
 
 export function OauthButtons() {
@@ -21,6 +21,16 @@ export function OauthButtons() {
             className="w-full"
           >
             Continue with Google
+          </Button>
+        </form>
+        <form action={actions.appleSignIn}>
+          <Button
+            type="submit"
+            startContent={<Apple />}
+            variant="bordered"
+            className="w-full"
+          >
+            Continue with Apple
           </Button>
         </form>
         <form action={actions.githubSignIn}>
