@@ -18,6 +18,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
 const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
+const AUTH_SECRET = process.env.AUTH_SECRET;
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
   throw new Error("Missing github oauth credentials");
@@ -45,22 +46,22 @@ export default {
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
       clientSecret: APPLE_CLIENT_SECRET!,
+      wellKnown: "https://appleid.apple.com/.well-known/openid-configuration",
+      checks: ["pkce"],
+      token: {
+        url: `https://appleid.apple.com/auth/token`,
+      },
       authorization: {
+        url: "https://appleid.apple.com/auth/authorize",
         params: {
-          code_challenge_method: "S256",
+          scope: "",
+          response_type: "code",
+          response_mode: "query",
+          state: crypto.randomUUID(),
         },
       },
-      userinfo: {
-        url: "https://appleid.apple.com/auth/userinfo",
-      },
-      profile(profile) {
-        console.log("@profile", profile);
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: null,
-        };
+      client: {
+        token_endpoint_auth_method: "client_secret_post",
       },
     }),
     Credentials({
@@ -90,15 +91,6 @@ export default {
     }),
   ],
   cookies: {
-    csrfToken: {
-      name: "next-auth.csrf-token",
-      options: {
-        httpOnly: true,
-        sameSite: "none",
-        path: "/",
-        secure: true,
-      },
-    },
     pkceCodeVerifier: {
       name: "next-auth.pkce.code_verifier",
       options: {
@@ -109,4 +101,5 @@ export default {
       },
     },
   },
+  secret: AUTH_SECRET,
 } satisfies NextAuthConfig;
