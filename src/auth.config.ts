@@ -49,6 +49,7 @@ export default {
         url: "https://appleid.apple.com/auth/userinfo",
       },
       profile(profile) {
+        console.log("@profile", profile);
         return {
           id: profile.sub,
           name: profile.name,
