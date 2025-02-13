@@ -45,6 +45,14 @@ export default {
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
       clientSecret: APPLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "email name",
+        },
+      },
+      userinfo: {
+        url: "https://appleid.apple.com/auth/userinfo",
+      },
     }),
     Credentials({
       async authorize(credentials): Promise<User | null | ThirdPartyError> {
