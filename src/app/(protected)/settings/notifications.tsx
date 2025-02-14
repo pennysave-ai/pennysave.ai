@@ -14,7 +14,7 @@ interface NotificationsProps {
 
 export default function Notifications({ user }: NotificationsProps) {
   const defaultState = {
-    monthlyReports: true,
+    monthlyReports: false,
   };
   useEffect(() => {
     if (user?.notifications) {

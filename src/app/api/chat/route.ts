@@ -17,7 +17,7 @@ import {
   createCategory,
   getUserCategories,
 } from "@/data/categories";
-import { getUserTransactions, createTransaction } from "@/data/transactions";
+import { getUserAnalytics, createTransaction } from "@/data/transactions";
 import { createTransactionSchema } from "@/schemas";
 import { convertAmountToMilliunits } from "@/lib/utils";
 
@@ -164,13 +164,12 @@ export async function POST(req: Request) {
             return { userAccounts: accounts };
           },
         }),
-        // TODO: improve user data fetching as we have for monthly report
-        fetchUserTransactions: tool({
+        fetchUserFinancialData: tool({
           parameters: z.object({}),
-          description: "fetch the user's transactions",
+          description: "fetch the user's available financial data",
           execute: async () => {
-            const transactions = await getUserTransactions(user.id as string);
-            return { transactions };
+            const financialData = await getUserAnalytics(user.id as string);
+            return { financialData };
           },
         }),
         fetchCurrentDate: tool({

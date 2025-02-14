@@ -42,14 +42,19 @@ export default function UserMenu({ user, isCompact, pathName }: UserMenuProps) {
           src={getOptimizedImageUrl(user.image) || ""}
         />
         <div
-          className={cn("flex max-w-full flex-col items-start", {
-            hidden: isCompact,
-          })}
+          className={cn(
+            "grid max-w-full flex-col items-start justify-items-start truncate",
+            {
+              hidden: isCompact,
+            }
+          )}
         >
-          <p className="truncate text-small font-medium text-default-600">
+          <p className="truncate text-small font-medium text-default-600 w-full text-left">
             {user.name}
           </p>
-          <p className="truncate text-tiny text-default-400">{user.email}</p>
+          <p className="truncate text-tiny text-default-400 w-full text-left">
+            {user.email}
+          </p>
         </div>
       </button>
     </Tooltip>

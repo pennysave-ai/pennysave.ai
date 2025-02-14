@@ -152,6 +152,14 @@ export default function NavbarCustomMenu({
                     : "var(--heroui-content1)",
               }}
             >
+              <span className="text-small font-bold opacity-100 mb-3">
+                <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+                  P
+                </span>
+                ENNYSAVE.
+                <span className="text-primary">AI</span>
+              </span>
+              <Divider className="mb-4" />
               <SidebarItems user={user} />
             </div>
           </ModalBody>
