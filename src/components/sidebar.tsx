@@ -34,7 +34,7 @@ export default function Sidebar({ user }: SidebarProps) {
   return (
     <div
       className={cn(
-        "relative flex h-full w-[300px] flex-col !border-r-small border-divider p-6 transition-width items-center",
+        "relative flex h-full w-[340px] flex-col !border-r-small border-divider p-6 transition-width items-center",
         {
           "w-16 items-center px-2 py-6": isCompact,
         }

@@ -208,7 +208,7 @@ export async function getPrevMonthSummaries(
   type Transaction = {
     category?: {
       name: string;
-    };
+    } | null;
     payee?: string;
     notes?: string;
     email: string;
@@ -396,6 +396,125 @@ export async function getPrevMonthSummaries(
   return usersData;
 }
 
+/**
+ * Fetch user analytics data for AI model context
+ * @param {String} userId - User ID
+ */
+export async function getUserAnalytics(userId: string) {
+  const transactionsData = await db.transaction.findMany({
+    select: {
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      account: {
+        select: {
+          name: true,
+          institutionName: true,
+          currency: {
+            select: { name: true, id: true, exchangeRate: true, symbol: true },
+          },
+          plaidBalance: true,
+        },
+      },
+      category: {
+        select: { name: true },
+      },
+    },
+    where: {
+      account: {
+        userId,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const transactionsByCurrency: Record<
+    string,
+    {
+      count: number;
+      expenses: number;
+      income: number;
+      exchangeRate: number;
+      symbol: string;
+      currency: string;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  > = transactionsData.reduce((acc: Record<string, any>, transaction) => {
+    if (transaction.account.currency.id in acc) {
+      acc[transaction.account.currency.id] = {
+        ...acc[transaction.account.currency.id],
+        count: acc[transaction.account.currency.id].count + 1,
+        expenses:
+          transaction.amount < 0
+            ? acc[transaction.account.currency.id].expenses + transaction.amount
+            : acc[transaction.account.currency.id].expenses,
+        income:
+          transaction.amount > 0
+            ? acc[transaction.account.currency.id].income + transaction.amount
+            : acc[transaction.account.currency.id].income,
+        symbol: transaction.account.currency.symbol,
+        currency: transaction.account.currency.name,
+      };
+    } else {
+      acc[transaction.account.currency.id] = {
+        count: 1,
+        expenses: transaction.amount < 0 ? transaction.amount : 0,
+        income: transaction.amount > 0 ? transaction.amount : 0,
+        exchangeRate: transaction.account.currency.exchangeRate,
+        symbol: transaction.account.currency.symbol,
+        currency: transaction.account.currency.name,
+      };
+    }
+    return acc;
+  }, {});
+
+  // sort by count
+  const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
+    (a, b) => b[1].count - a[1].count
+  );
+  const sum = Object.entries(transactionsByCurrency).reduce(
+    (acc, [currency, { income, expenses, exchangeRate }]) => {
+      if (currency === targetCurrency[0]) {
+        acc.income += Number(income);
+        acc.expenses += Number(expenses);
+      } else {
+        acc.income += convertCurrency(
+          income,
+          exchangeRate,
+          targetCurrency[1].exchangeRate
+        );
+        acc.expenses += convertCurrency(
+          expenses,
+          exchangeRate,
+          targetCurrency[1].exchangeRate
+        );
+      }
+      return acc;
+    },
+    {
+      income: 0,
+      expenses: 0,
+    }
+  );
+  return {
+    currenctSymbol: targetCurrency[1].symbol,
+    currencyName: targetCurrency[1].currency,
+    income: convertAmountFromMilliunits(sum.income),
+    expenses: convertAmountFromMilliunits(sum.expenses),
+    netFlow: convertAmountFromMilliunits(sum.income + sum.expenses),
+    transactions: transactionsData.map((transaction) => ({
+      amount: formatCurrency(
+        convertAmountFromMilliunits(transaction.amount),
+        transaction.account.currency.name
+      ),
+      category: transaction.category?.name || "Uncategorized",
+      payee: transaction.payee,
+      notes: transaction.notes,
+      account: transaction.account.name,
+    })),
+  };
+}
 /**
  * Creates a new transaction
  * @param {Transaction} payload - Transaction data
