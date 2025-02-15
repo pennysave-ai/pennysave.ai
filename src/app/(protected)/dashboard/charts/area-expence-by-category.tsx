@@ -100,11 +100,12 @@ export default function AreaExpenceByCategory({
           }}
           tickLine={false}
         />
-
-        <YAxis
-          strokeOpacity={0.25}
-          style={{ fontSize: "var(--heroui-font-size-tiny)" }}
-        />
+        {!isEmptyData && (
+          <YAxis
+            strokeOpacity={0.25}
+            style={{ fontSize: "var(--heroui-font-size-tiny)" }}
+          />
+        )}
         {!isEmptyData && (
           <Tooltip
             content={({ label, payload }) => (
