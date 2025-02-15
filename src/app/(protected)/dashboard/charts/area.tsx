@@ -38,11 +38,13 @@ export default function TransactionsAreaChart({
   transactionsByExpenses,
 }: TransactionsChartProps) {
   const searchParams = useSearchParams();
-  const from = searchParams?.get("from") || new Date();
-  const to = searchParams?.get("to") || new Date();
+  const from = searchParams?.get("from") || format(new Date(), "yyyy-MM-dd");
+  const to = searchParams?.get("to") || format(new Date(), "yyyy-MM-dd");
+  const fromDate = parseISO(from);
+  const toDate = parseISO(to);
   const dataRange = eachDayOfInterval({
-    start: parseISO(format(from, "yyyy-MM-dd")),
-    end: parseISO(format(to, "yyyy-MM-dd")),
+    start: fromDate,
+    end: toDate,
   });
   const [chartType, setChartType] = useState(new Set(["by-expence-category"]));
   const isEmptyData = !!data && !isLoading && data.length === 0;
