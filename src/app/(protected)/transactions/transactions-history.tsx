@@ -122,7 +122,7 @@ export default function TransactionsHistory({
               symbol: accountsData?.data[0]?.currencySymbol || "",
               name: accountsData?.data[0]?.currency || "",
             },
-            mask: accountsData?.data[0].institution.mask || "",
+            mask: accountsData?.data[0]?.institution.mask || "",
             institution: {
               name: accountsData?.data[0]?.institution.name || "",
             },
@@ -157,7 +157,7 @@ export default function TransactionsHistory({
         },
         mask: account.mask,
         institution: {
-          name: account.institution.name,
+          name: account?.institution.name,
         },
       },
       category: {
