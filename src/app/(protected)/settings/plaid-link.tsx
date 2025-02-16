@@ -96,8 +96,10 @@ const SimplePlaidLink = ({
       startContent={!isLoading && startContent}
     >
       {plaidItemId ? (
-        isLoading ? (
-          <Loader />
+        !isLoading ? (
+          <div className="w-10">
+            <Loader />
+          </div>
         ) : (
           <Icon icon="solar:pen-2-bold" width={22} />
         )

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
 import type { Key } from "@react-types/shared";
 import {
   Dropdown,
@@ -30,6 +31,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
+
 import { Image } from "@heroui/image";
 
 import { ArrowUp, ArrowDown } from "@/app/icons";
@@ -132,6 +134,7 @@ export default function TransactionsTable({
   const [visibleColumns, setVisibleColumns] = useState<Selection>(
     new Set(INITIAL_VISIBLE_COLUMNS)
   );
+  const isTablet = useMediaQuery("(max-width: 1023px)");
   const [rowsPerPage] = useState(25);
   const [page, setPage] = useState(1);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
@@ -262,75 +265,97 @@ export default function TransactionsTable({
         case "createdAt":
           return (
             <div className="text-nowrap text-small capitalize text-default-foreground">
+              <div className="text-default-400 block lg:hidden">
+                Transaction date:
+              </div>
               {format(parseISO(transaction[transactionKey]), "PP HH:mm")}
             </div>
           );
         case "amount":
           return (
-            <AmountCell
-              amount={transaction[transactionKey]}
-              currency={transaction.account.currency.name}
-            />
+            <>
+              <div className="text-default-400 block lg:hidden">Amount:</div>
+              <AmountCell
+                amount={transaction[transactionKey]}
+                currency={transaction.account.currency.name}
+              />
+            </>
           );
         case "account.name":
           return (
-            <AccountName
-              name={transaction.account.name}
-              mask={transaction.account.mask}
-            />
+            <>
+              <div className="text-default-400 block lg:hidden">Account:</div>
+              <AccountName
+                name={transaction.account.name}
+                mask={transaction.account.mask}
+              />
+            </>
           );
         case "account.institution.name":
           return (
-            <div className="capitalize text-default-foreground">
-              {transaction.account.institution.name}
-            </div>
+            <>
+              <div className="text-default-400 block lg:hidden">Bank:</div>
+              <div className="capitalize text-default-foreground">
+                {transaction.account.institution.name}
+              </div>
+            </>
           );
         case "category.name":
           return (
-            <div
-              className={cn("capitalize text-default-foreground", {
-                "text-danger": !transaction.category?.name,
-              })}
-            >
-              {transaction.category?.name || "Uncategorized"}
-            </div>
+            <>
+              <div className="text-default-400 block lg:hidden">Category:</div>
+              <div
+                className={cn("capitalize text-default-foreground", {
+                  "text-danger": !transaction.category?.name,
+                })}
+              >
+                {transaction.category?.name || "Uncategorized"}
+              </div>
+            </>
           );
         case "notes":
           return (
-            <div className="text-default-foreground">
-              {transaction[transactionKey]}
-            </div>
+            <>
+              <div className="text-default-400 block lg:hidden">Notes:</div>
+              <div className="text-default-foreground">
+                {transaction[transactionKey]}
+              </div>
+            </>
           );
         case "payee":
           return (
-            <div className="flex items-center gap-x-2 text-default-foreground">
-              {transaction?.logo ? (
-                <Image
-                  width={20}
-                  height={20}
-                  src={transaction.logo}
-                  alt={transaction.payee}
-                  radius="full"
-                />
-              ) : (
-                transaction?.payee && (
-                  <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
-                    {transaction?.payee[0]?.toUpperCase()}
-                  </div>
-                )
-              )}
-              <div>{transaction[transactionKey]}</div>
-            </div>
+            <>
+              <div className="text-default-400 block lg:hidden">Payee:</div>
+              <div className="flex items-center gap-x-2 text-default-foreground">
+                {transaction?.logo ? (
+                  <Image
+                    width={20}
+                    height={20}
+                    src={transaction.logo}
+                    alt={transaction.payee}
+                    radius="full"
+                  />
+                ) : (
+                  transaction?.payee && (
+                    <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
+                      {transaction?.payee[0]?.toUpperCase()}
+                    </div>
+                  )
+                )}
+                <div>{transaction[transactionKey]}</div>
+              </div>
+            </>
           );
         case "actions":
           return (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 flex-col md:flex-row">
               <Button
-                isIconOnly
+                isIconOnly={!isTablet}
                 size="sm"
                 color="primary"
                 aria-label="edit account"
-                variant="light"
+                variant={isTablet ? "flat" : "light"}
+                className={isTablet ? "w-full" : ""}
                 onPress={() => {
                   onOpenSidebar(transaction);
                 }}
@@ -338,11 +363,12 @@ export default function TransactionsTable({
                 <Icon icon="solar:pen-2-bold" width={22} />
               </Button>
               <Button
-                isIconOnly
+                isIconOnly={!isTablet}
                 size="sm"
                 color="danger"
                 aria-label="delete account"
-                variant="light"
+                variant={isTablet ? "flat" : "light"}
+                className={isTablet ? "w-full" : ""}
                 onPress={() => {
                   setDeleteCategoriesData({
                     type: "individual",
@@ -580,19 +606,20 @@ export default function TransactionsTable({
         sortDescriptor.direction === "ascending" ? "descending" : "ascending",
     });
   });
-
   return (
     <div className="h-full w-full mt-6">
       <Table
+        key={`table-tablet-${isTablet}`}
         color="primary"
         isHeaderSticky
         aria-label="Example table with custom cells, pagination and sorting"
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         classNames={{
-          td: "before:bg-default-100",
+          td: "before:bg-default-100 w-full",
           wrapper: "max-h-96 overflow-auto shadow-none p-0",
-          tr: "!shadow-none",
+          thead: "hidden lg:table-header-group",
+          tr: `!shadow-none ${isTablet ? "flex flex-col" : ""}`,
         }}
         selectedKeys={filterSelectedKeys}
         selectionMode="multiple"
@@ -601,6 +628,7 @@ export default function TransactionsTable({
         topContentPlacement="outside"
         onSelectionChange={onSelectionChange}
         onSortChange={setSortDescriptor}
+        hideHeader={isTablet}
       >
         <TableHeader columns={headerColumns}>
           {(column) => (
