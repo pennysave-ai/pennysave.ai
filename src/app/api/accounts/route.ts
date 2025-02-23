@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { createAccount } from "@/data/accounts";
+import {
+  createAccount,
+  deleteAccounts,
+  updateAccount,
+  getUserAccounts,
+  getUserAccountsNumber,
+} from "@/data/accounts";
 import { accountSchema } from "@/schemas";
 
 export async function GET() {
@@ -13,40 +19,27 @@ export async function GET() {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const data = await db.userAccount.findMany({
-    select: {
-      id: true,
-      name: true,
+  try {
+    const data = await getUserAccounts(user.id);
+    const accounts = data.map((account) => ({
+      id: account.id,
+      name: account.name,
       currency: {
-        select: { id: true, name: true, symbol: true },
+        id: account.currency.id,
+        name: account.currency.name,
+        symbol: account.currency.symbol,
       },
-      institutionName: true,
-      plaidMask: true,
-      plaidItem: {
-        select: {
-          institutionName: true,
-          institutionPrimaryColor: true,
-        },
+      institution: {
+        name: account.institutionName,
+        color: account?.plaidItem?.institutionPrimaryColor || null,
+        mask: account.plaidMask,
       },
-    },
-    where: { userId: user.id },
-  });
-  const accounts = data.map((account) => ({
-    id: account.id,
-    name: account.name,
-    currency: {
-      id: account.currency.id,
-      name: account.currency.name,
-      symbol: account.currency.symbol,
-    },
-    institution: {
-      name: account.institutionName,
-      color: account?.plaidItem?.institutionPrimaryColor || null,
-      mask: account.plaidMask,
-    },
-  }));
-  const count = await db.userAccount.count({ where: { userId: user.id } });
-  return NextResponse.json({ data: accounts, meta: { count } });
+    }));
+    const count = await getUserAccountsNumber(user.id);
+    return NextResponse.json({ data: accounts, meta: { count } });
+  } catch {
+    return NextResponse.json("Error while fetching accounts", { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -71,7 +64,7 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ data: newAccount });
   } catch {
-    return NextResponse.json("Bad Request", { status: 400 });
+    return NextResponse.json("Error while creating account", { status: 500 });
   }
 }
 
@@ -89,11 +82,12 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
 
-  const accounts = await db.userAccount.deleteMany({
-    where: { id: { in: body.ids }, userId: user.id },
-  });
-
-  return NextResponse.json({ data: accounts });
+  try {
+    const deletedAcounts = await deleteAccounts(body.ids, user.id);
+    return NextResponse.json({ data: deletedAcounts });
+  } catch {
+    return NextResponse.json("Error while deleting accounts", { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -119,14 +113,17 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
 
-  const accounts = await db.userAccount.update({
-    where: { id: body.id, userId: user.id },
-    data: {
-      name: body.name,
-      currencyId: body.currencyId,
-      institutionName: body.institutionName,
-    },
-  });
-
-  return NextResponse.json({ data: accounts });
+  try {
+    const { id, name, currencyId, institutionName } = body;
+    const account = await updateAccount(
+      id,
+      name,
+      currencyId,
+      user.id,
+      institutionName
+    );
+    return NextResponse.json({ data: account });
+  } catch {
+    return NextResponse.json("Error while updating account", { status: 500 });
+  }
 }

@@ -109,3 +109,92 @@ export async function createAccount(
   });
   return { id: account.id };
 }
+
+/**
+ * Delete user accounts
+ * @param {String[]} accountIds - Account Ids
+ * @param {String} userId - user Id
+ * @returns {Promise} - Promise object represents the deleted accounts
+ * @throws {Error} - If the account deletion fails
+ */
+export async function deleteAccounts(accountIds: string[], userId: string) {
+  const accounts = await db.userAccount.deleteMany({
+    where: {
+      id: {
+        in: accountIds,
+      },
+      userId,
+    },
+  });
+  return accounts;
+}
+
+/**
+ * Update user account
+ * @param {String} id - Account ID
+ * @param {String} name - Account Name
+ * @param {String} currencyId - Currency ID
+ * @param {String} userId - User ID
+ * @param {String} institutionName - Institution Name
+ * @returns {Promise} - Promise object represents the updated account
+ * @throws {Error} - If the account update fails
+ */
+export async function updateAccount(
+  id: string,
+  name: string,
+  currencyId: string,
+  userId: string,
+  institutionName?: string
+) {
+  const accounts = await db.userAccount.update({
+    where: { id, userId },
+    data: {
+      name,
+      currencyId,
+      institutionName,
+    },
+  });
+  return accounts;
+}
+
+/**
+ * Get user accounts
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the user accounts
+ * @throws {Error} - If the account retrieval fails
+ */
+// TODO add pagination here
+export async function getUserAccounts(userId: string) {
+  const accounts = await db.userAccount.findMany({
+    select: {
+      id: true,
+      name: true,
+      currency: {
+        select: { id: true, name: true, symbol: true },
+      },
+      institutionName: true,
+      plaidMask: true,
+      plaidItem: {
+        select: {
+          institutionName: true,
+          institutionPrimaryColor: true,
+        },
+      },
+    },
+    where: {
+      userId,
+    },
+  });
+  return accounts;
+}
+
+/**
+ * Get user accounts number
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the user accounts number
+ * @throws {Error} - If the account number retrieval fails
+ */
+export async function getUserAccountsNumber(userId: string) {
+  const count = await db.userAccount.count({ where: { userId } });
+  return count;
+}
