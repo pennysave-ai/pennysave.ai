@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
               item,
             }: {
               item: ItemWithConsentFields & {
-                institution_name?: string;
+                institution_name?: string | null;
               };
             } = await getItem(response.access_token);
             if (!item) {
