@@ -178,7 +178,7 @@ export const getInstitution = async (institutionId: string) => {
 
 export type ExtendedAccountResponseType = AccountsGetResponse & {
   item: {
-    institution_name?: string;
+    institution_name?: string | null;
   };
 };
 
