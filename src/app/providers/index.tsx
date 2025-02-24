@@ -1,3 +1,4 @@
+import { ToastProvider } from "@heroui/toast";
 import { HeroUIProvider } from "@heroui/system";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
@@ -13,6 +14,13 @@ export default function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <HeroUIProvider>
         <ThemeProvider attribute="class" defaultTheme="dark">
+          <ToastProvider
+            toastProps={{
+              timeout: 5000,
+              shouldShowTimeoutProgess: true,
+              variant: "bordered",
+            }}
+          />
           <QueryProvider>
             <ModalProvider>{children}</ModalProvider>
           </QueryProvider>

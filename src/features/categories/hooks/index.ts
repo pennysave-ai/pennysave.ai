@@ -6,6 +6,7 @@ import {
   type Query,
   type QueryClient,
 } from "@tanstack/react-query";
+import { addToast } from "@heroui/toast";
 
 export type CreateCategory = {
   name: string;
@@ -31,6 +32,20 @@ export const useCreateCategory = () => {
           "Content-Type": "application/json",
         },
       });
+      if (!response.ok) {
+        addToast({
+          title: "Ooops!",
+          description: "We have failed to create category, please try again",
+          color: "danger",
+        });
+        return;
+      } else {
+        addToast({
+          title: "Success",
+          description: "We have successfully created new category",
+          color: "success",
+        });
+      }
       return await response.json();
     },
     onSuccess: () => onSuccess(queryClient),
