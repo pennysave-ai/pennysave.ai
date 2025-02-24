@@ -22,6 +22,8 @@ export async function PUT(req: NextRequest) {
     });
     return NextResponse.json({ data: "success" });
   } catch {
-    return NextResponse.json("Bad Request", { status: 400 });
+    return NextResponse.json("Error while saving notification status", {
+      status: 500,
+    });
   }
 }

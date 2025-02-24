@@ -117,7 +117,9 @@ export async function POST(req: NextRequest) {
     const newTransaction = await createTransaction(payload);
     return NextResponse.json({ data: newTransaction });
   } catch {
-    return NextResponse.json("Bad Request", { status: 400 });
+    return NextResponse.json("Error while creating a  new transaction", {
+      status: 500,
+    });
   }
 }
 
