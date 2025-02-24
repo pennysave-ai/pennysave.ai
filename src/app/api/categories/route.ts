@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db";
-import { getUserCategories, createCategory } from "@/data/categories";
+import {
+  getUserCategories,
+  createCategory,
+  getCategoriesCount,
+  deleteCategories,
+  updateCategory,
+} from "@/data/categories";
 import { categorySchema } from "@/schemas";
 
 export async function GET() {
@@ -10,12 +15,18 @@ export async function GET() {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  if (!user) {
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const categories = await getUserCategories(user.id);
-  const count = await db.category.count({ where: { userId: user.id } });
-  return NextResponse.json({ data: categories, meta: { count } });
+  try {
+    const categories = await getUserCategories(user.id);
+    const count = await getCategoriesCount(user.id);
+    return NextResponse.json({ data: categories, meta: { count } });
+  } catch {
+    return NextResponse.json("Error while fetching user categories", {
+      status: 500,
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -39,7 +50,9 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ data: newCategory });
   } catch {
-    return NextResponse.json("Bad Request", { status: 400 });
+    return NextResponse.json("Error while creating categories", {
+      status: 500,
+    });
   }
 }
 
@@ -56,12 +69,14 @@ export async function DELETE(req: NextRequest) {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-
-  const categories = await db.category.deleteMany({
-    where: { id: { in: body.ids }, userId: user.id },
-  });
-
-  return NextResponse.json({ data: categories });
+  try {
+    const categories = await deleteCategories(body.ids, user.id);
+    return NextResponse.json({ data: categories });
+  } catch {
+    return NextResponse.json("Error while deleting categories", {
+      status: 500,
+    });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -84,15 +99,18 @@ export async function PATCH(req: NextRequest) {
   if (!validationResult.success) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-
-  const category = await db.category.update({
-    where: { id: body.id, userId: user.id },
-    data: {
-      name: body.name,
-      plaidId: body.plaidId,
-      description: body.description,
-    },
-  });
-
-  return NextResponse.json({ data: category });
+  try {
+    const category = await updateCategory(
+      body.id,
+      user.id,
+      body.name,
+      body.plaidId,
+      body.description
+    );
+    return NextResponse.json({ data: category });
+  } catch {
+    return NextResponse.json("Error while updating categories", {
+      status: 500,
+    });
+  }
 }

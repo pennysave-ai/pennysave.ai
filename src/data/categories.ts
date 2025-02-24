@@ -90,7 +90,6 @@ export async function getCategoiresMappings(
   await db.category.createMany({
     data: Array.from(newCategories.values()),
   });
-  console.log("@mappedCategories", mappedCategories);
   return mappedCategories;
 }
 
@@ -110,8 +109,18 @@ export async function getUserCategories(userId?: string) {
   });
 }
 
+/*
+ * Get categories number
+ * @param userId - User ID
+ * @returns {Promise<number>}
+ * @throws {Error} - If the category creation fails
+ */
+export async function getCategoriesCount(userId?: string) {
+  return db.category.count({ where: { userId } });
+}
+
 /**
- * Greates a new category
+ * Creates a new category
  * @param {String} name - Category name
  * @param {String} userId - User ID
  * @param {String} description - Category description
@@ -162,4 +171,46 @@ export async function getUserCategoriesByName(userId: string, name: string) {
     },
   });
   return categories;
+}
+
+/**
+ * Delete user categories
+ * @param {String[]} ids - Array of category Id's
+ * @param {String} userId - User ID
+ * @returns {Promise<{id: string}[]>} - Array of category Id's
+ * @throws {Error} - If the category deletion fails
+ */
+export async function deleteCategories(ids: string[], userId: string) {
+  const categories = await db.category.deleteMany({
+    where: { id: { in: ids }, userId },
+  });
+  return categories;
+}
+
+/**
+ * Update user category
+ * @param {String} id - Category ID
+ * @param {String} userId - User ID
+ * @param {String} name - Category Name
+ * @param {String} plaidId - Plaid Category ID
+ * @param {String} description - Category Description
+ * @returns {Promise<{id: string, name: string, plaidId: string}>} - Category data
+ * @throws {Error} - If the category update fails
+ */
+export async function updateCategory(
+  id: string,
+  userId: string,
+  name: string,
+  plaidId?: string,
+  description?: string
+) {
+  const category = await db.category.update({
+    where: { id, userId },
+    data: {
+      name,
+      plaidId,
+      description,
+    },
+  });
+  return category;
 }
