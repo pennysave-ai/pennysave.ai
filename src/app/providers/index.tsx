@@ -14,7 +14,13 @@ export default function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <HeroUIProvider>
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <ToastProvider />
+          <ToastProvider
+            toastProps={{
+              timeout: 5000,
+              shouldShowTimeoutProgess: true,
+              variant: "bordered",
+            }}
+          />
           <QueryProvider>
             <ModalProvider>{children}</ModalProvider>
           </QueryProvider>

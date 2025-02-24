@@ -34,29 +34,21 @@ export const useCreateCategory = () => {
       });
       if (!response.ok) {
         addToast({
-          variant: "bordered",
           title: "Ooops!",
           description: "We have failed to create category, please try again",
           color: "danger",
-          timeout: 5000,
-          shouldShowTimeoutProgess: true,
         });
         return;
       } else {
         addToast({
-          title: "Sucess",
-          variant: "bordered",
+          title: "Success",
           description: "We have successfully created new category",
           color: "success",
-          timeout: 5000,
-          shouldShowTimeoutProgess: true,
         });
       }
       return await response.json();
     },
-    onSuccess: () => {
-      onSuccess(queryClient);
-    },
+    onSuccess: () => onSuccess(queryClient),
   });
   return mutation;
 };
