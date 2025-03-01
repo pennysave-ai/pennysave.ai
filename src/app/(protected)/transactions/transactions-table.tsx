@@ -616,7 +616,7 @@ export default function TransactionsTable({
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         classNames={{
-          td: "before:bg-default-100 w-full",
+          td: "before:bg-default-100",
           wrapper: "max-h-96 overflow-auto shadow-none p-0",
           thead: "hidden lg:table-header-group",
           tr: `!shadow-none ${isTablet ? "flex flex-col" : ""}`,

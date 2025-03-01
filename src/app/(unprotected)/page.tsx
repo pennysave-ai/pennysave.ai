@@ -1,27 +1,27 @@
-import { Suspense } from "react";
+"use client";
 
-import { Card, CardHeader } from "@heroui/card";
-import { Link } from "@heroui/link";
+import Hero from "@/components/hero";
+import HowTo from "@/components/how-to";
+import Features from "@/components/features";
+import { Image } from "@heroui/image";
+import dashboardImage from "@/app/public/dashboard.png";
 
-import SignInForm from "@/components/sign-in-form";
-import { OauthButtons } from "@/components/common";
-
-export default function SignIn() {
+export default function HomePage() {
   return (
-    <div className="flex h-full w-full items-center justify-center">
-      <Card className="flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 pb-10 pt-6 shadow-small">
-        <CardHeader className="pb-2 text-xl font-medium">Sign In</CardHeader>
-        <Suspense fallback={<div>Loading...</div>}>
-          <SignInForm />
-        </Suspense>
-        <OauthButtons />
-        <p className="text-center text-small">
-          <span className="mr-1">Need to create an account?</span>
-          <Link href="/auth/sign-up" size="sm">
-            Sign Up
-          </Link>
-        </p>
-      </Card>
+    <div className="flex justify-center max-w-6xl mx-auto">
+      <div className="my-20">
+        <Hero />
+        <section
+          id="home"
+          className="relative w-full flex justify-center mt-10"
+        >
+          <Image src={dashboardImage.src} width="100%" alt="hero-bg" />
+          <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
+        </section>
+        <Features />
+        <HowTo />
+        <div className="triangle absolute left-0 bottom-0" />
+      </div>
     </div>
   );
 }

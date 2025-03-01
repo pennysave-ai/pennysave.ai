@@ -2,7 +2,6 @@
 
 import { useFormState } from "react-dom";
 import { Input } from "@heroui/input";
-import { Link } from "@heroui/link";
 
 import * as actions from "@/actions";
 import { SubmitButton } from "@/components/common";
@@ -46,12 +45,6 @@ export default function ResetPasswordForm() {
       />
       {showErrorMessage()}
       <SubmitButton>Reset my password</SubmitButton>
-      <p className="text-center text-small">
-        <span className="mr-1">Back to</span>
-        <Link href="/" size="sm">
-          Sign In
-        </Link>
-      </p>
     </form>
   );
 }

@@ -7,7 +7,7 @@ import { Spacer } from "@heroui/spacer";
 import { cn } from "@heroui/theme";
 import { useMediaQuery } from "usehooks-ts";
 import type { Session } from "next-auth";
-import { SidebarItems } from "@/components/common";
+import { SidebarItems, Logo } from "@/components/common";
 
 interface SidebarProps {
   user: Session["user"] | null;
@@ -56,11 +56,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 "w-0 opacity-0": isCompact,
               })}
             >
-              <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
-                P
-              </span>
-              ENNYSAVE.
-              <span className="text-primary">AI</span>
+              <Logo />
             </span>
             <div className="flex h-8 w-8 items-center justify-center">
               <Button isIconOnly variant="light" onPress={onToggle}>

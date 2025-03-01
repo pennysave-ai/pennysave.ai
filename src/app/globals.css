@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: #060612;
 }
@@ -66,4 +70,37 @@
 .thinking-dots::after {
   content: "";
   animation: dots 0.8s steps(3, end) infinite;
+}
+
+.blur-background {
+  position: absolute;
+  width: 100%;
+  height: 800px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.5;
+}
+
+.blur-1 {
+  z-index: -1;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(0, 136, 255, 0.5) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.blur-2 {
+  z-index: -1;
+  top: -300px;
+  background: radial-gradient(circle, rgba(0, 136, 255, 0.5), transparent);
+}
+
+.triangle {
+  z-index: -1;
+  width: 100%;
+  height: 960px;
+  background-size: cover;
+  background-position: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1440' height='1370' viewBox='0 0 1440 1370' fill='none'%3E%3Cg opacity='0.4' filter='url(%23filter0_f_480_403)'%3E%3Cpath d='M737.737 200.965L813.713 580.91C839.53 710.02 907.099 827.052 1006 913.965L1297.06 1169.73L737.737 980.501L178.418 1169.73L469.473 913.965C568.376 827.052 635.945 710.02 661.762 580.91L737.737 200.965Z' fill='%232388FF'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_f_480_403' x='-21.582' y='0.964844' width='1518.64' height='1368.77' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='100' result='effect1_foregroundBlur_480_403'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
 }

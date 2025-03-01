@@ -35,6 +35,7 @@ interface DataCardProps {
         end: string;
       }
     | undefined;
+  displayOnly?: boolean;
 }
 
 export default function DataCard({
@@ -46,6 +47,7 @@ export default function DataCard({
   prefix,
   isLoading,
   prevPeriod,
+  displayOnly = false,
 }: DataCardProps) {
   const getChangeType = () => {
     if (change === 0) return "neutral";
@@ -130,12 +132,18 @@ export default function DataCard({
                 vs prev period
               </div>
               <Tooltip
+                isDisabled={displayOnly}
                 content={`${prevPeriodStartDate} - ${prevPeriodEndDate}`}
               >
                 <Icon
                   height={16}
                   icon="solar:info-circle-linear"
-                  className="text-default-400 dark:text-default-500 cursor-pointer"
+                  className={cn(
+                    "text-default-400 dark:text-default-500 cursor-pointer",
+                    {
+                      "cursor-auto": displayOnly,
+                    }
+                  )}
                   width={16}
                 />
               </Tooltip>
@@ -199,6 +207,7 @@ export default function DataCard({
             </ResponsiveContainer>
           </div>
           <Dropdown
+            isDisabled={displayOnly}
             classNames={{
               content: "min-w-[120px]",
             }}
