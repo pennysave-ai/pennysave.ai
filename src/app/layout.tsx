@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Providers from "@/app/providers";
-
+import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -32,6 +32,7 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Analytics />
         <Providers>{children}</Providers>
       </body>
     </html>
