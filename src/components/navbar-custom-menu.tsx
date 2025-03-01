@@ -9,12 +9,12 @@ import {
   Navbar,
   NavbarContent,
   NavbarMenuToggle,
-  NavbarMenu,
-  NavbarMenuItem,
+  // NavbarMenu,
+  // NavbarMenuItem,
 } from "@heroui/navbar";
 import { Modal, ModalContent, ModalBody } from "@heroui/modal";
 import { Session } from "next-auth";
-import { Link } from "@heroui/link";
+// import { Link } from "@heroui/link";
 import { SidebarItems } from "@/components/common";
 
 interface NavbarProps {
@@ -31,8 +31,8 @@ const sidebarWidth = 288;
 export default function NavbarCustomMenu({
   children,
   user,
-  navItems,
-}: NavbarProps) {
+}: // navItems,
+NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const { theme } = useTheme();
@@ -41,57 +41,57 @@ export default function NavbarCustomMenu({
       setIsMenuOpen(false);
     }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!user)
-    return (
-      <Navbar isBlurred isBordered>
-        <NavbarContent justify="start">
-          <NavbarMenuToggle
-            className="sm:hidden"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          />
-          <span className="text-small font-bold opacity-100 hidden sm:block">
-            <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
-              P
-            </span>
-            ENNYSAVE.
-            <span className="text-primary">AI</span>
-          </span>
-          {navItems?.map((item, i) => (
-            <NavbarMenuItem key={i} className="hidden sm:block">
-              <Link
-                className="w-full"
-                color={item.href === pathname ? "primary" : "foreground"}
-                href={item.href}
-              >
-                {item.name}
-              </Link>
-            </NavbarMenuItem>
-          ))}
-        </NavbarContent>
-        <NavbarMenu>
-          <span className="text-small font-bold opacity-100">
-            <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
-              P
-            </span>
-            ENNYSAVE.
-            <span className="text-primary">AI</span>
-          </span>
-          <Divider />
-          {navItems?.map((item, i) => (
-            <NavbarMenuItem key={i}>
-              <Link
-                className="w-full "
-                color={item.href === pathname ? "primary" : "foreground"}
-                href={item.href}
-              >
-                {item.name}
-              </Link>
-            </NavbarMenuItem>
-          ))}
-        </NavbarMenu>
-        {children}
-      </Navbar>
-    );
+  // if (!user)
+  //   return (
+  //     <Navbar isBlurred>
+  //       <NavbarContent justify="start">
+  //         <NavbarMenuToggle
+  //           className="sm:hidden"
+  //           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+  //         />
+  //         <span className="text-small font-bold opacity-100 hidden sm:block">
+  //           <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+  //             P
+  //           </span>
+  //           ENNYSAVE.
+  //           <span className="text-primary">AI</span>
+  //         </span>
+  //         {navItems?.map((item, i) => (
+  //           <NavbarMenuItem key={i} className="hidden sm:block">
+  //             <Link
+  //               className="w-full"
+  //               color={item.href === pathname ? "primary" : "foreground"}
+  //               href={item.href}
+  //             >
+  //               {item.name}
+  //             </Link>
+  //           </NavbarMenuItem>
+  //         ))}
+  //       </NavbarContent>
+  //       <NavbarMenu>
+  //         <span className="text-small font-bold opacity-100">
+  //           <span className="py-1 px-2 text-lg bg-secondary rounded-md mr-1 text-white">
+  //             P
+  //           </span>
+  //           ENNYSAVE.
+  //           <span className="text-primary">AI</span>
+  //         </span>
+  //         <Divider />
+  //         {navItems?.map((item, i) => (
+  //           <NavbarMenuItem key={i}>
+  //             <Link
+  //               className="w-full "
+  //               color={item.href === pathname ? "primary" : "foreground"}
+  //               href={item.href}
+  //             >
+  //               {item.name}
+  //             </Link>
+  //           </NavbarMenuItem>
+  //         ))}
+  //       </NavbarMenu>
+  //       {children}
+  //     </Navbar>
+  //   );
   return (
     <>
       <Navbar

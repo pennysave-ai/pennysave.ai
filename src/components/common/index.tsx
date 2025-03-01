@@ -6,3 +6,6 @@ export { Header } from "./header";
 export { RightSidebar } from "./right-sidebar";
 export { SidebarItems } from "./sidebar-items";
 export { AccountName } from "./cells/account-name";
+export { Logo } from "./logo";
+export { AuthCardFooter } from "./auth-card-footer";
+export { Footer } from "./footer";

@@ -64,7 +64,7 @@ export default function DashboardPage() {
         />
         <DataCard
           isLoading={isLoading}
-          title="Expences"
+          title="Expenses"
           type="expenses"
           value={Math.abs(data?.expensesAmount || 0)}
           prefix={data?.meta.currency.symbol || ""}
