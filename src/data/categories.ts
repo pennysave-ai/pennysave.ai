@@ -113,10 +113,9 @@ export async function getUserCategories(userId?: string) {
  * Get categories number
  * @param userId - User ID
  * @returns {Promise<number>}
- * @throws {Error} - If the category creation fails
  */
 export async function getCategoriesCount(userId?: string) {
-  return db.category.count({ where: { userId } });
+  return await db.category.count({ where: { userId } });
 }
 
 /**

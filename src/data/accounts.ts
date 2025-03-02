@@ -192,9 +192,7 @@ export async function getUserAccounts(userId: string) {
  * Get user accounts number
  * @param {String} userId - User ID
  * @returns {Promise} - Promise object represents the user accounts number
- * @throws {Error} - If the account number retrieval fails
  */
-export async function getUserAccountsNumber(userId: string) {
-  const count = await db.userAccount.count({ where: { userId } });
-  return count;
+export async function getUserAccountsCount(userId?: string) {
+  return await db.userAccount.count({ where: { userId } });
 }

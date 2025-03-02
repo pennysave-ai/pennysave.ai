@@ -19,6 +19,6 @@ export async function POST(req: NextRequest) {
     const newBudget = await createBudget(user.id, body);
     return NextResponse.json({ data: newBudget });
   } catch {
-    return NextResponse.json("Bad Request", { status: 400 });
+    return NextResponse.json("Error while creating budget", { status: 500 });
   }
 }

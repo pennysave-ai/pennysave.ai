@@ -25,7 +25,7 @@ jest.mock("@/data/accounts", () => ({
   createAccount: jest.fn(),
   deleteAccounts: jest.fn(),
   updateAccount: jest.fn(),
-  getUserAccountsNumber: jest.fn(),
+  getUserAccountsCount: jest.fn(),
   getUserAccounts: jest.fn(),
 }));
 
@@ -35,7 +35,7 @@ import {
   createAccount,
   deleteAccounts,
   updateAccount,
-  getUserAccountsNumber,
+  getUserAccountsCount,
   getUserAccounts,
 } from "@/data/accounts";
 
@@ -76,7 +76,7 @@ describe("API Route: /api/accounts", () => {
 
     it("should return accounts if authenticated", async () => {
       (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-      (getUserAccountsNumber as jest.Mock).mockResolvedValueOnce(1);
+      (getUserAccountsCount as jest.Mock).mockResolvedValueOnce(1);
       (getUserAccounts as jest.Mock).mockResolvedValueOnce([mockAccount]);
 
       const response = await GET();
