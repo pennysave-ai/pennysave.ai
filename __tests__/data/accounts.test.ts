@@ -13,6 +13,7 @@ import {
   getUserAccountIdsByName,
   updateAccount,
 } from "@/data/accounts";
+import { AccountType, ItemUpdateTypeEnum } from "plaid";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -198,18 +199,34 @@ describe("accounts", () => {
 
   describe("createPlaidAccounts", () => {
     const mockAccountsData = {
+      request_id: "request-123",
       accounts: [
         {
           account_id: "account-1",
           name: "Test Account",
           mask: "1234",
-          balances: { current: 100, iso_currency_code: "USD" },
-          type: "depository",
+          balances: {
+            current: 100,
+            iso_currency_code: "USD",
+            unofficial_currency_code: "840",
+            available: 100,
+            limit: 100,
+          },
+          type: AccountType.Depository,
+          official_name: "Test Bank",
+          subtypets: ["checking"],
+          subtype: null,
         },
       ],
       item: {
         item_id: "item-123",
         institution_name: "Test Bank",
+        webhook: "",
+        error: null,
+        available_products: [],
+        billed_products: [],
+        consent_expiration_time: "",
+        update_type: ItemUpdateTypeEnum.Background,
       },
     };
     const mockUserId = "user-123";
