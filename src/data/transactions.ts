@@ -555,3 +555,14 @@ export async function createTransaction(payload: CreateTransaction) {
     throw new Error("Failed to create transaction");
   }
 }
+
+/**
+ * Get user transactions count
+ * @param {String} userId - User ID
+ * @returns {Promise<number>} - Number of transactions
+ */
+export async function getUserTransactionsCount(userId?: string) {
+  return await db.transaction.count({
+    where: { account: { userId } },
+  });
+}

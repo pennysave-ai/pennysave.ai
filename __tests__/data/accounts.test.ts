@@ -7,7 +7,7 @@ import {
   createAccount,
   deleteAccounts,
   getUserAccounts,
-  getUserAccountsNumber,
+  getUserAccountsCount,
   deleteAccountsByPlaidItemId,
   createPlaidAccounts,
   getUserAccountIdsByName,
@@ -169,14 +169,14 @@ describe("accounts", () => {
     });
   });
 
-  describe("getUserAccountsNumber", () => {
+  describe("getUserAccountsCount", () => {
     const mockUserId = "user-123";
     const mockCount = 5;
 
     it("should return user accounts number", async () => {
       (db.userAccount.count as jest.Mock).mockResolvedValue(mockCount);
 
-      const result = await getUserAccountsNumber(mockUserId);
+      const result = await getUserAccountsCount(mockUserId);
 
       expect(result).toEqual(mockCount);
       expect(db.userAccount.count).toHaveBeenCalledWith({

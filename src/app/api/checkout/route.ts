@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getUserById } from "@/data/user";
 import { auth } from "@/auth";
-import { db } from "@/db";
 
 // TODO - Add different currency support and different locale support
 export async function POST(req: NextRequest) {
@@ -22,10 +22,7 @@ export async function POST(req: NextRequest) {
     const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
     // Check if user has a stripe customer id to avoid creating a new customer on stripe
-    const userData = await db.user.findUnique({
-      where: { id: user.id },
-      select: { stripeCustomerId: true },
-    });
+    const userData = await getUserById(user.id);
     const session = await STRIPE.checkout.sessions.create({
       mode: "subscription",
       locale: "auto",
@@ -49,8 +46,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Error:", error);
+  } catch {
     return NextResponse.json("Failed to create checkout session", {
       status: 500,
     });

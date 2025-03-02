@@ -1,4 +1,5 @@
 import { db } from "@/db";
+
 /**
  * Gets the list of currencies by Name
  * @param {String} currencyName - Currency Name
@@ -31,6 +32,21 @@ export async function getCurrencyByNameOrSymbol(
           },
         },
       ],
+    },
+  });
+  return currencies;
+}
+
+/**
+ * Get All Currencies
+ * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ */
+export async function getAllCurrencies() {
+  const currencies = await db.currency.findMany({
+    select: {
+      id: true,
+      symbol: true,
+      name: true,
     },
   });
   return currencies;

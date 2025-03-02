@@ -5,7 +5,7 @@ import {
   deleteAccounts,
   updateAccount,
   getUserAccounts,
-  getUserAccountsNumber,
+  getUserAccountsCount,
 } from "@/data/accounts";
 import { accountSchema } from "@/schemas";
 
@@ -34,7 +34,7 @@ export async function GET() {
         mask: account.plaidMask,
       },
     }));
-    const count = await getUserAccountsNumber(user.id);
+    const count = await getUserAccountsCount(user.id);
     return NextResponse.json({ data: accounts, meta: { count } });
   } catch {
     return NextResponse.json("Error while fetching accounts", { status: 500 });

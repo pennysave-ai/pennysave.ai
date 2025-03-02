@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db";
+import { getCategoriesCount } from "@/data/categories";
+import { getUserAccountsCount } from "@/data/accounts";
+import { getUserTransactionsCount } from "@/data/transactions";
 
 export async function GET() {
   const session = await auth();
@@ -8,18 +10,19 @@ export async function GET() {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  const categories = await db.category.count({
-    where: { userId: user.id },
-  });
-  const accounts = await db.userAccount.count({
-    where: { userId: user.id },
-  });
-  const transactions = await db.transaction.count({
-    where: { account: { userId: user.id } },
-  });
-  return NextResponse.json({
-    categories,
-    accounts,
-    transactions,
-  });
+  try {
+    const categories = await getCategoriesCount(user.id);
+    const accounts = await getUserAccountsCount(user.id);
+    const transactions = await getUserTransactionsCount(user.id);
+    return NextResponse.json({
+      categories,
+      accounts,
+      transactions,
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Could not fetch entities" },
+      { status: 500 }
+    );
+  }
 }
