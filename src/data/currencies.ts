@@ -1,4 +1,6 @@
 import { db } from "@/db";
+import { type Currency } from "@prisma/client";
+import { BASE_CURRENCY } from "@/constants";
 
 /**
  * Gets the list of currencies by Name
@@ -50,4 +52,71 @@ export async function getAllCurrencies() {
     },
   });
   return currencies;
+}
+
+/**
+ * Get currency by id
+ * @param {string} currencyId - Currency Id
+ * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ */
+export async function getCurrencyById(currencyId: string) {
+  return await db.currency.findUnique({
+    where: {
+      id: currencyId,
+    },
+  });
+}
+
+/**
+ * Get currency by name
+ * @param {string} currencyName - Currency Name
+ * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ */
+export async function getCurrencyByName(currencyName: string) {
+  return await db.currency.findFirst({
+    where: {
+      name: currencyName,
+    },
+  });
+}
+
+/**
+ * Get the target currency for the summary endpoint.
+ * If the currencyId is provided, it will return the currency with that ID.
+ * If the accountId is provided, it will return the currency of the account with that ID.
+ * If neither is provided, it will return the base currency.
+ * @param {string | null} accountId
+ * @param {string | null} currencyId
+ * @returns {Promise<Currency>} - The target currency.
+ */
+export async function getTargetCurrency(
+  accountId: string | null,
+  currencyId: string | null
+): Promise<Currency> {
+  if (currencyId) {
+    const currency = await getCurrencyById(currencyId);
+    if (!currency) {
+      throw new Error("Currency not found");
+    }
+    return currency;
+  }
+  if (accountId) {
+    const account = await db.userAccount.findUnique({
+      where: {
+        id: accountId,
+      },
+      include: {
+        currency: true,
+      },
+    });
+    if (!account) {
+      throw new Error("Account not found");
+    }
+    return account.currency;
+  }
+  const baseCurrency = await getCurrencyByName(BASE_CURRENCY.toUpperCase());
+  if (!baseCurrency) {
+    throw new Error("Currency not found");
+  }
+  return baseCurrency;
 }

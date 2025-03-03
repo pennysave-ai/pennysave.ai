@@ -10,7 +10,8 @@ import { db } from "@/db";
 import { auth } from "@/auth";
 import { convertCurrency } from "@/lib/utils";
 import { type Currency } from "@prisma/client";
-import { BASE_CURRENCY, DEFAULT_DATA_PERIOD } from "@/constants";
+import { getTargetCurrency } from "@/data/currencies";
+import { DEFAULT_DATA_PERIOD } from "@/constants";
 import {
   calculatePercentageChange,
   fillMissingDates,
@@ -33,56 +34,6 @@ export type DailyDataResponse = {
   date: string;
   income: number;
   expences: number;
-};
-
-/**
- * Get the target currency for the endpoint.
- * If the currencyId is provided, it will return the currency with that ID.
- * If the accountId is provided, it will return the currency of the account with that ID.
- * If neither is provided, it will return the base currency.
- * @param {string | null} accountId
- * @param {string | null} currencyId
- * @returns {Promise<Currency>} - The target currency.
- */
-
-const getTargetCurrency = async (
-  accountId: string | null,
-  currencyId: string | null
-): Promise<Currency> => {
-  if (currencyId) {
-    const currency = await db.currency.findUnique({
-      where: {
-        id: currencyId,
-      },
-    });
-    if (!currency) {
-      throw new Error("Currency not found");
-    }
-    return currency;
-  }
-  if (accountId) {
-    const account = await db.userAccount.findUnique({
-      where: {
-        id: accountId,
-      },
-      include: {
-        currency: true,
-      },
-    });
-    if (!account) {
-      throw new Error("Account not found");
-    }
-    return account.currency;
-  }
-  const baseCurrency = await db.currency.findFirst({
-    where: {
-      name: BASE_CURRENCY.toUpperCase(),
-    },
-  });
-  if (!baseCurrency) {
-    throw new Error("Currency not found");
-  }
-  return baseCurrency;
 };
 
 /**
@@ -600,8 +551,7 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-  } catch (error) {
-    console.error(error);
+  } catch {
     return NextResponse.json("Internal Server Error", { status: 500 });
   }
 }
