@@ -6,7 +6,10 @@ import { convertAmountToMilliunits, formatCurrency } from "@/lib/utils";
 import { getAllTransactions } from "../lib/plaid";
 import { getCategoiresMappings } from "./categories";
 import { convertAmountFromMilliunits, convertCurrency } from "@/lib/utils";
-import { CreateTransaction } from "@/features/transactions/hooks";
+import {
+  CreateTransaction,
+  UpdateTransaction,
+} from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
 
 /**
@@ -627,7 +630,7 @@ export async function deleteTransactions(
 export async function updateTransaction(
   id: string,
   userId: string,
-  data: { [key: string]: any }
+  data: UpdateTransaction
 ) {
   return await db.transaction.update({
     where: {
@@ -724,7 +727,9 @@ export async function getUserTransactionById(id: string, userId: string) {
  * @param {Object[]} transactions - Array of transactions
  * @returns {Promise} - Promise object represents the created transactions
  */
-export async function bulkCreateTransactions(transactions: any[]) {
+export async function bulkCreateTransactions(
+  transactions: CreateTransaction[]
+) {
   return await db.transaction.createMany({
     data: transactions,
   });
