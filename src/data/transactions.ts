@@ -630,7 +630,7 @@ export async function deleteTransactions(
 export async function updateTransaction(
   id: string,
   userId: string,
-  data: UpdateTransaction
+  data: Omit<UpdateTransaction, "id">
 ) {
   return await db.transaction.update({
     where: {

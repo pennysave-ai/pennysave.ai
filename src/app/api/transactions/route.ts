@@ -156,7 +156,7 @@ export async function PATCH(req: NextRequest) {
 
     const transaction = await updateTransaction(id, user.id, {
       amount,
-      payee,
+      payee: payee || "",
       notes,
       accountId,
       createdAt,
