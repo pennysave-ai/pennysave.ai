@@ -566,3 +566,166 @@ export async function getUserTransactionsCount(userId?: string) {
     where: { account: { userId } },
   });
 }
+
+/**
+ * Get user transactions count by account and creation date
+ * @param {String} userId - User ID
+ * @param {String} accountId - Account ID
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {Promise<number>} - Number of transactions
+ */
+export async function getUserTransactionsCountByAccount(
+  userId: string,
+  accountId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return await db.transaction.count({
+    where: {
+      accountId,
+      account: {
+        userId,
+      },
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+  });
+}
+
+/**
+ * Bulk delete transactions
+ * @param {String[]} transactionIds - Array of transaction IDs
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the deleted transactions
+ */
+export async function deleteTransactions(
+  transactionIds: string[],
+  userId: string
+) {
+  return await db.transaction.deleteMany({
+    where: {
+      id: {
+        in: transactionIds,
+      },
+      account: {
+        userId,
+      },
+    },
+  });
+}
+
+/**
+ * Update transaction by ID
+ * @param {String} id - Transaction ID
+ * @param {String} userId - User ID
+ * @param {Object} data - Transaction data
+ * @returns {Promise} - Promise object represents the updated transaction
+ */
+export async function updateTransaction(
+  id: string,
+  userId: string,
+  data: { [key: string]: any }
+) {
+  return await db.transaction.update({
+    where: {
+      id,
+      account: {
+        userId,
+      },
+    },
+    data,
+  });
+}
+
+/**
+ * Get user transactions by account and creation date
+ * @param {String} userId - User ID
+ * @param {String} accountId - Account ID
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {Promise} - Promise object represents the transactions data
+ */
+export async function getUserTransactionsByAccountandCreatedDate(
+  userId: string,
+  accountId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return await db.transaction.findMany({
+    select: {
+      id: true,
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      logo: true,
+      account: {
+        select: {
+          id: true,
+          name: true,
+          plaidMask: true,
+          institutionName: true,
+          currency: { select: { symbol: true, name: true } },
+        },
+      },
+      category: {
+        select: { id: true, name: true },
+      },
+    },
+    where: {
+      accountId,
+      account: {
+        userId,
+      },
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * Get user transaction buy transaction ID and user ID
+ * @param {String} id - Transaction ID
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the transaction data
+ */
+export async function getUserTransactionById(id: string, userId: string) {
+  return await db.transaction.findFirst({
+    where: {
+      id,
+      account: {
+        userId,
+      },
+    },
+    select: {
+      id: true,
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      account: {
+        select: { id: true, name: true },
+      },
+      category: {
+        select: { id: true, name: true },
+      },
+    },
+  });
+}
+
+/**
+ * Bulk create transactions
+ * @param {Object[]} transactions - Array of transactions
+ * @returns {Promise} - Promise object represents the created transactions
+ */
+export async function bulkCreateTransactions(transactions: any[]) {
+  return await db.transaction.createMany({
+    data: transactions,
+  });
+}

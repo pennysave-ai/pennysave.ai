@@ -218,9 +218,8 @@ const fetchSpendingByCategory = async (
       },
       []
     );
-    return result;
+    return result.sort((a, b) => b.amount - a.amount);
   } catch {
-    console.error("Error fetching spending by category:");
     throw new Error("Failed to fetch spending by category.");
   }
 };

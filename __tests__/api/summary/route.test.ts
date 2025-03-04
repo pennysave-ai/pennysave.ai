@@ -47,10 +47,6 @@ describe("GET /api/summary", () => {
     symbol: "$",
     exchangeRate: 1,
   };
-  const mockFinancialData = { income: 1000, expences: -500, remaining: 500 };
-  const mockSpendingByCategory = [
-    { id: "category-1", name: "Food", amount: 200 },
-  ];
   const mockDailyData = [{ date: "2023-01-01", income: 100, expences: -50 }];
   const mockDailyExpences = new Map([["2023-01-01", { Food: 50 }]]);
 

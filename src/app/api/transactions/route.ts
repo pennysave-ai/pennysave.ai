@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { subDays, parse, endOfDay } from "date-fns";
 
 import { auth } from "@/auth";
-import { db } from "@/db";
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
-import { createTransaction } from "@/data/transactions";
+import {
+  createTransaction,
+  getUserTransactionsCountByAccount,
+  deleteTransactions,
+  updateTransaction,
+  getUserTransactionsByAccountandCreatedDate,
+} from "@/data/transactions";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -25,99 +30,72 @@ export async function GET(req: NextRequest) {
   });
 
   if (!validationResult.success) {
-    console.log(validationResult.error);
     return NextResponse.json("Bad Request", { status: 400 });
   }
 
-  const defaultTo = new Date();
-  const defaultFrom = subDays(defaultTo, 30);
+  try {
+    const defaultTo = new Date();
+    const defaultFrom = subDays(defaultTo, 30);
 
-  const startDate = from ? parse(from, "yyyy-MM-dd", new Date()) : defaultFrom;
-  const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
-  // if notes is empty, return empty string
-  const transactions = await db.transaction.findMany({
-    select: {
-      id: true,
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      logo: true,
+    const startDate = from
+      ? parse(from, "yyyy-MM-dd", new Date())
+      : defaultFrom;
+    const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
+    // if notes is empty, return empty string
+    const transactions = await getUserTransactionsByAccountandCreatedDate(
+      user.id!,
+      accountId!,
+      startDate,
+      endOfDay(endDate)
+    );
+
+    // Convert nulls to empty strings
+    const sanitizedTransactions = transactions.map((transaction) => ({
+      ...transaction,
+      payee: transaction.payee ?? "",
+      notes: transaction.notes ?? "",
+      logo: transaction.logo,
       account: {
-        select: {
-          id: true,
-          name: true,
-          plaidMask: true,
-          institutionName: true,
-          currency: { select: { symbol: true, name: true } },
+        id: transaction.account.id,
+        name: transaction.account.name,
+        currency: {
+          ...transaction.account.currency,
+        },
+        mask: transaction.account.plaidMask,
+        institution: {
+          name: transaction.account.institutionName,
         },
       },
-      category: {
-        select: { id: true, name: true },
-      },
-    },
-    where: {
-      accountId: accountId,
-      account: {
-        userId: user.id,
-      },
-      createdAt: {
-        gte: startDate,
-        lte: endOfDay(endDate),
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Convert nulls to empty strings
-  const sanitizedTransactions = transactions.map((transaction) => ({
-    ...transaction,
-    payee: transaction.payee ?? "",
-    notes: transaction.notes ?? "",
-    logo: transaction.logo,
-    account: {
-      id: transaction.account.id,
-      name: transaction.account.name,
-      currency: {
-        ...transaction.account.currency,
-      },
-      mask: transaction.account.plaidMask,
-      institution: {
-        name: transaction.account.institutionName,
-      },
-    },
-  }));
-
-  const count = await db.transaction.count({
-    where: {
-      accountId: accountId,
-      account: {
-        userId: user.id,
-      },
-      createdAt: {
-        gte: startDate,
-        lte: endOfDay(endDate),
-      },
-    },
-  });
-  return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
+    }));
+    const count = await getUserTransactionsCountByAccount(
+      user.id!,
+      accountId!,
+      startDate,
+      endOfDay(endDate)
+    );
+    return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
+  } catch {
+    return NextResponse.json("Error while fetching transactions", {
+      status: 500,
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+  const user = session.user;
+  if (!user.id) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+  const payload = await req.json();
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json("Unautorized", { status: 401 });
-    }
-    const user = session.user;
-    if (!user.id) {
-      return NextResponse.json("Unautorized", { status: 401 });
-    }
-    const payload = await req.json();
     const newTransaction = await createTransaction(payload);
     return NextResponse.json({ data: newTransaction });
   } catch {
-    return NextResponse.json("Error while creating a  new transaction", {
+    return NextResponse.json("Error while creating a new transaction", {
       status: 500,
     });
   }
@@ -136,17 +114,14 @@ export async function DELETE(req: NextRequest) {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-
-  const accounts = await db.transaction.deleteMany({
-    where: {
-      id: { in: body.ids },
-      account: {
-        userId: user.id,
-      },
-    },
-  });
-
-  return NextResponse.json({ data: accounts });
+  try {
+    const data = await deleteTransactions(body.ids, user.id);
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json("Error while deleting transactions", {
+      status: 500,
+    });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -175,21 +150,23 @@ export async function PATCH(req: NextRequest) {
   if (!validationResult.success) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
+  try {
+    const { id, amount, payee, notes, accountId, createdAt, categoryId } =
+      validationResult.data;
 
-  const { id, amount, payee, notes, accountId, createdAt, categoryId } =
-    validationResult.data;
-
-  const transaction = await db.transaction.update({
-    where: { id, account: { userId: user.id } },
-    data: {
+    const transaction = await updateTransaction(id, user.id, {
       amount,
       payee,
       notes,
       accountId,
       createdAt,
       categoryId: categoryId ? categoryId : null,
-    },
-  });
+    });
 
-  return NextResponse.json({ data: transaction });
+    return NextResponse.json({ data: transaction });
+  } catch {
+    return NextResponse.json("Error while updating transaction", {
+      status: 500,
+    });
+  }
 }
