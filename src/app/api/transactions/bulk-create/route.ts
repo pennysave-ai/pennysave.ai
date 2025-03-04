@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db";
+import { bulkCreateTransactions } from "@/data/transactions";
 import { v4 as uuid } from "uuid";
 import { bulkCreateTransactionsSchema } from "@/schemas";
 
@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
   for (let i = 0; i < body.length; i++) {
     const validationResult = bulkCreateTransactionsSchema.safeParse(body[i]);
     if (!validationResult.success) {
-      console.error(validationResult.error);
       return NextResponse.json("Bad Request", { status: 400 });
     }
   }
@@ -34,12 +33,9 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    await db.transaction.createMany({
-      data: transactionsToCreate,
-    });
+    await bulkCreateTransactions(transactionsToCreate);
     return NextResponse.json({ data: transactionsToCreate });
-  } catch (error) {
-    console.error("Error creating transactions:", error);
-    return NextResponse.json("Internal Server Error", { status: 500 });
+  } catch {
+    return NextResponse.json("Error creating transactions", { status: 500 });
   }
 }

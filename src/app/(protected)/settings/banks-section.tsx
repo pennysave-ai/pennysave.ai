@@ -212,18 +212,17 @@ export default function BanksSection({
           <div>
             Connected bank accounts
             <div className="text-small text-default-500 flex gap-x-1 flex-col md:flex-row">
-              {/* Add your bank card to track your transactions automatically. */}
-              In development, please check back later.
+              Add your bank card to track your transactions automatically.
             </div>
           </div>
         </div>
-        {/* <PlaidLink
+        <PlaidLink
           className="w-full md:w-auto"
           title="Connect"
           startContent={<Icon icon="solar:add-circle-bold" width={20} />}
           hasActiveSubscription={hasActiveSubscription}
           openPaywall={onPaywallModalOpen}
-        /> */}
+        />
       </div>
     </CardBody>
   );

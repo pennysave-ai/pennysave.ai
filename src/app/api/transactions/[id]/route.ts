@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db";
+import { getUserTransactionById } from "@/data/transactions";
 
 export async function GET(
   _: NextRequest,
@@ -14,29 +14,15 @@ export async function GET(
   if (!user) {
     return NextResponse.json("Unauthorized", { status: 401 });
   }
-  const transaction = await db.transaction.findFirst({
-    where: {
-      id: params.id,
-      account: {
-        userId: user.id,
-      },
-    },
-    select: {
-      id: true,
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      account: {
-        select: { id: true, name: true },
-      },
-      category: {
-        select: { id: true, name: true },
-      },
-    },
-  });
-  if (!transaction) {
-    return NextResponse.json("Not found", { status: 404 });
+  try {
+    const transaction = await getUserTransactionById(user.id!, params.id);
+    if (!transaction) {
+      return NextResponse.json("Not found", { status: 404 });
+    }
+    return NextResponse.json({ data: transaction });
+  } catch {
+    return NextResponse.json(`Error while fetching transaction ${params.id}`, {
+      status: 500,
+    });
   }
-  return NextResponse.json({ data: transaction });
 }
