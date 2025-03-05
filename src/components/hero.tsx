@@ -16,7 +16,7 @@ export default function Hero() {
         </span>{" "}
         with Ease!
       </div>
-      <div className="text-lg text-default-400">
+      <div className="text-lg text-default-400 text-center">
         A convenient tool for managing your finances.
       </div>
       <div className="flex gap-4 mt-8">

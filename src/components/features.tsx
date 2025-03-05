@@ -34,7 +34,7 @@ export default function Features() {
                 />
                 Simple Analytics
               </div>
-              <div className="p-3 mb-12 md:mb-10 flex flex-col gap-y-5">
+              <div className="p-3 mb-[70px] md:mb-12 flex flex-col gap-y-5">
                 <DataCard
                   displayOnly
                   title="Income"
@@ -108,7 +108,7 @@ export default function Features() {
                 />
                 Personal financial AI advisor
               </div>
-              <div className="p-3 mb-14 md:mb-0 flex flex-col gap-y-3 items-center">
+              <div className="p-3 mb-[120px] md:mb-0 flex flex-col gap-y-3 items-center">
                 <Card className="p-3 w-full justify-center">
                   Identify my unnecessary expenses
                 </Card>
@@ -163,7 +163,7 @@ export default function Features() {
               Monthly Email reports
             </div>
             <div className="p-3">
-              <div className="p-5 dark:bg-content1 bg-content2 rounded-lg mb-10">
+              <div className="p-5 dark:bg-content1 bg-content2 rounded-lg mb-16">
                 <h1 className="text-xl font-bold">
                   Your financial report for {lastMonthFormatted}
                 </h1>
@@ -199,7 +199,7 @@ export default function Features() {
               />
               Connect your data
             </div>
-            <div className="p-3 flex flex-col gap-y-2 mb-16 md:mb-0">
+            <div className="p-3 flex flex-col gap-y-2 mb-24 md:mb-0">
               <div className="flex justify-between items-center gap-3">
                 <div className="flex items-center gap-x-3 overflow-hidden">
                   <div
