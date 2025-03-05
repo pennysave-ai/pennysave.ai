@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /api/
+Disallow: /auth/
+Allow: /privacy-policy
+Allow: /auth/sign-in
+Allow: /auth/sign-up
+
+Sitemap: https://pennysave.ai/sitemap.xml
