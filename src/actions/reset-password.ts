@@ -3,7 +3,7 @@
 import { getUserByEmail } from "@/data";
 import { forgotPasswordSchema } from "@/schemas";
 import { sendResetPasswordEmail } from "@/lib/mail";
-import { generatePasswordResetToken } from "@/lib/tokens";
+import { generatePasswordResetToken } from "@/data/verification-token";
 
 interface ResetPasswordErrors {
   errors: {
