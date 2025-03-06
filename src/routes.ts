@@ -3,6 +3,8 @@
  * @type {string[]}
  */
 export const publicRoutes = [
+  "/robots.txt",
+  "/sitemap.xml",
   "/privacy-policy",
   "/auth/verify-email",
   "/api/webhooks/stripe",

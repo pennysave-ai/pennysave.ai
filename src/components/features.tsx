@@ -118,7 +118,7 @@ export default function Features() {
                 <Card className="p-3 w-[94%] justify-center opacity-60">
                   How much money did I spend on food last week?
                 </Card>
-                <Card className="p-3 w-[92%] justify-center opacity-40">
+                <Card className="p-3 w-[92%] justify-center opacity-60">
                   How can I optimize my expences?
                 </Card>
               </div>
@@ -167,11 +167,11 @@ export default function Features() {
                 <h1 className="text-xl font-bold">
                   Your financial report for {lastMonthFormatted}
                 </h1>
-                <div className="flex items-center gap-x-1 mb-[30px] text-xs text-default-500">
+                <div className="flex items-center gap-x-1 mb-[30px] text-xs text-default-600">
                   <div>Financal health status:</div>
                   <div className="rounded-full h-2.5 w-2.5 bg-success" />
                 </div>
-                <div className="text-default-500 text-sm">
+                <div className="text-default-600 text-sm">
                   This month, your financial landscape painted a pretty rose
                   picture! With a net cash flow of $5622.00, it seems like your
                   money management skills are on point....

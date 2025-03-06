@@ -15,7 +15,13 @@ export default function HomePage() {
           id="home"
           className="relative w-full flex justify-center mt-10"
         >
-          <Image src={dashboardImage.src} width="100%" alt="hero-bg" />
+          <Image
+            src={dashboardImage.src}
+            width="100%"
+            alt="hero-bg"
+            // srcSet={`image-300.jpg 300w, image-768.jpg 768w, ${dashboardImage.src} 1280w`}
+            // sizes="(max-width: 600px) 300px, (max-width: 1200px) 600px, 1200px"
+          />
           <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
         </section>
         <Features />
