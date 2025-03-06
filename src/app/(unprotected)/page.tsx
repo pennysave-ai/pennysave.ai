@@ -4,7 +4,7 @@ import Hero from "@/components/hero";
 import HowTo from "@/components/how-to";
 import Features from "@/components/features";
 import { Image } from "@heroui/image";
-import dashboardImage from "@/app/public/dashboard_1280.png";
+import dashboardImage from "@/app/public/dashboard.png";
 
 export default function HomePage() {
   return (
