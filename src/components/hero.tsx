@@ -16,13 +16,13 @@ export default function Hero() {
         </span>{" "}
         with Ease!
       </div>
-      <div className="text-lg text-default-400 text-center">
+      <div className="text-lg text-default-500 text-center">
         A convenient tool for managing your finances.
       </div>
       <div className="flex gap-4 mt-8">
         <Button
           color="primary"
-          variant="bordered"
+          variant="flat"
           size="lg"
           className="rounded-full"
           onPress={() => {
