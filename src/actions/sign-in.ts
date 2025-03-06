@@ -4,7 +4,7 @@ import { signIn } from "@/auth";
 import { signInSchema } from "@/schemas";
 import { AuthError } from "next-auth";
 import { getUserByEmail } from "@/data";
-import { generateVerificationToken } from "@/lib/tokens";
+import { generateVerificationToken } from "@/data/verification-token";
 import { DEFAULT_LOGGED_IN_REDIRECT } from "@/routes";
 import { ThirdPartyError } from "@/auth.config";
 import { sendVerificationEmail } from "@/lib/mail";
