@@ -1,10 +1,10 @@
 "use client";
-
 import Hero from "@/components/hero";
 import HowTo from "@/components/how-to";
 import Features from "@/components/features";
 import { Image } from "@heroui/image";
-import dashboardImage from "@/app/public/dashboard.webp";
+import dashboardLight_1800 from "@/app/public/dashboard_light_1800.webp";
+import dashboardLight_900 from "@/app/public/dashboard_light_900.webp";
 
 export default function HomePage() {
   return (
@@ -16,11 +16,9 @@ export default function HomePage() {
           className="relative w-full flex justify-center mt-10"
         >
           <Image
-            src={dashboardImage.src}
-            width="100%"
+            src={dashboardLight_1800.src}
             alt="hero-bg"
-            // srcSet={`image-300.jpg 300w, image-768.jpg 768w, ${dashboardImage.src} 1280w`}
-            // sizes="(max-width: 600px) 300px, (max-width: 1200px) 600px, 1200px"
+            srcSet={`${dashboardLight_900.src} 1280w, ${dashboardLight_1800.src} 1400w`}
           />
           <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
         </section>
