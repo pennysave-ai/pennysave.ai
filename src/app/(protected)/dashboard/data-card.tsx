@@ -82,8 +82,8 @@ export default function DataCard({
         <Card className="border border-transparent dark:border-default-100">
           <section className="flex flex-nowrap justify-between">
             <div className="flex flex-col justify-between gap-y-2 p-4">
-              <div className="flex flex-col gap-y-4">
-                <dl>
+              <div>
+                <dl className="flex flex-col gap-y-4">
                   <dt className="text-sm font-medium text-default-600">
                     <Skeleton className="w-20 h-5 rounded" />
                   </dt>

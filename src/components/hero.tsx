@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
 
