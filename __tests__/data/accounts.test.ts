@@ -36,6 +36,14 @@ jest.mock("@/schemas", () => ({
   },
 }));
 
+jest.mock("@/data/stripe", () => ({
+  financialConnections: {
+    sessions: {
+      create: jest.fn(),
+    },
+  },
+}));
+
 describe("accounts", () => {
   beforeEach(() => {
     jest.clearAllMocks();
