@@ -71,7 +71,6 @@ export type TransactionResponseItem = {
   payee: string;
   notes?: string;
   createdAt: string;
-  logo: string | null;
   account: {
     id: string;
     name: string;
@@ -82,7 +81,7 @@ export type TransactionResponseItem = {
     institution: {
       name: string | null;
     };
-    mask: string | null;
+    last4: string | null;
   };
   category: {
     id: string | null;

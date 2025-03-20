@@ -32,8 +32,6 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 
-import { Image } from "@heroui/image";
-
 import { ArrowUp, ArrowDown } from "@/app/icons";
 import { Spinner } from "@heroui/spinner";
 
@@ -287,7 +285,7 @@ export default function TransactionsTable({
               <div className="text-default-400 block lg:hidden">Account:</div>
               <AccountName
                 name={transaction.account.name}
-                mask={transaction.account.mask}
+                last4={transaction.account.last4}
               />
             </>
           );
@@ -327,20 +325,10 @@ export default function TransactionsTable({
             <>
               <div className="text-default-400 block lg:hidden">Payee:</div>
               <div className="flex items-center gap-x-2 text-default-foreground">
-                {transaction?.logo ? (
-                  <Image
-                    width={20}
-                    height={20}
-                    src={transaction.logo}
-                    alt={transaction.payee}
-                    radius="full"
-                  />
-                ) : (
-                  transaction?.payee && (
-                    <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
-                      {transaction?.payee[0]?.toUpperCase()}
-                    </div>
-                  )
+                {transaction?.payee && (
+                  <div className="w-5 h-5 rounded-full bg-default-200 flex items-center text-xs justify-center">
+                    {transaction?.payee[0]?.toUpperCase()}
+                  </div>
                 )}
                 <div>{transaction[transactionKey]}</div>
               </div>

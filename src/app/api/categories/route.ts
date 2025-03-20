@@ -104,7 +104,6 @@ export async function PATCH(req: NextRequest) {
       body.id,
       user.id,
       body.name,
-      body.plaidId,
       body.description
     );
     return NextResponse.json({ data: category });

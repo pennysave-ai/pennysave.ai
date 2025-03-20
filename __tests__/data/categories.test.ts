@@ -136,7 +136,7 @@ describe("categories", () => {
     const mockUserId = "user-123";
     const mockName = "Test Category";
     const mockCategories = [
-      { id: "category-1", name: "Test Category", plaidId: "plaid-123" },
+      { id: "category-1", name: "Test Category", last4: "2123" },
     ];
 
     it("should return user categories by name", async () => {
@@ -156,7 +156,6 @@ describe("categories", () => {
         select: {
           id: true,
           name: true,
-          plaidId: true,
         },
       });
     });
@@ -194,7 +193,7 @@ describe("categories", () => {
       id: "category-1",
       userId: "user-123",
       name: "Updated Category",
-      plaidId: "plaid-123",
+      last4: "2123",
       description: "Updated Description",
     };
 
@@ -205,7 +204,6 @@ describe("categories", () => {
         mockCategoryData.id,
         mockCategoryData.userId,
         mockCategoryData.name,
-        mockCategoryData.plaidId,
         mockCategoryData.description
       );
 
@@ -214,7 +212,6 @@ describe("categories", () => {
         where: { id: mockCategoryData.id, userId: mockCategoryData.userId },
         data: {
           name: mockCategoryData.name,
-          plaidId: mockCategoryData.plaidId,
           description: mockCategoryData.description,
         },
       });

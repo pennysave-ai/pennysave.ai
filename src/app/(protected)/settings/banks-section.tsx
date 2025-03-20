@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Accordion, AccordionItem } from "@heroui/accordion";
@@ -15,48 +17,78 @@ import {
   ModalBody,
   useDisclosure,
 } from "@heroui/modal";
-import PlaidLink from "./plaid-link";
-import { Link } from "@heroui/link";
+import { Account } from "@/features/accounts/hooks";
+import { useDeleteStripeAccounts } from "@/features/stripe/hooks";
+import StripeLink from "./stripe-link";
+
 import { Chip } from "@heroui/chip";
 
-import { useDeletePlaidItem } from "@/features/plaidItems/hooks";
 import SectionLoading from "./section-loading";
-
-interface Bank {
-  name: string;
-  url: string;
-  color: string;
-  id: string;
-}
 
 interface BanksSectionProps {
   hasActiveSubscription: boolean;
-  banks: Bank[];
+  accounts?: {
+    data: Account[] | [];
+    meta: {
+      count: number;
+    } | null;
+  };
   isLoading: boolean;
 }
 
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+);
+
 export default function BanksSection({
   hasActiveSubscription,
-  banks,
+  accounts,
   isLoading,
 }: BanksSectionProps) {
   const isMobile = useMediaQuery("(max-width: 767px)");
-  const [plaidItemToDelete, setPlaidItemToDelete] = useState<string>("");
+  const [institutionToDelete, setInstitutionToDelete] = useState<string>("");
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const { onOpen: onPaywallModalOpen } = useModal();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const deleteItem = useDeletePlaidItem();
+  const deleteStripeAccounts = useDeleteStripeAccounts();
 
+  // Group banks by institution
+  const banks = accounts?.data
+    .filter((account) => account.institution.last4)
+    .reduce<
+      {
+        bankName: string;
+        account: { name: string; last4: string | null }[];
+      }[]
+    >((acc, account) => {
+      const bank = acc.find(
+        (bank) => bank.bankName === account.institution.name
+      );
+      if (bank) {
+        bank.account.push({
+          name: account.name,
+          last4: account.institution.last4,
+        });
+        return acc;
+      } else {
+        acc.push({
+          bankName: account.institution.name || "",
+          account: [
+            {
+              name: account.name,
+              last4: account.institution.last4,
+            },
+          ],
+        });
+      }
+      return acc;
+    }, []);
   const handleDeleteItem = async () => {
     setIsDeleteLoading(true);
-    await deleteItem.mutateAsync([plaidItemToDelete]);
+    await deleteStripeAccounts.mutateAsync(institutionToDelete);
     setIsDeleteLoading(false);
     onOpenChange();
   };
-
-  const bankNameToDelete =
-    banks?.find((bank) => bank.id === plaidItemToDelete)?.name || "";
-
   if (isLoading)
     return (
       <SectionLoading
@@ -64,9 +96,9 @@ export default function BanksSection({
       />
     );
 
-  if (!!banks.length) {
+  if (!!banks?.length) {
     return (
-      <>
+      <Elements stripe={stripePromise}>
         <Accordion variant="bordered" className="overflow-hidden">
           <AccordionItem
             className="py-0.5"
@@ -85,7 +117,7 @@ export default function BanksSection({
                     {banks.length}
                   </Chip>
                 </div>
-                <PlaidLink
+                <StripeLink
                   className="w-auto hidden md:flex"
                   title="Connect"
                   startContent={
@@ -97,13 +129,6 @@ export default function BanksSection({
               </div>
             }
           >
-            <PlaidLink
-              className="w-full md:hidden mb-3"
-              title="Connect"
-              startContent={<Icon icon="solar:add-circle-bold" width={20} />}
-              hasActiveSubscription={hasActiveSubscription}
-              openPaywall={onPaywallModalOpen}
-            />
             <div className="flex flex-col">
               {banks.map((bank, i) => (
                 <div
@@ -111,34 +136,21 @@ export default function BanksSection({
                   className="flex justify-between items-start md:items-center hover:none md:hover:bg-default-100 p-2 rounded-[8px] transition-colors duration-300 ease-in-out truncate flex-col md:flex-row gap-y-4 md:gap-y-0"
                 >
                   <div className="flex items-center gap-x-3 overflow-hidden w-full">
-                    <div
-                      className="bank-card"
-                      style={{
-                        background: bank.color,
-                      }}
-                    >
-                      {bank.name[0]?.toUpperCase()}
+                    <div className="bank-card bg-secondary-400">
+                      {bank?.bankName[0]?.toUpperCase()}
                     </div>
                     <div className="flex flex-col overflow-hidden text-ellipsis">
-                      <div className="truncate block">{bank.name}</div>
-                      <Link
-                        isExternal
-                        size="sm"
-                        href={bank.url || ""}
-                        className="truncate block"
-                      >
-                        {bank.url}
-                      </Link>
+                      <div className="truncate block">{bank.bankName}</div>
+                      <div className="flex gap-x-2 text-xs text-default-400">
+                        {bank.account.map((account, i) => (
+                          <div key={i} className="trucate block">
+                            *{account.last4}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-x-2 flex-col md:flex-row gap-y-3 md:gap-y-0 w-full md:w-auto">
-                    <PlaidLink
-                      plaidItemId={bank.id}
-                      className="md:flex w-full"
-                      variant={isMobile ? "flat" : "light"}
-                      hasActiveSubscription={hasActiveSubscription}
-                      openPaywall={onPaywallModalOpen}
-                    />
                     <Button
                       isIconOnly
                       fullWidth
@@ -149,7 +161,7 @@ export default function BanksSection({
                       variant={isMobile ? "flat" : "light"}
                       onPress={() => {
                         onOpen();
-                        setPlaidItemToDelete(bank.id);
+                        setInstitutionToDelete(bank.bankName);
                       }}
                     >
                       <Icon icon="solar:close-circle-bold" width={22} />
@@ -163,7 +175,7 @@ export default function BanksSection({
         <Modal
           isOpen={isOpen}
           onOpenChange={() => {
-            setPlaidItemToDelete("");
+            setInstitutionToDelete("");
             onOpenChange();
           }}
           backdrop="opaque"
@@ -178,7 +190,7 @@ export default function BanksSection({
                   <div>
                     You are about to delete connection with
                     <span className="text-primary ml-1">
-                      {bankNameToDelete}
+                      {institutionToDelete}
                     </span>
                     . All transactions and accounts associated with this bank
                     will be removed. Are you sure you want to continue?
@@ -201,7 +213,7 @@ export default function BanksSection({
             )}
           </ModalContent>
         </Modal>
-      </>
+      </Elements>
     );
   }
   return (
@@ -216,13 +228,15 @@ export default function BanksSection({
             </div>
           </div>
         </div>
-        <PlaidLink
-          className="w-full md:w-auto"
-          title="Connect"
-          startContent={<Icon icon="solar:add-circle-bold" width={20} />}
-          hasActiveSubscription={hasActiveSubscription}
-          openPaywall={onPaywallModalOpen}
-        />
+        <Elements stripe={stripePromise}>
+          <StripeLink
+            className="w-full md:w-auto"
+            title="Connect"
+            startContent={<Icon icon="solar:add-circle-bold" width={20} />}
+            hasActiveSubscription={hasActiveSubscription}
+            openPaywall={onPaywallModalOpen}
+          />
+        </Elements>
       </div>
     </CardBody>
   );

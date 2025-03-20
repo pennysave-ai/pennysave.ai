@@ -4,15 +4,14 @@ import { Session } from "next-auth";
 import { CardHeader } from "@heroui/card";
 import BanksSection from "./banks-section";
 import SubscriptionSection from "./subscription-section";
-import { useGetPlaidItems } from "@/features/plaidItems/hooks";
+import { useGetAccounts } from "@/features/accounts/hooks";
 
 interface GeneralProps {
   user: Session["user"];
 }
 
-// TODO: Add currency support
 export default function General({ user }: GeneralProps) {
-  const { data: banks, isLoading: banksLoading } = useGetPlaidItems();
+  const { data: accounts, isFetching: accountsLoading } = useGetAccounts();
   return (
     <>
       <CardHeader className="flex flex-col items-start p-4">
@@ -22,8 +21,8 @@ export default function General({ user }: GeneralProps) {
       <div className="grid grid-col-1 gap-y-3 px-3">
         <SubscriptionSection />
         <BanksSection
-          isLoading={banksLoading}
-          banks={banks}
+          isLoading={accountsLoading}
+          accounts={accounts}
           hasActiveSubscription={user.hasActiveStripeSubscription}
         />
       </div>

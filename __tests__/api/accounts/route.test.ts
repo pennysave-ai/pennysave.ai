@@ -29,6 +29,15 @@ jest.mock("@/data/accounts", () => ({
   getUserAccounts: jest.fn(),
 }));
 
+jest.mock("@/db", () => ({
+  db: {
+    userAccount: {
+      findMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+  },
+}));
+
 // Import mocked modules
 import { auth } from "@/auth";
 import {
@@ -51,10 +60,7 @@ describe("API Route: /api/accounts", () => {
       symbol: "$",
     },
     institutionName: "Test Bank",
-    plaidMask: "1234",
-    plaidItem: {
-      institutionPrimaryColor: "#000000",
-    },
+    last4: "1234",
   };
 
   beforeEach(() => {
@@ -91,8 +97,7 @@ describe("API Route: /api/accounts", () => {
             currency: mockAccount.currency,
             institution: {
               name: mockAccount.institutionName,
-              color: mockAccount.plaidItem.institutionPrimaryColor,
-              mask: mockAccount.plaidMask,
+              last4: mockAccount.last4,
             },
           },
         ],

@@ -54,14 +54,13 @@ export async function GET(req: NextRequest) {
       ...transaction,
       payee: transaction.payee ?? "",
       notes: transaction.notes ?? "",
-      logo: transaction.logo,
       account: {
         id: transaction.account.id,
         name: transaction.account.name,
         currency: {
           ...transaction.account.currency,
         },
-        mask: transaction.account.plaidMask,
+        last4: transaction.account.last4,
         institution: {
           name: transaction.account.institutionName,
         },

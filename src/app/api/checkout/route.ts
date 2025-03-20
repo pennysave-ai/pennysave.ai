@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { stripe } from "@/data/stripe";
 import { getUserById } from "@/data/user";
 import { auth } from "@/auth";
 
@@ -18,12 +18,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    // Create a checkout session for subscription
-    const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY || "");
-
     // Check if user has a stripe customer id to avoid creating a new customer on stripe
     const userData = await getUserById(user.id);
-    const session = await STRIPE.checkout.sessions.create({
+    const stripeSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       locale: "auto",
       customer: userData?.stripeCustomerId || undefined,
@@ -42,11 +39,12 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(
       {
-        url: session.url,
+        url: stripeSession.url,
       },
       { status: 200 }
     );
-  } catch {
+  } catch (e) {
+    console.error(e);
     return NextResponse.json("Failed to create checkout session", {
       status: 500,
     });

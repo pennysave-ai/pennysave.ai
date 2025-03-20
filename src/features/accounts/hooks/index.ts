@@ -38,7 +38,6 @@ export const useCreateAccount = () => {
 export type AccountResponse = {
   id: string;
   name: string;
-  plaidId?: string[];
   currency: {
     id: string;
     name: string;
@@ -58,8 +57,7 @@ export type Account = {
   currencySymbol: string;
   institution: {
     name: string | null;
-    color: string | null;
-    mask: string | null;
+    last4: string | null;
   };
 };
 

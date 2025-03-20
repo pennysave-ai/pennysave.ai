@@ -57,7 +57,6 @@ export type Category = {
   id: string;
   name: string;
   description: string;
-  plaidId: string[];
 };
 
 type Meta = {

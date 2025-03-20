@@ -3,6 +3,19 @@
 import { db } from "@/db";
 
 /**
+ * Get user by Stripe customer ID
+ * @param stripeCustomerId - Stripe customer ID
+ * @returns Promise<User>
+ */
+export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+  return db.user.findFirst({
+    where: {
+      stripeCustomerId,
+    },
+  });
+}
+
+/**
  * Get user data by email
  * @param email
  * @returns

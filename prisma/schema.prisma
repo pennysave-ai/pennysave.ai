@@ -46,13 +46,10 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  plaidUserToken String?
-  plaidUserId    String?
   accounts      Account[]
   sessions      Session[]
   category      Category[]
   userAccounts  UserAccount[]
-  plaidItems    PlaidItem[]
   budgets       Budget[]
   password      String?
   role          UserRole @default(USER)
@@ -71,19 +68,6 @@ model Transaction {
   amount      Int
   payee       String?
   notes       String?
-  logo        String?
-  plaidCategoryConfidenceLeveL String?
-  plaidCategoryPrimary String?
-  plaidCategoryDetailed String?
-  plaidPaymentChannel String?
-  plaidAdress String?
-  plaidCity String?
-  plaidCountry String?
-  plaidLatitude Float?
-  plaidLongitude Float?
-  plaidPostalCode String?
-  plaidRegion String?
-  plaidStoreNumber String?
   accountId   String
   account     UserAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId  String?
@@ -97,8 +81,6 @@ model Category {
   name        String
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plaidId     String?   // Plaid category id determined by the plaid API
-  plaidPrimary String?  // Plaid primary category
   description String?
   transactions Transaction[]
   budgetAllocations BudgetAllocation[]
@@ -141,42 +123,15 @@ model UserAccount {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   institutionName String?
-  plaidAccountId String? @unique
-  plaidItemId    String?
-  plaidMask      String?
-  plaidBalance   Float?
-  plaidType      String?
-  plaidItem  PlaidItem? @relation(fields: [plaidItemId], references: [plaidItemId], onDelete: Cascade)   
+  stripeAccountId String?
+  stripeLastTransactionsRefreshId String?
+  last4      String?
+  balance   Int?
+  stripeAccountType      String?  
   transactions Transaction[]
   currencyId String
   currency   Currency  @relation(fields: [currencyId], references: [id])
   budgets    BudgetAccount[]
-  @@unique([id])
-}
-
-// A model to store the plaid item details
-model PlaidItem {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken String
-  plaidItemId String  @unique
-  institutionId String
-  institutionName String
-  institutionPrimaryColor String?
-  institutionUrl String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  transactionCursor String?
-  UserAccount UserAccount[]
-}
-
-// A model to store Plaid transaction categories
-model PlaidCategory {
-  id          String    @id @default(uuid())
-  primary     String
-  detailed    String
-  description String
   @@unique([id])
 }
 
