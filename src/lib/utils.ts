@@ -217,3 +217,12 @@ export const convertHexToRgba = (hex: string, alpha: number) => {
   }
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
+
+/**
+ * Converts Unix timestamp to ISO string
+ * @param timestamp
+ * @returns {String}
+ */
+export const convertUnixTimestampToISO = (timestamp: number): string => {
+  return new Date(timestamp * 1000).toISOString();
+};

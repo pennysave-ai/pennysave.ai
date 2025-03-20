@@ -15,6 +15,7 @@ import { useModal } from "@/app/providers/modal";
 import { Icon } from "@iconify/react";
 import PlanRadio from "./plan-radio";
 import { STRIPE_PLANS } from "@/lib/stripe";
+import { useCreateCheckoutSession } from "@/features/stripe/hooks";
 
 const PAID_FEATURES = [
   { id: 1, name: "Enable your AI financial advisor." },
@@ -33,18 +34,11 @@ export const PaywallModal = () => {
   const { isOpen, onClose } = useModal();
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const createCheckoutSession = useCreateCheckoutSession();
   const handleSubscribe = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ priceId: selected }),
-      });
-      const session = await response.json();
+      const session = await createCheckoutSession.mutateAsync(selected!);
       setLoading(false);
       if (session.url) {
         window.location.href = session.url;
@@ -58,7 +52,14 @@ export const PaywallModal = () => {
     }
   };
   return (
-    <Modal isOpen={isOpen} onClose={onClose} backdrop="opaque">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      backdrop="opaque"
+      classNames={{
+        backdrop: "z-10",
+      }}
+    >
       <ModalContent>
         <ModalHeader className="mt-2">
           <div className="flex items-center gap-x-1">

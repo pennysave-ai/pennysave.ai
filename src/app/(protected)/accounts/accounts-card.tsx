@@ -38,13 +38,13 @@ const AccountsCard = () => {
     name: string;
     currencyId: string;
     institutionName: string;
-    mask: string | null;
+    last4: string | null;
   }>({
     id: "",
     name: "",
     currencyId: "",
     institutionName: "",
-    mask: "",
+    last4: "",
   });
   const [formError, setFormError] = useState<Record<string, string[]>>({});
 
@@ -55,7 +55,7 @@ const AccountsCard = () => {
         name: "",
         currencyId: "",
         institutionName: "",
-        mask: "",
+        last4: "",
       });
       setFormError({});
     }
@@ -69,7 +69,7 @@ const AccountsCard = () => {
       name: account.name,
       currencyId: account.currencyId,
       institutionName: account.institution?.name || "",
-      mask: account.institution?.mask,
+      last4: account.institution?.last4,
     });
     onOpenChange();
   };
@@ -199,7 +199,7 @@ const AccountsCard = () => {
                     institutionName: e.target.value,
                   })
                 }
-                isDisabled={!!formState.mask}
+                isDisabled={!!formState.last4}
                 isInvalid={!!formError?.institutionName}
                 errorMessage={formError?.institutionName?.join(", ")}
               />

@@ -17,7 +17,7 @@ export default function Providers({ children }: ProvidersProps) {
           <ToastProvider
             toastProps={{
               timeout: 5000,
-              shouldShowTimeoutProgess: true,
+              shouldShowTimeoutProgress: true,
               variant: "bordered",
             }}
           />

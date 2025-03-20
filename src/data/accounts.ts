@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { v4 as uuid } from "uuid";
 import { accountSchema } from "@/schemas";
-import { ExtendedAccountResponseType } from "@/lib/plaid";
+import { stripe } from "@/data/stripe";
 
 export type CreateAccount = {
   name: string;
@@ -10,45 +10,120 @@ export type CreateAccount = {
 };
 
 /**
- * Deletes accounts by plaidItemId
- * @param {String} plaidItemId - Plaid Item ID
- * @returns {void}
+ * Get Stripe Account by ID
+ * @param {String} stripeAccountId - Stripe Account ID
+ * @returns {Promise} - Promise object represents the Stripe Account
  */
-export async function deleteAccountsByPlaidItemId(plaidItemId: string) {
-  await db.userAccount.deleteMany({
-    where: {
-      plaidItemId,
-    },
+export async function getStripeAccountById(stripeAccountId: string) {
+  return await db.userAccount.findFirst({
+    where: { stripeAccountId },
   });
 }
 
 /**
- * Creates a new Plaid accounts
- * @param {Array} accountsData - Plaid Accounts data
- * @param {String} userId - User ID
- * @param {Array} currencies - Currencies data
- * @returns {void}
+ * Upsert Stripe Accounts
+ * @param {Array} accountsData - Stripe Accounts data
+ * @returns {Promise} - Promise object represents the upserted accounts
  */
-export async function createPlaidAccounts(
-  accountsData: ExtendedAccountResponseType,
-  userId: string,
-  currencies: { name: string; id: string }[]
+export async function upsertStripeAccounts(
+  accountsData: {
+    name: string;
+    institutionName?: string;
+    stripeAccountId: string;
+    last4?: string;
+    balance?: number;
+    stripeAccountType?: string;
+    currencyId: string;
+    userId: string;
+  }[]
 ) {
-  await db.userAccount.createMany({
-    data: accountsData?.accounts.map((account) => ({
-      plaidAccountId: account.account_id,
+  for (const account of accountsData) {
+    const {
+      name,
+      institutionName,
+      stripeAccountId,
+      last4,
+      balance,
+      stripeAccountType,
+      currencyId,
       userId,
-      name: account.name,
-      plaidItemId: accountsData.item.item_id,
-      plaidMask: account.mask,
-      plaidBalance: account.balances.current,
-      plaidType: account.type,
-      institutionName: accountsData.item.institution_name,
-      currencyId:
-        currencies?.find(
-          (currency) => currency.name === account.balances?.iso_currency_code
-        )?.id || "",
-    })),
+    } = account;
+
+    // Check if a record with the given stripeAccountId exists
+    const existingAccount = await db.userAccount.findFirst({
+      where: { stripeAccountId },
+    });
+
+    if (existingAccount) {
+      // Update the existing record
+      await db.userAccount.update({
+        where: { id: existingAccount.id },
+        data: {
+          name,
+          institutionName,
+          last4,
+          balance,
+          stripeAccountType,
+          currencyId,
+        },
+      });
+    } else {
+      // Create a new record
+      await db.userAccount.create({
+        data: {
+          name,
+          userId,
+          institutionName,
+          stripeAccountId,
+          last4,
+          balance,
+          stripeAccountType,
+          currencyId,
+        },
+      });
+    }
+  }
+}
+
+/**
+ * Delete and disconnect Stripe Accounts by institution name
+ * @param {String} institutionName - Institution Name
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the deleted accounts
+ * @throws {Error} - If the account deletion fails
+ */
+export async function deleteStripeAccountsByInstitutionName(
+  institutionName: string,
+  userId: string
+) {
+  // Delete all accounts by institution name
+  const stripeAccounts = await db.userAccount.findMany({
+    where: {
+      institutionName,
+      userId,
+      stripeAccountId: {
+        not: null,
+      },
+    },
+    select: {
+      id: true,
+      stripeAccountId: true,
+    },
+  });
+  // Unlink stripe accounts
+  stripeAccounts.forEach(async (account) => {
+    await stripe.financialConnections.accounts.disconnect(
+      account.stripeAccountId!
+    );
+  });
+  await db.userAccount.deleteMany({
+    where: {
+      id: {
+        in: stripeAccounts.map((account) => account.id),
+      },
+      institutionName,
+      userId,
+    },
   });
 }
 
@@ -118,6 +193,26 @@ export async function createAccount(
  * @throws {Error} - If the account deletion fails
  */
 export async function deleteAccounts(accountIds: string[], userId: string) {
+  const stripeAccounts = await db.userAccount.findMany({
+    where: {
+      userId,
+      id: {
+        in: accountIds,
+      },
+    },
+    select: {
+      id: true,
+      stripeAccountId: true,
+    },
+  });
+  // Unlink stripe accounts
+  stripeAccounts
+    ?.filter((a) => a.stripeAccountId)
+    .forEach(async (account) => {
+      await stripe.financialConnections.accounts.disconnect(
+        account.stripeAccountId!
+      );
+    });
   const accounts = await db.userAccount.deleteMany({
     where: {
       id: {
@@ -158,6 +253,24 @@ export async function updateAccount(
 }
 
 /**
+ * Update last transaction refreshID
+ * @param {String} id - Account ID
+ * @param {String} refreshID - Refresh ID
+ * @returns {Promise} - Promise object represents the updated account
+ */
+
+export async function updateLastTransactionRefreshId(
+  id: string,
+  refreshID: string
+) {
+  return await db.userAccount.update({
+    where: { id },
+    data: {
+      stripeLastTransactionsRefreshId: refreshID,
+    },
+  });
+}
+/**
  * Get user accounts
  * @param {String} userId - User ID
  * @returns {Promise} - Promise object represents the user accounts
@@ -173,13 +286,7 @@ export async function getUserAccounts(userId: string) {
         select: { id: true, name: true, symbol: true },
       },
       institutionName: true,
-      plaidMask: true,
-      plaidItem: {
-        select: {
-          institutionName: true,
-          institutionPrimaryColor: true,
-        },
-      },
+      last4: true,
     },
     where: {
       userId,

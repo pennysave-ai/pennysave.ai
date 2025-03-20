@@ -30,8 +30,7 @@ export async function GET() {
       },
       institution: {
         name: account.institutionName,
-        color: account?.plaidItem?.institutionPrimaryColor || null,
-        mask: account.plaidMask,
+        last4: account.last4,
       },
     }));
     const count = await getUserAccountsCount(user.id);

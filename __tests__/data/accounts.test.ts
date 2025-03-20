@@ -8,12 +8,9 @@ import {
   deleteAccounts,
   getUserAccounts,
   getUserAccountsCount,
-  deleteAccountsByPlaidItemId,
-  createPlaidAccounts,
   getUserAccountIdsByName,
   updateAccount,
 } from "@/data/accounts";
-import { AccountType, ItemUpdateTypeEnum } from "plaid";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -36,6 +33,14 @@ jest.mock("uuid", () => ({
 jest.mock("@/schemas", () => ({
   accountSchema: {
     safeParse: jest.fn(),
+  },
+}));
+
+jest.mock("@/data/stripe", () => ({
+  financialConnections: {
+    sessions: {
+      create: jest.fn(),
+    },
   },
 }));
 
@@ -132,11 +137,7 @@ describe("accounts", () => {
         name: "Test Account",
         currency: { id: "USD", name: "US Dollar", symbol: "$" },
         institutionName: "Test Bank",
-        plaidMask: "1234",
-        plaidItem: {
-          institutionName: "Test Bank",
-          institutionPrimaryColor: "#000000",
-        },
+        last4: "1234",
       },
     ];
 
@@ -154,13 +155,7 @@ describe("accounts", () => {
             select: { id: true, name: true, symbol: true },
           },
           institutionName: true,
-          plaidMask: true,
-          plaidItem: {
-            select: {
-              institutionName: true,
-              institutionPrimaryColor: true,
-            },
-          },
+          last4: true,
         },
         where: {
           userId: mockUserId,
@@ -181,74 +176,6 @@ describe("accounts", () => {
       expect(result).toEqual(mockCount);
       expect(db.userAccount.count).toHaveBeenCalledWith({
         where: { userId: mockUserId },
-      });
-    });
-  });
-
-  describe("deleteAccountsByPlaidItemId", () => {
-    const mockPlaidItemId = "plaid-item-123";
-
-    it("should delete accounts by plaid item id", async () => {
-      await deleteAccountsByPlaidItemId(mockPlaidItemId);
-
-      expect(db.userAccount.deleteMany).toHaveBeenCalledWith({
-        where: { plaidItemId: mockPlaidItemId },
-      });
-    });
-  });
-
-  describe("createPlaidAccounts", () => {
-    const mockAccountsData = {
-      request_id: "request-123",
-      accounts: [
-        {
-          account_id: "account-1",
-          name: "Test Account",
-          mask: "1234",
-          balances: {
-            current: 100,
-            iso_currency_code: "USD",
-            unofficial_currency_code: "840",
-            available: 100,
-            limit: 100,
-          },
-          type: AccountType.Depository,
-          official_name: "Test Bank",
-          subtypets: ["checking"],
-          subtype: null,
-        },
-      ],
-      item: {
-        item_id: "item-123",
-        institution_name: "Test Bank",
-        webhook: "",
-        error: null,
-        available_products: [],
-        billed_products: [],
-        consent_expiration_time: "",
-        update_type: ItemUpdateTypeEnum.Background,
-      },
-    };
-    const mockUserId = "user-123";
-    const mockCurrencies = [{ name: "USD", id: "currency-123" }];
-
-    it("should create plaid accounts successfully", async () => {
-      await createPlaidAccounts(mockAccountsData, mockUserId, mockCurrencies);
-
-      expect(db.userAccount.createMany).toHaveBeenCalledWith({
-        data: [
-          {
-            plaidAccountId: "account-1",
-            userId: mockUserId,
-            name: "Test Account",
-            plaidItemId: "item-123",
-            plaidMask: "1234",
-            plaidBalance: 100,
-            plaidType: "depository",
-            institutionName: "Test Bank",
-            currencyId: "currency-123",
-          },
-        ],
       });
     });
   });

@@ -3,9 +3,9 @@
  */
 import { POST } from "@/app/api/checkout/route";
 import { NextRequest } from "next/server";
-import Stripe from "stripe";
 import { auth } from "@/auth";
 import { db } from "@/db";
+import { stripe } from "@/data/stripe";
 
 // Mock next/server
 jest.mock("next/server", () => ({
@@ -29,7 +29,16 @@ jest.mock("@/db", () => ({
     },
   },
 }));
-jest.mock("stripe");
+
+jest.mock("@/data/stripe", () => ({
+  stripe: {
+    checkout: {
+      sessions: {
+        create: jest.fn(), // Mock the create method
+      },
+    },
+  },
+}));
 
 describe("POST /api/checkout", () => {
   const mockUser = { id: "user-123" };
@@ -83,14 +92,9 @@ describe("POST /api/checkout", () => {
     (db.user.findUnique as jest.Mock).mockResolvedValue({
       stripeCustomerId: mockStripeCustomerId,
     });
-    const mockStripe = {
-      checkout: {
-        sessions: {
-          create: jest.fn().mockResolvedValue(mockCheckoutSession),
-        },
-      },
-    };
-    (Stripe as unknown as jest.Mock).mockImplementation(() => mockStripe);
+    (stripe.checkout.sessions.create as jest.Mock).mockResolvedValue(
+      mockCheckoutSession
+    );
 
     const mockReq = {
       json: jest.fn().mockResolvedValue({ priceId: mockPriceId }),
@@ -101,7 +105,7 @@ describe("POST /api/checkout", () => {
 
     expect(response.status).toBe(200);
     expect(data).toEqual({ url: mockCheckoutSession.url });
-    expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith({
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith({
       mode: "subscription",
       locale: "auto",
       customer: mockStripeCustomerId,
@@ -125,14 +129,9 @@ describe("POST /api/checkout", () => {
     (db.user.findUnique as jest.Mock).mockResolvedValue({
       stripeCustomerId: mockStripeCustomerId,
     });
-    const mockStripe = {
-      checkout: {
-        sessions: {
-          create: jest.fn().mockRejectedValue(new Error("Stripe error")),
-        },
-      },
-    };
-    (Stripe as unknown as jest.Mock).mockImplementation(() => mockStripe);
+    (stripe.checkout.sessions.create as jest.Mock).mockRejectedValue(
+      new Error("Stripe error")
+    );
 
     const mockReq = {
       json: jest.fn().mockResolvedValue({ priceId: mockPriceId }),

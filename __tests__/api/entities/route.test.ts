@@ -24,6 +24,13 @@ jest.mock("@/auth", () => ({
 jest.mock("@/data/categories");
 jest.mock("@/data/accounts");
 jest.mock("@/data/transactions");
+jest.mock("@/data/stripe", () => ({
+  financialConnections: {
+    sessions: {
+      create: jest.fn(),
+    },
+  },
+}));
 
 describe("GET /api/entities", () => {
   const mockUser = { id: "user-123" };

@@ -325,7 +325,6 @@ describe("API Route: /api/categories", () => {
         "category-1",
         mockUser.id,
         "Updated Category",
-        undefined,
         "Updated Description"
       );
     });

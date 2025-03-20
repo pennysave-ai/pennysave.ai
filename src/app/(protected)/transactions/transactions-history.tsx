@@ -62,7 +62,6 @@ export default function TransactionsHistory({
     payee: "",
     notes: "",
     createdAt: now("UTC").toDate().toISOString(),
-    logo: "",
     account: {
       id: "",
       name: "",
@@ -70,7 +69,7 @@ export default function TransactionsHistory({
         symbol: "",
         name: "",
       },
-      mask: "",
+      last4: "",
       institution: {
         name: "",
       },
@@ -96,7 +95,7 @@ export default function TransactionsHistory({
             symbol: "",
             name: "",
           },
-          mask: "",
+          last4: "",
           institution: {
             name: "",
           },
@@ -122,7 +121,7 @@ export default function TransactionsHistory({
               symbol: accountsData?.data[0]?.currencySymbol || "",
               name: accountsData?.data[0]?.currency || "",
             },
-            mask: accountsData?.data[0]?.institution.mask || "",
+            last4: accountsData?.data[0]?.institution.last4 || "",
             institution: {
               name: accountsData?.data[0]?.institution.name || "",
             },
@@ -147,7 +146,6 @@ export default function TransactionsHistory({
       payee,
       notes,
       createdAt,
-      logo: "",
       account: {
         id: account.id,
         name: account.name,
@@ -155,7 +153,7 @@ export default function TransactionsHistory({
           symbol: account.currency.symbol,
           name: account.currency.name,
         },
-        mask: account.mask,
+        last4: account.last4,
         institution: {
           name: account?.institution.name,
         },

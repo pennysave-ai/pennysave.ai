@@ -209,7 +209,7 @@ export default function AccountsTable({
           return (
             <AccountName
               name={account[accountKey]}
-              mask={account.institution.mask}
+              last4={account.institution.last4}
             />
           );
         case "institution":
