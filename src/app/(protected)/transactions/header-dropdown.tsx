@@ -11,7 +11,7 @@ import {
 import { cn } from "@heroui/theme";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-interface HeaderDropdown {
+interface HeaderDropdownProps {
   disabledKeys: string[];
   columnIndex: number;
   onChange: (columnIndex: number, value: string | null) => void;
@@ -23,7 +23,7 @@ export default function HeaderDropdown({
   disabledKeys,
   columnIndex,
   onChange,
-}: HeaderDropdown) {
+}: HeaderDropdownProps) {
   const [selectedKeys, setSelectedKeys] = React.useState<Selection>(
     new Set(["select"])
   );

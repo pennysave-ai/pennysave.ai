@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import MessageCard from "./message-card";
 import AiAvatar from "./ai-avatar";
 
-interface Conversation {
+interface ConversationProps {
   messages: {
     role: string;
     content: string;
@@ -24,7 +24,7 @@ export default function Conversation({
   responseStarted,
   error,
   currentTool,
-}: Conversation) {
+}: ConversationProps) {
   const { data } = useSession();
   const [lastMessageIndex, setLastMessageIndex] = useState<number>(0);
   useEffect(() => {

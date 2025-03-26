@@ -16,13 +16,17 @@ type ChartData = {
   amount: number;
 };
 
-interface Top5Chart {
+interface Top5ChartProps {
   data: ChartData[];
   currency: string;
   isLoading: boolean;
 }
 
-export default function Top5Chart({ data, isLoading, currency }: Top5Chart) {
+export default function Top5Chart({
+  data,
+  isLoading,
+  currency,
+}: Top5ChartProps) {
   const [chartType, setChartType] = useState(new Set(["bar"]));
   return (
     <Card className="h-[400px] border border-transparent dark:border-default-100">

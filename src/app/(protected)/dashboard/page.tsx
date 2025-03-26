@@ -10,9 +10,9 @@ import Top5Chart from "./top-5-chart";
 import DataCard from "./data-card";
 import TransactionsAreaChart from "./charts/area";
 import BaseCurrencyFilter from "./base-currency-filter";
-import FloatingButton from "./float-button";
-import Notifications from "./notifications";
-import FinancialGoals from "./financial-goals";
+// import FloatingButton from "./float-button";
+// import Notifications from "./notifications";
+// import FinancialGoals from "./financial-goals";
 
 export default function DashboardPage() {
   const { data, isLoading } = useGetSummary();
@@ -95,11 +95,11 @@ export default function DashboardPage() {
           data={data?.categories || []}
           currency={data?.meta.currency.name || ""}
         />
-        <FloatingButton />
+        {/* <FloatingButton /> */}
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
-        <Notifications />
-        <FinancialGoals />
+        {/* <Notifications /> */}
+        {/* <FinancialGoals /> */}
       </div>
     </div>
   );

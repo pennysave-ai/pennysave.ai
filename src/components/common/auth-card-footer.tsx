@@ -2,13 +2,13 @@
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
 
-interface AuthCardFooter {
+interface AuthCardFooterProps {
   title: string;
   text: string;
   link: string;
 }
 
-export const AuthCardFooter = ({ title, text, link }: AuthCardFooter) => {
+export const AuthCardFooter = ({ title, text, link }: AuthCardFooterProps) => {
   const router = useRouter();
   return (
     <p className="text-center text-small">
