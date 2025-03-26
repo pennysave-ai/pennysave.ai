@@ -1,4 +1,5 @@
 "use client";
+import { Dispatch, SetStateAction } from "react";
 
 import {
   Modal,
@@ -15,7 +16,7 @@ import PrivacyPolicyContent from "@/components/common/privacy-policy-content";
 
 interface TermsAndPrivacyPolicyProps {
   gdprConsent: boolean;
-  setGdprConsent: () => void;
+  setGdprConsent: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function TermsAndPrivacyPolicy({
