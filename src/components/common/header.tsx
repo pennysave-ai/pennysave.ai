@@ -5,16 +5,12 @@ import type { Session } from "next-auth";
 import NavbarCustomMenu from "@/components/navbar-custom-menu";
 
 interface HeaderProps {
-  navItems?: {
-    name: string;
-    href: string;
-  }[];
   user?: Session["user"] | null;
 }
 
-export async function Header({ user, navItems }: HeaderProps) {
+export async function Header({ user }: HeaderProps) {
   return (
-    <NavbarCustomMenu user={user || null} navItems={navItems}>
+    <NavbarCustomMenu user={user || null}>
       <NavbarContent justify="end">
         <NavbarItem>
           <ThemeSwitcher />

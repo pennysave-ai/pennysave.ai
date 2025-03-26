@@ -39,17 +39,3 @@ export const apiAuthPrefix = "/api/auth";
  * @type {string}
  */
 export const DEFAULT_LOGGED_IN_REDIRECT = "/dashboard";
-
-/**
- * List of navigation items
- */
-export const navItems = [
-  {
-    name: "Sign In",
-    href: "/",
-  },
-  {
-    name: "Sign Up",
-    href: "/auth/sign-up",
-  },
-];

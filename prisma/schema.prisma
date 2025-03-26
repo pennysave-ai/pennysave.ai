@@ -177,7 +177,7 @@ model BudgetAllocation {
   allocatedAmount Float
   spentAmount   Float     @default(0)
 }
-
+// Model for financial reports
 model Report {
   id            String    @id @default(uuid())
   userId        String

@@ -1,6 +1,6 @@
 import { formatCurrency } from "@/lib/utils";
 
-interface ChartLegend {
+interface ChartLegendProps {
   payload?: {
     value?: number | string;
     payload?: {
@@ -19,7 +19,7 @@ export default function ChartLegend({
   currency,
   className = "",
   isEmptyData,
-}: ChartLegend) {
+}: ChartLegendProps) {
   return (
     <div className="flex justify-end">
       <ul

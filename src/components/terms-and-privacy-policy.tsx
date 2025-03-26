@@ -15,7 +15,7 @@ import PrivacyPolicyContent from "@/components/common/privacy-policy-content";
 
 interface TermsAndPrivacyPolicyProps {
   gdprConsent: boolean;
-  setGdprConsent: (value: boolean) => void;
+  setGdprConsent: () => void;
 }
 
 export default function TermsAndPrivacyPolicy({
