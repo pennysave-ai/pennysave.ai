@@ -206,7 +206,7 @@ export default function Features() {
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Chase</div>
                     <div className="flex gap-x-2 text-xs text-default-400">
-                      <div className="trucate block">*6789</div>
+                      <div className="truncate block">*6789</div>
                     </div>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function Features() {
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Charles Schwab</div>
                     <div className="flex gap-x-2 text-xs text-default-400">
-                      <div className="trucate block">*4321</div>
+                      <div className="truncate block">*4321</div>
                     </div>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export default function Features() {
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Citibank Online</div>
                     <div className="flex gap-x-2 text-xs text-default-400">
-                      <div className="trucate block">*6142</div>
+                      <div className="truncate block">*6142</div>
                     </div>
                   </div>
                 </div>

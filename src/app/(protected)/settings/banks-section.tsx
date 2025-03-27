@@ -143,7 +143,7 @@ export default function BanksSection({
                       <div className="truncate block">{bank.bankName}</div>
                       <div className="flex gap-x-2 text-xs text-default-400">
                         {bank.account.map((account, i) => (
-                          <div key={i} className="trucate block">
+                          <div key={i} className="truncate block">
                             *{account.last4}
                           </div>
                         ))}
