@@ -59,15 +59,15 @@ export default function SubscriptionSection() {
                     {user.subscription?.cancelAt
                       ? "will be canceled on"
                       : "renews on"}{" "}
-                    {user.subscription?.cancelAt ||
-                      (user.subscription?.expires &&
-                        format(
-                          new Date(
-                            user.subscription?.cancelAt ||
-                              user.subscription?.expires
-                          ),
-                          "PP"
-                        ))}
+                    {(user.subscription?.cancelAt ||
+                      user.subscription?.expires) &&
+                      format(
+                        new Date(
+                          user.subscription?.cancelAt ||
+                            user.subscription?.expires
+                        ),
+                        "PP"
+                      )}
                   </div>
                 </div>
               </div>

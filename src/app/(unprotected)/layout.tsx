@@ -101,11 +101,6 @@ export default function UnprotectedRoadsLayout({
                     Get started
                   </Link>
                 </NavbarItem>
-                {/* <NavbarItem>
-                  <Link className="text-default-600" href="#" size="sm">
-                    Showcase
-                  </Link>
-                </NavbarItem> */}
                 <NavbarItem>
                   <Link className="text-default-600" href="#contacts" size="sm">
                     Contacts
@@ -114,8 +109,6 @@ export default function UnprotectedRoadsLayout({
               </>
             )}
             <Button
-              as={Button}
-              href=""
               color="primary"
               radius="full"
               variant="solid"

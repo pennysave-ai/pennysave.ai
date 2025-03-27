@@ -47,6 +47,7 @@ const StripeLink = ({
   };
   return (
     <Button
+      as="a"
       className={className}
       onPress={handlePress}
       isDisabled={isFetching}

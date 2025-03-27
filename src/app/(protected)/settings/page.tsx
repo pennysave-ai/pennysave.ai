@@ -19,7 +19,11 @@ export default async function Settings() {
       <div className="flex w-full max-w-screen-2xl -mt-20 px-4 mx-auto">
         <Card className="p-8 w-full">
           <Tabs>
-            <General user={session?.user} />
+            <General
+              hasActiveSubscription={
+                !!session?.user?.hasActiveStripeSubscription
+              }
+            />
             <Notifications user={session?.user} />
           </Tabs>
         </Card>

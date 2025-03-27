@@ -1,13 +1,12 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { Input } from "@heroui/input";
-
 import * as actions from "@/actions";
 import { SubmitButton } from "@/components/common";
 
 export default function ResetPasswordForm() {
-  const [formState, action] = useFormState(actions.resetPassword, {
+  const [formState, action] = useActionState(actions.resetPassword, {
     errors: {},
     success: {},
   });

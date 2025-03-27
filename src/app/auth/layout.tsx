@@ -89,8 +89,6 @@ export default function UnprotectedRoadsLayout({
             </NavbarItem>
             {path === "/auth/sign-in" && (
               <Button
-                as={Button}
-                href=""
                 color="primary"
                 radius="full"
                 variant="solid"
@@ -106,8 +104,6 @@ export default function UnprotectedRoadsLayout({
               path === "/auth/verify-email" ||
               path === "/auth/new-password") && (
               <Button
-                as={Button}
-                href=""
                 color="primary"
                 radius="full"
                 variant="solid"

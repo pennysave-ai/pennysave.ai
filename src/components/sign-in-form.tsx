@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { useSearchParams } from "next/navigation";
@@ -9,7 +9,7 @@ import * as actions from "@/actions";
 import { SubmitButton, PasswordInput } from "@/components/common";
 
 export default function SignInForm() {
-  const [formState, action] = useFormState(actions.emailSignIn, {
+  const [formState, action] = useActionState(actions.emailSignIn, {
     errors: {},
     success: {},
   });

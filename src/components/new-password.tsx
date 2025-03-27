@@ -1,12 +1,12 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as actions from "@/actions";
 import { SubmitButton, PasswordInput } from "@/components/common";
 
 export default function NewPassword() {
-  const [formState, action] = useFormState(actions.setNewPassword, {
+  const [formState, action] = useActionState(actions.setNewPassword, {
     errors: {},
     success: {},
   });
