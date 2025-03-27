@@ -1,4 +1,5 @@
 "use client";
+
 import Hero from "@/components/hero";
 import HowTo from "@/components/how-to";
 import Features from "@/components/features";

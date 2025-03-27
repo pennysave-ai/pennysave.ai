@@ -58,7 +58,6 @@ export const useCreateCheckoutSession = () => {
         },
         body: JSON.stringify({ priceId }),
       });
-      console.log("response->", response);
       if (!response.ok) {
         addToast({
           timeout: 10000,

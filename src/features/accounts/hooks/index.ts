@@ -82,6 +82,7 @@ export const useGetAccounts = () => {
         meta: Meta;
       };
     },
+    refetchOnWindowFocus: false,
   });
   return query;
 };

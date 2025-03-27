@@ -1,6 +1,5 @@
 "use client";
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { Input } from "@heroui/input";
 import TermsAndPrivacyPolicy from "@/components/terms-and-privacy-policy";
 
@@ -8,7 +7,7 @@ import * as actions from "@/actions";
 import { SubmitButton, PasswordInput, OauthButtons } from "@/components/common";
 
 export default function SignUpForm() {
-  const [formState, action] = useFormState(actions.signUp, {
+  const [formState, action] = useActionState(actions.signUp, {
     errors: {},
     success: {},
   });

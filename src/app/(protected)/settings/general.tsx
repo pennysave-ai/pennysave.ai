@@ -1,16 +1,15 @@
 "use client";
 
-import { Session } from "next-auth";
 import { CardHeader } from "@heroui/card";
 import BanksSection from "./banks-section";
 import SubscriptionSection from "./subscription-section";
 import { useGetAccounts } from "@/features/accounts/hooks";
 
 interface GeneralProps {
-  user: Session["user"];
+  hasActiveSubscription: boolean;
 }
 
-export default function General({ user }: GeneralProps) {
+export default function General({ hasActiveSubscription }: GeneralProps) {
   const { data: accounts, isFetching: accountsLoading } = useGetAccounts();
   return (
     <>
@@ -23,7 +22,7 @@ export default function General({ user }: GeneralProps) {
         <BanksSection
           isLoading={accountsLoading}
           accounts={accounts}
-          hasActiveSubscription={user.hasActiveStripeSubscription}
+          hasActiveSubscription={hasActiveSubscription}
         />
       </div>
     </>

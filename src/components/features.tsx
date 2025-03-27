@@ -201,33 +201,16 @@ export default function Features() {
             </div>
             <div className="p-3 flex flex-col gap-y-2 mb-24 md:mb-0">
               <div className="flex justify-between items-center gap-3">
-                <div className="flex items-center gap-x-3 overflow-hidden">
-                  <div
-                    className="bank-card"
-                    style={{
-                      background: "#0056b3",
-                    }}
-                  >
-                    C
-                  </div>
+                <div className="flex items-center gap-x-3 overflow-hidden w-full">
+                  <div className="bank-card bg-secondary-400">C</div>
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Chase</div>
-                    <div className="text-sm text-primary">chase.com</div>
+                    <div className="flex gap-x-2 text-xs text-default-400">
+                      <div className="truncate block">*6789</div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex">
-                  <Button
-                    isIconOnly
-                    fullWidth
-                    isDisabled
-                    className="md:flex w-full"
-                    size="sm"
-                    aria-label="edit bank"
-                    color="primary"
-                    variant="light"
-                  >
-                    <Icon icon="solar:pen-2-bold" width={22} />
-                  </Button>
                   <Button
                     isIconOnly
                     fullWidth
@@ -243,33 +226,16 @@ export default function Features() {
                 </div>
               </div>
               <div className="flex justify-between items-center gap-3">
-                <div className="flex items-center gap-x-3 overflow-hidden">
-                  <div
-                    className="bank-card"
-                    style={{
-                      background: "#0075a3",
-                    }}
-                  >
-                    C
-                  </div>
+                <div className="flex items-center gap-x-3 overflow-hidden w-full">
+                  <div className="bank-card bg-secondary-400">C</div>
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Charles Schwab</div>
-                    <div className="text-sm text-primary">schwab.com</div>
+                    <div className="flex gap-x-2 text-xs text-default-400">
+                      <div className="truncate block">*4321</div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex">
-                  <Button
-                    isIconOnly
-                    fullWidth
-                    isDisabled
-                    className="md:flex w-full"
-                    size="sm"
-                    aria-label="edit bank"
-                    color="primary"
-                    variant="light"
-                  >
-                    <Icon icon="solar:pen-2-bold" width={22} />
-                  </Button>
                   <Button
                     isIconOnly
                     fullWidth
@@ -285,33 +251,16 @@ export default function Features() {
                 </div>
               </div>
               <div className="flex justify-between items-center gap-3">
-                <div className="flex items-center gap-x-3 overflow-hidden">
-                  <div
-                    className="bank-card"
-                    style={{
-                      background: "#204081",
-                    }}
-                  >
-                    C
-                  </div>
+                <div className="flex items-center gap-x-3 overflow-hidden w-full">
+                  <div className="bank-card bg-secondary-400">C</div>
                   <div className="flex flex-col overflow-hidden text-ellipsis">
                     <div className="truncate block">Citibank Online</div>
-                    <div className="text-sm text-primary">citi.com</div>
+                    <div className="flex gap-x-2 text-xs text-default-400">
+                      <div className="truncate block">*6142</div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex">
-                  <Button
-                    isIconOnly
-                    fullWidth
-                    isDisabled
-                    className="md:flex w-full"
-                    size="sm"
-                    aria-label="edit bank"
-                    color="primary"
-                    variant="light"
-                  >
-                    <Icon icon="solar:pen-2-bold" width={22} />
-                  </Button>
                   <Button
                     isIconOnly
                     fullWidth
