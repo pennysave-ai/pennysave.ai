@@ -5,6 +5,39 @@ import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import DataCard from "@/app/(protected)/dashboard/data-card";
 
+const PREV_PERIOD = {
+  start: "",
+  end: "",
+};
+
+const EXPENSES = [
+  { day: "2025-01-28T23:00:00.000Z", value: 5 },
+  {
+    day: "2025-01-29T23:00:00.000Z",
+    value: 4,
+  },
+  {
+    day: "2025-01-30T23:00:00.000Z",
+    value: 2,
+  },
+  {
+    day: "2025-01-30T23:00:00.000Z",
+    value: 3,
+  },
+];
+
+const INCOME = [
+  { day: "2025-01-28T23:00:00.000Z", value: 3 },
+  {
+    day: "2025-01-29T23:00:00.000Z",
+    value: 5,
+  },
+  {
+    day: "2025-01-30T23:00:00.000Z",
+    value: 8,
+  },
+];
+
 export default async function Features() {
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -43,21 +76,8 @@ export default async function Features() {
                   value={5622}
                   prefix="$"
                   change={21}
-                  data={[
-                    { day: "2025-01-28T23:00:00.000Z", value: 3 },
-                    {
-                      day: "2025-01-29T23:00:00.000Z",
-                      value: 5,
-                    },
-                    {
-                      day: "2025-01-30T23:00:00.000Z",
-                      value: 8,
-                    },
-                  ]}
-                  prevPeriod={{
-                    start: "",
-                    end: "",
-                  }}
+                  data={INCOME}
+                  prevPeriod={PREV_PERIOD}
                 />
                 <DataCard
                   displayOnly
@@ -66,25 +86,8 @@ export default async function Features() {
                   value={3200}
                   prefix="$"
                   change={2}
-                  data={[
-                    { day: "2025-01-28T23:00:00.000Z", value: 5 },
-                    {
-                      day: "2025-01-29T23:00:00.000Z",
-                      value: 4,
-                    },
-                    {
-                      day: "2025-01-30T23:00:00.000Z",
-                      value: 2,
-                    },
-                    {
-                      day: "2025-01-30T23:00:00.000Z",
-                      value: 3,
-                    },
-                  ]}
-                  prevPeriod={{
-                    start: "",
-                    end: "",
-                  }}
+                  data={EXPENSES}
+                  prevPeriod={PREV_PERIOD}
                 />
               </div>
               <p className="text-default-500 absolute bottom-0 backdrop-blur-md backdrop-saturate-150 py-3 px-6 w-full">
@@ -132,22 +135,6 @@ export default async function Features() {
         </div>
       </div>
       <div className="w-full flex gap-3 flex-col md:flex-row">
-        {/* <Card
-          isBlurred
-          fullWidth
-          className="p-3 border-none bg-background/60 dark:bg-default-100/50"
-          shadow="sm"
-        >
-          <CardBody>
-            Budget planning
-            <p className="text-default-500">
-              Say goodbye to guesswork and spreadsheet chaos. Plan, track, and
-              optimize your finances effortlessly—all in one place. Smart
-              insights, real-time updates, and stress-free budgeting at your
-              fingertips!
-            </p>
-          </CardBody>
-        </Card> */}
         <Card
           isBlurred
           fullWidth
