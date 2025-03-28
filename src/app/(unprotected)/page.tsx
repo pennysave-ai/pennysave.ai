@@ -42,7 +42,11 @@ export default async function HomePage() {
             src={dashboardLight_1800.src}
             alt="hero-bg"
             loading="lazy"
+            width={1152}
+            height={790}
+            className="w-full max-w-[1152px] !h-auto object-contain"
             srcSet={`${dashboardLight_900.src} 1280w, ${dashboardLight_1800.src} 1400w`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1400px"
           />
           <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
         </section>
