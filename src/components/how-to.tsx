@@ -1,5 +1,7 @@
+"use server";
 import { Card, CardBody } from "@heroui/card";
-export default function HowTo() {
+
+export default async function HowTo() {
   return (
     <section id="get-started" className="flex flex-col items-center mt-20 px-6">
       <h2 className="text-4xl font-bold text-center">
