@@ -1,13 +1,13 @@
 "use server";
 
 import { Suspense, lazy } from "react";
-import HeroButtons from "@/components/hero-buttons";
 import { Image } from "@heroui/image";
 import dashboardLight_1800 from "@/app/public/dashboard_light_1800.webp";
 import dashboardLight_900 from "@/app/public/dashboard_light_900.webp";
 
 const Features = lazy(() => import("@/components/features"));
 const HowTo = lazy(() => import("@/components/how-to"));
+const HeroButtons = lazy(() => import("@/components/hero-buttons"));
 
 export default async function HomePage() {
   return (
@@ -29,7 +29,9 @@ export default async function HomePage() {
             A convenient tool for managing your finances.
           </div>
           <div className="flex gap-4 mt-8">
-            <HeroButtons />
+            <Suspense fallback={<div>Loading CTA buttons...</div>}>
+              <HeroButtons />
+            </Suspense>
           </div>
         </div>
         <section
