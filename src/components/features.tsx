@@ -1,10 +1,11 @@
+"use server";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
 import DataCard from "@/app/(protected)/dashboard/data-card";
 
-export default function Features() {
+export default async function Features() {
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
   const lastMonthFormatted = format(lastMonth, "MMMM yyyy");
