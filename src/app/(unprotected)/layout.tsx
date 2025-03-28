@@ -16,6 +16,39 @@ import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import { Logo, Footer } from "@/components/common";
 
+const MOTION_PROPS = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: {
+    ease: "easeInOut",
+    duration: 0.2,
+  },
+};
+
+const menuItems = [
+  {
+    name: "Home",
+    href: "/",
+  },
+  {
+    name: "Sign Up",
+    href: "/auth/sign-up",
+  },
+  {
+    name: "Sign In",
+    href: "/auth/sign-in",
+  },
+  {
+    name: "Reset Password",
+    href: "/auth/reset-password",
+  },
+  {
+    name: "Privacy Policy",
+    href: "/privacy-policy",
+  },
+];
+
 export default function UnprotectedRoadsLayout({
   children,
 }: Readonly<{
@@ -24,28 +57,14 @@ export default function UnprotectedRoadsLayout({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathName = usePathname();
-  const menuItems = [
-    {
-      name: "Home",
-      href: "/",
-    },
-    {
-      name: "Sign Up",
-      href: "/auth/sign-up",
-    },
-    {
-      name: "Sign In",
-      href: "/auth/sign-in",
-    },
-    {
-      name: "Reset Password",
-      href: "/auth/reset-password",
-    },
-    {
-      name: "Privacy Policy",
-      href: "/privacy-policy",
-    },
-  ];
+
+  const handleHomeClick = () => {
+    router.push("/");
+  };
+  const handleSignInClick = () => {
+    router.push("/auth/sign-in");
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <Navbar
@@ -78,9 +97,7 @@ export default function UnprotectedRoadsLayout({
               <Link
                 className="text-default-600 cursor-pointer"
                 size="sm"
-                onPress={() => {
-                  router.push("/");
-                }}
+                onPress={handleHomeClick}
               >
                 Home
               </Link>
@@ -112,9 +129,7 @@ export default function UnprotectedRoadsLayout({
               color="primary"
               radius="full"
               variant="solid"
-              onPress={() => {
-                router.push("/auth/sign-in");
-              }}
+              onPress={handleSignInClick}
             >
               Sign in
             </Button>
@@ -127,15 +142,7 @@ export default function UnprotectedRoadsLayout({
         </div>
         <NavbarMenu
           className="top-[calc(var(--navbar-height)_-_1px)] max-h-[100vh] bg-default-200/50 pt-6 shadow-medium backdrop-blur-md backdrop-saturate-150 dark:bg-default-100/50"
-          motionProps={{
-            initial: { opacity: 0, y: -20 },
-            animate: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -20 },
-            transition: {
-              ease: "easeInOut",
-              duration: 0.2,
-            },
-          }}
+          motionProps={MOTION_PROPS}
         >
           {menuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
