@@ -18,6 +18,7 @@
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
     "prisma:migrate:dev": "dotenv -e .env.local -- npx prisma migrate dev --schema=prisma/schema.prisma",
+    "prisma:migrate:prod": "dotenv -e .env.prod prisma migrate deploy",
     "prisma:generate:dev": "dotenv -e .env.local -- npx prisma generate --schema=prisma/schema.prisma",
     "start:db": "docker run --rm -p 5432:5432 -v postgres-data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust postgres",
     "reset:db": "dotenv -e .env.local -- npx prisma migrate reset && npx prisma database push"

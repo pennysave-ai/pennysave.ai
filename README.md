@@ -47,7 +47,7 @@ npm run dotenv -e .env.prod -- prisma migrate resolve --rolled-back 202501302129
 #### Apply migrations in prod
 
 ```bash
-npm run dotenv -e .env.prod prisma migrate deploy
+npm run prisma:migrate:prod
 ```
 
 #### Populate db
