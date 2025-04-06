@@ -7,6 +7,7 @@ export type CreateBudget = {
   name: string;
   totalAmount: number;
   frequency: Budget["frequency"];
+  description: string;
   currencyId: string;
   accounts: string[];
   budgetAllocations: {
@@ -32,6 +33,7 @@ export async function createBudget(userId: string, budget: CreateBudget) {
     frequency,
     accounts,
     budgetAllocations,
+    description,
   } = budget;
   const createdBudget = await db.budget.create({
     data: {
@@ -39,6 +41,7 @@ export async function createBudget(userId: string, budget: CreateBudget) {
       userId,
       name,
       totalAmount,
+      description,
       currencyId,
       frequency,
       accounts: {
