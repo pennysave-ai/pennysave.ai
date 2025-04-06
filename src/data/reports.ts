@@ -48,10 +48,9 @@ export async function bulkUpsertReports(
 
 /**
  * Get the created and unsended reports for the current month
- * @param {Array<string>} userIds
  * @returns {Promise}
  */
-export async function getUnsendedReports(userIds: string[]): Promise<
+export async function getUnsendedReports(): Promise<
   {
     id: string;
     userId: string;
@@ -60,7 +59,13 @@ export async function getUnsendedReports(userIds: string[]): Promise<
   }[]
 > {
   try {
-    return await db.report.findMany({
+    const reports = await db.report.findMany({
+      where: {
+        sentAt: null,
+        createdAt: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        },
+      },
       select: {
         id: true,
         userId: true,
@@ -71,17 +76,8 @@ export async function getUnsendedReports(userIds: string[]): Promise<
           },
         },
       },
-      where: {
-        userId: {
-          in: userIds,
-        },
-        createdAt: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-          lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
-        },
-        sentAt: null,
-      },
     });
+    return reports;
   } catch (e) {
     console.error("Error getting the unsended reports:", e);
     throw new Error("Failed to get unsended reports");

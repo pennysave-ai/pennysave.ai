@@ -30,7 +30,7 @@ export const sectionItems: SidebarItem[] = [
       // {
       //   key: "budgets",
       //   icon: "solar:calculator-linear",
-      //   title: "Budgets & Goals",
+      //   title: "Budgets",
       // },
       // {
       //   key: "reports",

@@ -20,6 +20,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Commands
 
+#### Run ngrok
+
+```bash
+ngrok http 3000
+```
+
 #### Create and apply new db migration in dev
 
 ```bash

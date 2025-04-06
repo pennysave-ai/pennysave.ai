@@ -45,31 +45,6 @@ export default async function RootLayout({
           href="https://api.iconify.design"
           crossOrigin="anonymous"
         />
-        <style>
-          {`.text-center {
-        text-align: center;
-      }
-      .text-6xl {
-        font-size: 4rem;
-      }
-      .max-w-4xl {
-        max-width: 64rem;
-      }
-      .font-semibold {
-        font-weight: 600;
-      }
-      .leading-snug {
-        line-height: 1.375;
-      }
-      .bg-clip-text {
-        -webkit-background-clip: text;
-        color: transparent;
-      }
-      .bg-gradient-to-r {
-        background-image: linear-gradient(to right, #3b82f6, #9333ea);
-      }
-      `}
-        </style>
       </head>
       <body
         suppressHydrationWarning

@@ -10,8 +10,10 @@ export const publicRoutes = [
   "/api/webhooks/stripe",
   "/api/webhooks/cron/update-exchange-rates",
   "/api/webhooks/cron/fill-monthly-reports",
+  "/api/webhooks/cron/send-reports",
   "/api/webhooks/monthly-reports/create",
   "/api/webhooks/monthly-reports/send",
+  "/api/webhooks/monthly-reports/process-user",
 ];
 
 /**

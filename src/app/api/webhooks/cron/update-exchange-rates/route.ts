@@ -6,7 +6,7 @@ import { BASE_CURRENCY } from "@/constants";
 const CURRENCY_API_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY}.json`;
 
 /**
- * Uupdate the exchange rates in the database
+ * Update the exchange rates in the database
  * runs accoording the schedule defined in vercel.json file
  * once a day
  * @param req
