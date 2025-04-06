@@ -157,6 +157,7 @@ model Budget {
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
+  description   String
   totalAmount   Float
   currencyId    String
   currency      Currency  @relation(fields: [currencyId], references: [id])

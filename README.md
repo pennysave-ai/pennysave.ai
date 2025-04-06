@@ -20,6 +20,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Commands
 
+#### Run ngrok
+
+```bash
+ngrok http 3000
+```
+
 #### Create and apply new db migration in dev
 
 ```bash
@@ -41,11 +47,22 @@ npm run dotenv -e .env.prod -- prisma migrate resolve --rolled-back 202501302129
 #### Apply migrations in prod
 
 ```bash
-npm run dotenv -e .env.prod prisma migrate deploy
+npm run prisma:migrate:prod
 ```
 
 #### Populate db
 
 ```bash
 npm run populate:db:dev
+```
+
+# TODO
+
+When it's gonna be possible and thre will be stable cash flow we need to update current vercel plan to a pro (https://vercel.com/pricing) to support more than two cron jobs. After we can add the following job to a vercel.json file to update currency automatically.
+
+```json
+ {
+      "path": "/api/webhooks/cron/update-exchange-rates",
+      "schedule": "0 17 * * *"
+},
 ```

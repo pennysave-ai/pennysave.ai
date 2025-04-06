@@ -1,6 +1,6 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { NextResponse } from "next/server";
-import { getUnsendedReports, markReportsAsSent } from "@/data/reports";
+import { markReportsAsSent } from "@/data/reports";
 import { sendMonthlyReports } from "@/lib/mail";
 
 /**
@@ -10,10 +10,11 @@ import { sendMonthlyReports } from "@/lib/mail";
  */
 async function handler(req: Request): Promise<NextResponse> {
   try {
-    const { ids } = await req.json();
-    const reportsToSend = await getUnsendedReports(ids);
+    const { reportsToSend } = await req.json();
     await sendMonthlyReports(reportsToSend);
-    await markReportsAsSent(reportsToSend.map((report) => report.id));
+    await markReportsAsSent(
+      reportsToSend.map((report: { id: string }) => report.id)
+    );
     return NextResponse.json({ message: "Monthly reports sent" });
   } catch (error) {
     console.error("Error sending monthly reports:", error);

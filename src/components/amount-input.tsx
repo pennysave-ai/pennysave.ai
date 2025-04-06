@@ -73,6 +73,7 @@ export default function AmountInput({
       <CurrencyInput
         id="amount"
         maxLength={12}
+        name="Amount"
         aria-label="Amount"
         prefix={prefix}
         value={value}
