@@ -55,3 +55,14 @@ npm run prisma:migrate:prod
 ```bash
 npm run populate:db:dev
 ```
+
+# TODO
+
+When it's gonna be possible and thre will be stable cash flow we need to update current vercel plan to a pro (https://vercel.com/pricing) to support more than two cron jobs. After we can add the following job to a vercel.json file to update currency automatically.
+
+```json
+ {
+      "path": "/api/webhooks/cron/update-exchange-rates",
+      "schedule": "0 17 * * *"
+},
+```
