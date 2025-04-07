@@ -229,55 +229,55 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
         <div
           style={{
             margin: "0 8px",
+            backgroundColor: "#f0f0f0",
+            padding: "0 20px 20px",
           }}
         >
-          <div
-            style={{
-              backgroundImage:
-                "url('https://hujivekupajsyi6h.public.blob.vercel-storage.com/slip-AnD8aS5N6UDxkV9VhQd43B3m6s4BV0.png')",
-              padding: "30px 20px 40px",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              color: "#454545",
-            }}
-          >
-            <table>
-              <tbody>
-                <tr>
-                  <td width="100%"></td>
-                  <td
-                    width="auto"
+          <table>
+            <tbody>
+              <tr>
+                <td width="100%"></td>
+                <td
+                  width="auto"
+                  style={{
+                    whiteSpace: "nowrap",
+                    color: "#454545!important",
+                    fontSize: 12,
+                  }}
+                >
+                  <a
+                    href="https://pennysave.ai/settings"
                     style={{
-                      whiteSpace: "nowrap",
                       color: "#454545!important",
-                      fontSize: 12,
                     }}
                   >
-                    <a
-                      href="https://pennysave.ai/settings"
-                      style={{
-                        color: "#454545!important",
-                      }}
-                    >
-                      unsubscribe
-                    </a>
-                    {" | "}
-                    <a
-                      href="https://pennysave.ai"
-                      style={{
-                        color: "#454545!important",
-                      }}
-                    >
-                      pennysave.ai
-                    </a>{" "}
-                    | 2025
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    unsubscribe
+                  </a>
+                  {" | "}
+                  <a
+                    href="https://pennysave.ai"
+                    style={{
+                      color: "#454545!important",
+                    }}
+                  >
+                    pennysave.ai
+                  </a>{" "}
+                  | 2025
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+        <div
+          style={{
+            height: "44px",
+            margin: "0 8px",
+            background:
+              "conic-gradient(from -45deg at bottom,#f0f0f0 90deg,transparent 0) 50%/10% 100%",
+            padding: "0px 20px 24px",
+            color: "#454545",
+          }}
+        ></div>
       </div>
     </div>
   );
