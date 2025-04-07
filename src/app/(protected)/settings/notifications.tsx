@@ -5,7 +5,9 @@ import { Session } from "next-auth";
 import { CardBody, CardHeader } from "@heroui/card";
 import { Icon } from "@iconify/react";
 import { Button } from "@heroui/button";
+import { addToast } from "@heroui/toast";
 import SwitchCell from "./switch-cell";
+import { useModal } from "@/app/providers/modal";
 import { useUpdateNotifiactionPreferences } from "@/features/users/hooks";
 
 interface NotificationsProps {
@@ -24,6 +26,7 @@ export default function Notifications({ user }: NotificationsProps) {
     }
   }, [user]);
   const [state, setState] = useState(defaultState);
+  const { onOpen: onPaywallModalOpen } = useModal();
   const [updating, setUpdating] = useState(false);
   const { mutateAsync: udpateUserPreferences } =
     useUpdateNotifiactionPreferences();
@@ -40,7 +43,19 @@ export default function Notifications({ user }: NotificationsProps) {
       console.error("Failed to save user notifications changes");
     }
     setUpdating(false);
-    // TODO: implement toast messages
+    addToast({
+      title: "Success",
+      description: "You have successfully updated your notification settings",
+      color: "success",
+    });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user?.hasActiveStripeSubscription) {
+      onPaywallModalOpen();
+    } else {
+      setState({ ...state, monthlyReports: e.target.checked });
+    }
   };
   return (
     <>
@@ -64,9 +79,7 @@ export default function Notifications({ user }: NotificationsProps) {
             description="Enable monthly email reports on your income and expenses."
             label="Monthly Reports"
             isSelected={state.monthlyReports}
-            onChange={(e) => {
-              setState({ ...state, monthlyReports: e.target.checked });
-            }}
+            onChange={handleChange}
           />
           {/* <SwitchCell
             description="Allow AI advisor to send you reports on your spending habits, and advice on how to save more."

@@ -75,7 +75,7 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
               <div className="flex justify-start gap-x-2 items-center">
                 <h3 className="text-medium font-medium text-default-700">
                   Subscribe to the
-                  <span className="ml-1 text-primary">Pro Plan</span>
+                  <span className="ml-1 text-primary">Paid Plan</span>
                 </h3>
               </div>
               <p className="p-4 text-small text-default-500">
