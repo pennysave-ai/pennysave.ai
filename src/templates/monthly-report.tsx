@@ -273,7 +273,7 @@ const MonthlyReport = ({ data }: MonthlyReportData) => {
             height: "44px",
             margin: "0 8px",
             background:
-              "conic-gradient(from -45deg at bottom,#f0f0f0 90deg,transparent 0) 50%/10% 100%;",
+              "conic-gradient(from -45deg at bottom,#f0f0f0 90deg,transparent 0) 50%/10% 100%",
             padding: "0px 20px 24px",
             color: "#454545",
           }}
