@@ -18,7 +18,7 @@ import { STRIPE_PLANS } from "@/lib/stripe";
 import { useCreateCheckoutSession } from "@/features/stripe/hooks";
 
 const PAID_FEATURES = [
-  { id: 1, name: "Enable your AI financial advisor." },
+  { id: 1, name: "Enable Monthly email reports." },
   {
     id: 2,
     name: "Set your financial goals, notifications and alarms about your expenses.",
@@ -64,7 +64,7 @@ export const PaywallModal = () => {
         <ModalHeader className="mt-2">
           <div className="flex items-center gap-x-1">
             <Icon icon="solar:box-minimalistic-linear" width={32} />
-            Subscribe to the <span className="text-primary">Pro Plan</span>
+            Subscribe to the <span className="text-primary">Paid Plan</span>
           </div>
         </ModalHeader>
         <ModalBody>

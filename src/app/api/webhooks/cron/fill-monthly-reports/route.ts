@@ -2,16 +2,9 @@ import { NextResponse } from "next/server";
 import { qstash } from "@/qstash";
 import { db } from "@/db";
 
-// Batch size for processing
-// Note that after we write reports to db
-// we will send them to the users by calling
-// api/webhooks/monthly-reports/send API
-// and it has a batch size max 100
 const BATCH_SIZE = 100;
 
-/** Populate the database with the AI Generated data
- * runs accoording the schedule defined in vercel.json file
- * once a month on the 1st day
+/** Get reports data for all users
  * @param req
  * @returns {Promise<NextResponse>}
  */

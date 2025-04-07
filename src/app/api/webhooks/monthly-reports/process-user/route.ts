@@ -17,6 +17,7 @@ async function handler(req: Request): Promise<NextResponse> {
       email, // eslint-disable-line @typescript-eslint/no-unused-vars
       ...rest
     } = userData;
+    console.log("Starting report generation for user", userId);
     // Call model to generate the report with retries
     const result = await fetch(process.env.LLM_API_URL!, {
       method: "POST",
@@ -80,6 +81,7 @@ async function handler(req: Request): Promise<NextResponse> {
     if (Object.keys(response).length === 0) {
       throw new Error(`Empty response from LLM for user: ${userId}`);
     }
+    console.log("LLM response:", result);
     const {
       insights,
       income_analysis,
