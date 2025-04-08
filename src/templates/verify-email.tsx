@@ -75,13 +75,10 @@ const VerifyEmail = ({ confirmLink }: VerifyEmailProps) => {
         >
           <div
             style={{
-              backgroundImage:
-                "url('https://hujivekupajsyi6h.public.blob.vercel-storage.com/slip-AnD8aS5N6UDxkV9VhQd43B3m6s4BV0.png')",
+              borderBottomRightRadius: "8px",
+              borderBottomLeftRadius: "8px",
               padding: "30px 20px 40px",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              color: "#454545",
+              background: "#f0f0f0",
             }}
           >
             <table>
