@@ -31,6 +31,15 @@ jest.mock("@/auth", () => ({
 jest.mock("@/schemas");
 jest.mock("@/data/transactions");
 
+jest.mock("resend", () => {
+  return {
+    Resend: jest.fn().mockImplementation(() => ({
+      sendEmail: jest.fn().mockResolvedValue({ id: "mock-email-id" }),
+    })),
+  };
+});
+process.env.RESEND_API_KEY = "test-api-key";
+
 describe("Transactions API", () => {
   const mockUser = { id: "user-123" };
   const mockSession = { user: mockUser };

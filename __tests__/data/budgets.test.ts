@@ -31,6 +31,8 @@ describe("createBudget", () => {
     totalAmount: 1000,
     frequency: "MONTHLY" as const,
     currencyId: "currency-123",
+    description: "Test description",
+    enableNotifications: true,
     accounts: ["account-1", "account-2"],
     budgetAllocations: [
       {
@@ -47,9 +49,7 @@ describe("createBudget", () => {
       },
     ],
     allocateByCategories: true,
-    description: "Test description",
     icon: "Test icon",
-    enableNotifications: true,
   };
 
   beforeEach(() => {
@@ -94,6 +94,9 @@ describe("createBudget", () => {
         totalAmount: mockBudget.totalAmount,
         currencyId: mockBudget.currencyId,
         frequency: mockBudget.frequency,
+        description: mockBudget.description,
+        enableNotifications: mockBudget.enableNotifications,
+        icon: mockBudget.icon,
         accounts: {
           create: mockBudget.accounts.map((id) => ({
             userAccount: {
