@@ -91,7 +91,12 @@ export async function POST(req: NextRequest) {
   }
   const payload = await req.json();
   try {
-    const newTransaction = await createTransaction(payload);
+    const newTransaction = await createTransaction(
+      payload,
+      user.email!,
+      user?.name || "Customer",
+      user.id
+    );
     return NextResponse.json({ data: newTransaction });
   } catch {
     return NextResponse.json("Error while creating a new transaction", {
@@ -153,14 +158,20 @@ export async function PATCH(req: NextRequest) {
     const { id, amount, payee, notes, accountId, createdAt, categoryId } =
       validationResult.data;
 
-    const transaction = await updateTransaction(id, user.id, {
-      amount,
-      payee: payee || "",
-      notes,
-      accountId,
-      createdAt,
-      categoryId: categoryId ? categoryId : null,
-    });
+    const transaction = await updateTransaction(
+      id,
+      user.id,
+      user.email!,
+      user.name!,
+      {
+        amount,
+        payee: payee || "",
+        notes,
+        accountId,
+        createdAt,
+        categoryId: categoryId ? categoryId : null,
+      }
+    );
 
     return NextResponse.json({ data: transaction });
   } catch {

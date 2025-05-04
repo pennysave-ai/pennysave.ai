@@ -12,6 +12,7 @@ export function RightSidebar({
   onOpenChange,
   children,
 }: RightSidebarProps) {
+  if (!isOpen) return null;
   return (
     <>
       <Drawer

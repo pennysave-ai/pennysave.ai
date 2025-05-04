@@ -3,6 +3,9 @@ import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
 import { format } from "date-fns";
+import { Progress } from "@heroui/progress";
+import { cn } from "@heroui/theme";
+import { Link } from "@heroui/link";
 import DataCard from "@/app/(protected)/dashboard/data-card";
 
 const PREV_PERIOD = {
@@ -35,6 +38,49 @@ const INCOME = [
   {
     day: "2025-01-30T23:00:00.000Z",
     value: 8,
+  },
+];
+
+const BUDGETS = [
+  {
+    id: "1",
+    name: "Food",
+    totalAmount: 1000,
+    totalTransactions: 500,
+    enableNotifications: true,
+    percentage: 50,
+  },
+  {
+    id: "2",
+    name: "Entertainment",
+    totalAmount: 2000,
+    totalTransactions: 2500,
+    enableNotifications: true,
+    percentage: 120,
+  },
+  {
+    id: "3",
+    name: "Transportation",
+    totalAmount: 500,
+    totalTransactions: 200,
+    enableNotifications: true,
+    percentage: 40,
+  },
+  {
+    id: "4",
+    name: "Utilities",
+    totalAmount: 800,
+    totalTransactions: 600,
+    enableNotifications: false,
+    percentage: 75,
+  },
+  {
+    id: "5",
+    name: "Healthcare",
+    totalAmount: 1200,
+    totalTransactions: 800,
+    enableNotifications: true,
+    percentage: 22,
   },
 ];
 
@@ -106,29 +152,71 @@ export default async function Features() {
             <CardBody className="p-0 relative">
               <div className="flex gap-x-2 items-center px-6 pt-6">
                 <Icon
-                  icon="solar:star-fall-bold"
+                  icon="solar:calculator-bold"
                   className="text-primary dark:text-white"
                   width={34}
                 />
-                Personal financial AI advisor
+                Budgets
               </div>
-              <div className="p-3 mb-[120px] md:mb-0 flex flex-col gap-y-3 items-center">
-                <Card className="p-3 w-full justify-center">
-                  Identify my unnecessary expenses
-                </Card>
-                <Card className="p-3 w-[96%] justify-center opacity-80">
-                  Create an income report for the last month
-                </Card>
-                <Card className="p-3 w-[94%] justify-center opacity-60">
-                  How much money did I spend on food last week?
-                </Card>
-                <Card className="p-3 w-[92%] justify-center opacity-60">
-                  How can I optimize my expences?
+              <div className="p-3 mb-[120px] md:mb-0 flex flex-col gap-y-3 items-center relative overflow-hidden">
+                <Card
+                  as="dl"
+                  fullWidth
+                  className="border border-transparent dark:border-default-100 lg:col-span-2 md:col-span-1 p-4"
+                >
+                  <h3 className="text-small font-medium text-default-500">
+                    My Budgets
+                  </h3>
+                  <div className="mt-3 flex-col flex gap-y-2">
+                    {BUDGETS?.map((budget) => (
+                      <div key={budget.id} className="flex">
+                        <Progress
+                          classNames={{
+                            track: "border border-default",
+                            indicator: cn([
+                              "bg-gradient-to-r",
+                              budget.percentage > 100
+                                ? "from-danger-300 to-danger-500"
+                                : "from-primary-500 to-secondary-500",
+                            ]),
+                            label: "text-default-600 capitalize",
+                            value: "text-foreground/60",
+                          }}
+                          label={
+                            <div className="flex items-center gap-x-1">
+                              <Link
+                                isDisabled
+                                underline="hover"
+                                size="sm"
+                                color="foreground"
+                                href="/budgets"
+                              >
+                                {budget.name}
+                              </Link>
+                              {budget.enableNotifications && (
+                                <Icon icon="solar:bell-bold" />
+                              )}
+                            </div>
+                          }
+                          radius="sm"
+                          showValueLabel={true}
+                          valueLabel={
+                            <div className="flex gap-x-1 text-xs">
+                              <div>{`${budget.percentage}%`}</div>
+                            </div>
+                          }
+                          size="sm"
+                          value={budget?.totalTransactions}
+                          maxValue={budget.totalAmount}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </Card>
               </div>
               <p className="text-default-500 absolute bottom-0 backdrop-blur-md backdrop-saturate-150 py-3 px-6 w-full">
-                Get personalized insights and recommendations to help you save
-                money, reduce debt, and improve your financial health.
+                Create a budgets and track your expenses. Get an email alert on
+                exceeding you budgets.
               </p>
             </CardBody>
           </Card>

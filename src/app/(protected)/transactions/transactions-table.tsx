@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useMediaQuery } from "usehooks-ts";
 import type { Key } from "@react-types/shared";
 import {
@@ -14,7 +15,7 @@ import {
   type TransactionResponseItem,
 } from "@/features/transactions/hooks";
 import {
-  Table,
+  // Table,
   SortDescriptor,
   Selection,
   TableHeader,
@@ -46,6 +47,12 @@ import { useMemoizedCallback } from "@/hooks";
 import { parseISO, format } from "date-fns";
 import { AmountCell } from "./amount-cell";
 import { AccountName } from "@/components/common";
+
+// Temporary fix for hydration error caused by selectionMode="multiple" Table prop
+// https://github.com/heroui-inc/heroui/issues/4385
+const Table = dynamic(() => import("@heroui/table").then((c) => c.Table), {
+  ssr: false,
+});
 
 export type ColumnsKey =
   | "createdAt"

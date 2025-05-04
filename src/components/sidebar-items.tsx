@@ -27,11 +27,11 @@ export const sectionItems: SidebarItem[] = [
         icon: "solar:card-transfer-linear",
         title: "Transactions",
       },
-      // {
-      //   key: "budgets",
-      //   icon: "solar:calculator-linear",
-      //   title: "Budgets",
-      // },
+      {
+        key: "budgets",
+        icon: "solar:calculator-linear",
+        title: "Budgets",
+      },
       // {
       //   key: "reports",
       //   icon: "solar:document-add-linear",

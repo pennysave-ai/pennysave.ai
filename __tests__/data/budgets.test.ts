@@ -31,11 +31,25 @@ describe("createBudget", () => {
     totalAmount: 1000,
     frequency: "MONTHLY" as const,
     currencyId: "currency-123",
+    description: "Test description",
+    enableNotifications: true,
     accounts: ["account-1", "account-2"],
     budgetAllocations: [
-      { categoryId: "category-1", allocationAmount: 500 },
-      { categoryId: "category-2", allocationAmount: 500 },
+      {
+        categoryId: "category-1",
+        allocatedAmount: 500,
+        name: "Test",
+        spent: 0,
+      },
+      {
+        categoryId: "category-2",
+        allocatedAmount: 500,
+        name: "Test",
+        spent: 0,
+      },
     ],
+    allocateByCategories: true,
+    icon: "Test icon",
   };
 
   beforeEach(() => {
@@ -63,7 +77,7 @@ describe("createBudget", () => {
       ...mockBudget,
       budgetAllocations: mockBudget.budgetAllocations.map((allocation) => ({
         ...allocation,
-        allocatedAmount: allocation.allocationAmount,
+        allocatedAmount: allocation.allocatedAmount,
       })),
       accounts: mockBudget.accounts.map((id) => ({ id })),
     });
@@ -80,6 +94,9 @@ describe("createBudget", () => {
         totalAmount: mockBudget.totalAmount,
         currencyId: mockBudget.currencyId,
         frequency: mockBudget.frequency,
+        description: mockBudget.description,
+        enableNotifications: mockBudget.enableNotifications,
+        icon: mockBudget.icon,
         accounts: {
           create: mockBudget.accounts.map((id) => ({
             userAccount: {
@@ -89,9 +106,9 @@ describe("createBudget", () => {
         },
         budgetAllocations: {
           create: mockBudget.budgetAllocations.map(
-            ({ categoryId, allocationAmount }) => ({
+            ({ categoryId, allocatedAmount }) => ({
               category: { connect: { id: categoryId } },
-              allocatedAmount: allocationAmount,
+              allocatedAmount,
             })
           ),
         },

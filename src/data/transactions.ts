@@ -9,56 +9,8 @@ import {
   UpdateTransaction,
 } from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
-
-/**
- * Fetch user data for AI model context
- * @param {String}  userId - User ID
- */
-export async function getUserTransactions(userId: string) {
-  const transactions = await db.transaction.findMany({
-    select: {
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      account: {
-        select: {
-          name: true,
-          institutionName: true,
-          currency: { select: { name: true } },
-          balance: true,
-        },
-      },
-      category: {
-        select: { name: true },
-      },
-    },
-    where: {
-      account: {
-        userId,
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const convertedTransactions = transactions.map((transaction) => ({
-    ...transaction,
-    amount: convertAmountFromMilliunits(transaction.amount),
-    createdAt: transaction.createdAt,
-    account: {
-      name: transaction.account.name,
-      balance: transaction.account.balance || "unknown",
-      currency: {
-        name: transaction.account.currency.name,
-      },
-    },
-    bank: {
-      name: transaction.account.institutionName,
-    },
-  }));
-
-  return convertedTransactions;
-}
+import { checkBudgetExceedance } from "@/data/budgets";
+import { sendBudgetExceedNotification } from "@/lib/mail";
 
 /**
  * Fetch users analytics data for AI model context
@@ -263,131 +215,17 @@ export async function getPrevMonthSummaries(
 }
 
 /**
- * Fetch user analytics data for AI model context
- * @param {String} userId - User ID
- */
-export async function getUserAnalytics(userId: string) {
-  const transactionsData = await db.transaction.findMany({
-    select: {
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      account: {
-        select: {
-          name: true,
-          institutionName: true,
-          currency: {
-            select: { name: true, id: true, exchangeRate: true, symbol: true },
-          },
-          balance: true,
-        },
-      },
-      category: {
-        select: { name: true },
-      },
-    },
-    where: {
-      account: {
-        userId,
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const transactionsByCurrency: Record<
-    string,
-    {
-      count: number;
-      expenses: number;
-      income: number;
-      exchangeRate: number;
-      symbol: string;
-      currency: string;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  > = transactionsData.reduce((acc: Record<string, any>, transaction) => {
-    if (transaction.account.currency.id in acc) {
-      acc[transaction.account.currency.id] = {
-        ...acc[transaction.account.currency.id],
-        count: acc[transaction.account.currency.id].count + 1,
-        expenses:
-          transaction.amount < 0
-            ? acc[transaction.account.currency.id].expenses + transaction.amount
-            : acc[transaction.account.currency.id].expenses,
-        income:
-          transaction.amount > 0
-            ? acc[transaction.account.currency.id].income + transaction.amount
-            : acc[transaction.account.currency.id].income,
-        symbol: transaction.account.currency.symbol,
-        currency: transaction.account.currency.name,
-      };
-    } else {
-      acc[transaction.account.currency.id] = {
-        count: 1,
-        expenses: transaction.amount < 0 ? transaction.amount : 0,
-        income: transaction.amount > 0 ? transaction.amount : 0,
-        exchangeRate: transaction.account.currency.exchangeRate,
-        symbol: transaction.account.currency.symbol,
-        currency: transaction.account.currency.name,
-      };
-    }
-    return acc;
-  }, {});
-
-  // sort by count
-  const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
-    (a, b) => b[1].count - a[1].count
-  );
-  const sum = Object.entries(transactionsByCurrency).reduce(
-    (acc, [currency, { income, expenses, exchangeRate }]) => {
-      if (currency === targetCurrency[0]) {
-        acc.income += Number(income);
-        acc.expenses += Number(expenses);
-      } else {
-        acc.income += convertCurrency(
-          income,
-          exchangeRate,
-          targetCurrency[1].exchangeRate
-        );
-        acc.expenses += convertCurrency(
-          expenses,
-          exchangeRate,
-          targetCurrency[1].exchangeRate
-        );
-      }
-      return acc;
-    },
-    {
-      income: 0,
-      expenses: 0,
-    }
-  );
-  return {
-    currenctSymbol: targetCurrency[1].symbol,
-    currencyName: targetCurrency[1].currency,
-    income: convertAmountFromMilliunits(sum.income),
-    expenses: convertAmountFromMilliunits(sum.expenses),
-    netFlow: convertAmountFromMilliunits(sum.income + sum.expenses),
-    transactions: transactionsData.map((transaction) => ({
-      amount: formatCurrency(
-        convertAmountFromMilliunits(transaction.amount),
-        transaction.account.currency.name
-      ),
-      category: transaction.category?.name || "Uncategorized",
-      payee: transaction.payee,
-      notes: transaction.notes,
-      account: transaction.account.name,
-    })),
-  };
-}
-/**
  * Creates a new transaction
  * @param {Transaction} payload - Transaction data
  * @returns {Promise} - Promise object represents the transaction data
  * @throws {Error} - If the transaction creation fails
  */
-export async function createTransaction(payload: CreateTransaction) {
+export async function createTransaction(
+  payload: CreateTransaction,
+  email: string,
+  userName: string,
+  userId?: string
+) {
   try {
     const { amount, payee, notes, accountId, categoryId, createdAt } = payload;
     const id = uuid();
@@ -404,6 +242,24 @@ export async function createTransaction(payload: CreateTransaction) {
       console.log(validationResult.error.flatten().fieldErrors);
       throw new Error("Invalid transaction data");
     }
+
+    // Check if the transaction exceeds the budget limit
+    // only check if the transaction has a category and the amount is negative
+    // if the transaction is an income, we don't need to check the budget
+    // if the transaction is an expense, we need to check the budget
+    if (!!categoryId && amount < 0 && userId) {
+      const budgetExceedance = await checkBudgetExceedance(
+        null,
+        userId,
+        amount,
+        categoryId,
+        accountId
+      );
+      for (const budget of budgetExceedance) {
+        sendBudgetExceedNotification(email, budget, userName);
+      }
+    }
+
     const transaction = await db.transaction.create({
       data: {
         id,
@@ -415,6 +271,7 @@ export async function createTransaction(payload: CreateTransaction) {
         createdAt,
       },
     });
+
     return { id: transaction.id };
   } catch (error) {
     console.error("Error creating transaction:", error);
@@ -427,7 +284,7 @@ export async function createTransaction(payload: CreateTransaction) {
  * @param {String} userId - User ID
  * @returns {Promise<number>} - Number of transactions
  */
-export async function getUserTransactionsCount(userId?: string) {
+export async function getUserTransactionsCount(userId: string) {
   return await db.transaction.count({
     where: { account: { userId } },
   });
@@ -493,8 +350,23 @@ export async function deleteTransactions(
 export async function updateTransaction(
   id: string,
   userId: string,
+  email: string,
+  userName: string,
   data: Omit<UpdateTransaction, "id">
 ) {
+  const { categoryId, amount, accountId } = data;
+  if (!!categoryId && amount < 0 && userId) {
+    const budgetExceedance = await checkBudgetExceedance(
+      id,
+      userId,
+      amount,
+      categoryId,
+      accountId
+    );
+    for (const budget of budgetExceedance) {
+      sendBudgetExceedNotification(email, budget, userName);
+    }
+  }
   return await db.transaction.update({
     where: {
       id,

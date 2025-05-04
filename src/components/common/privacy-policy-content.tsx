@@ -76,11 +76,6 @@ export default function PrivacyPolicyContent() {
       the following circumstances:
       <ul style={{ listStyleType: "disc", marginLeft: "1.5rem" }}>
         <li>
-          Service Providers: We may share your information with third-party
-          service providers who perform services on our behalf, such as data
-          analysis.
-        </li>
-        <li>
           Legal Requirements: We may disclose your information if required by
           law or in response to legal processes, such as a court order or
           subpoena.

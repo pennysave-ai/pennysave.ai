@@ -157,15 +157,48 @@ export const bulkCreateTransactionsSchema = createTransactionsSchema.omit({
   categoryId: true,
 });
 
-export const createBudgetSchema = z.object({
-  name: z.string().min(1, { message: "Budget name cannot be empty" }),
-  totalAmount: z
-    .number()
-    .min(0, { message: "Total amount must be a positive number" }),
-  currencyId: z.string().min(1, { message: "Currency cannot be empty" }),
-  frequency: z.nativeEnum(BudgetFrequency),
-  accounts: z.array(z.string().uuid()),
-  budgetAllocations: z.array(
-    z.object({ categoryId: z.string().uuid(), allocatedAmount: z.number() })
-  ),
-});
+export const createBudgetSchema = z
+  .object({
+    name: z.string().min(1, { message: "Budget name cannot be empty" }),
+    totalAmount: z
+      .number()
+      .min(1, { message: "Total amount must be a positive number" }),
+    currencyId: z.string().min(1, { message: "Currency cannot be empty" }),
+    frequency: z.nativeEnum(BudgetFrequency),
+    accounts: z.array(z.string().uuid()).min(1, {
+      message: "At least one account must be selected",
+    }),
+    allocateByCategories: z.boolean(),
+    budgetAllocations: z
+      .array(
+        z.object({
+          categoryId: z.string().uuid(),
+          allocatedAmount: z
+            .number()
+            .min(0, { message: "Allocated amount must be non-negative" }),
+        })
+      )
+      .nonempty({
+        message: "At least one budget allocation is required",
+      }),
+  })
+  .refine(
+    (data) => {
+      // apply the validation only if allocateByCategories is true
+      if (!data.allocateByCategories) {
+        return true;
+      }
+      console.log("data.budgetAllocations", data.budgetAllocations);
+      console.log("data.totalAmount", data.totalAmount);
+      return (
+        data.budgetAllocations.reduce(
+          (sum, allocation) => sum + allocation.allocatedAmount,
+          0
+        ) === data.totalAmount
+      );
+    },
+    {
+      message: "Please alocate the full budget amount",
+      path: ["budgetAllocations"], // This points the error to the `budgetAllocations` field
+    }
+  );

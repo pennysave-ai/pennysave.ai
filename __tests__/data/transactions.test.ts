@@ -16,6 +16,16 @@ jest.mock("@/db", () => ({
   },
 }));
 
+jest.mock("resend", () => {
+  return {
+    Resend: jest.fn().mockImplementation(() => ({
+      sendEmail: jest.fn().mockResolvedValue({ id: "mock-email-id" }),
+    })),
+  };
+});
+
+process.env.RESEND_API_KEY = "test-api-key";
+
 describe("Transactions Data Access", () => {
   beforeEach(() => {
     jest.clearAllMocks();
