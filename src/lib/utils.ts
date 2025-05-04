@@ -13,6 +13,10 @@ import {
   isSameDay,
   startOfDay,
   endOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  startOfQuarter,
 } from "date-fns";
 
 /**
@@ -47,7 +51,13 @@ export function formatCurrency(value: number, currency: string): string {
   }).format(value);
 }
 
-// Function to parse ISO 8601 string to CalendarDate
+/**
+ * Function to parse ISO 8601 string to CalendarDate
+ * @param dateString - The date string to convert.
+ * @returns {ZonedDateTime}
+ * @throws {Error} - If the date string is invalid.
+ * @example
+ **/
 export const parseDateTime = (dateString: string): ZonedDateTime => {
   const localTime = format(
     parseISO(dateString),
@@ -77,6 +87,12 @@ export const parseDateTime = (dateString: string): ZonedDateTime => {
   return toZoned(dateTime, getLocalTimeZone());
 };
 
+/**
+ * Calculates the percentage change between two numbers.
+ * @param {number} current - The current value.
+ * @param {number} previous - The previous value.
+ * @returns {number} - The percentage change.
+ */
 export const calculatePercentageChange = (
   current: number,
   previous: number
@@ -128,6 +144,12 @@ export const fillMissingDatesForExpenceCategories = (
   return transactionByDate;
 };
 
+/**
+ * Fills missing dates for transactions
+ * @param {Array<{date: string, income: number, expences: number}>} data - The data to fill missing dates for.
+ * @param {Date} startDate - The start date of the range.
+ * @returns {Array<{date: string, income: number, expences: number}>}
+ */
 export const fillMissingDates = (
   data: { date: string; income: number; expences: number }[],
   startDate: Date,
@@ -198,7 +220,12 @@ export const convertDateStringToCalendarDate = (
   }
 };
 
-// Function to convert hex to RGBA
+/**
+ * Function to convert hex to RGBA
+ * @param hex
+ * @param alpha
+ * @returns {string}
+ */
 export const convertHexToRgba = (hex: string, alpha: number) => {
   // Remove the hash at the start if it's there
   hex = hex.replace(/^#/, "");
@@ -225,4 +252,26 @@ export const convertHexToRgba = (hex: string, alpha: number) => {
  */
 export const convertUnixTimestampToISO = (timestamp: number): string => {
   return new Date(timestamp * 1000).toISOString();
+};
+
+/**
+ * Get the start date for budget frequency period
+ * @param {string} frequency - The frequency of the budget
+ * @returns {Date}
+ * @throws {Error} - If the frequency is not valid
+ */
+export const getStartDateForFrequency = (frequency: string): Date => {
+  const now = new Date();
+  switch (frequency) {
+    case "WEEKLY":
+      return startOfWeek(now, { weekStartsOn: 1 }); // Start of the week (Monday)
+    case "MONTHLY":
+      return startOfMonth(now); // Start of the month
+    case "YEARLY":
+      return startOfYear(now); // Start of the year
+    case "QUARTERLY":
+      return startOfQuarter(now); // Start of the quarter
+    default:
+      throw new Error("Invalid budget frequency");
+  }
 };

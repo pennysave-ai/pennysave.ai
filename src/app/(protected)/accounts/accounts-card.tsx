@@ -109,7 +109,6 @@ const AccountsCard = () => {
   const deleteAccount = async () => {
     if (formState.id) {
       await deleteAccounts.mutateAsync([formState.id]);
-
       onOpenChange();
     }
   };

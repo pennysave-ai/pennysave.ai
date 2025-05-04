@@ -300,6 +300,6 @@ export async function getUserAccounts(userId: string) {
  * @param {String} userId - User ID
  * @returns {Promise} - Promise object represents the user accounts number
  */
-export async function getUserAccountsCount(userId?: string) {
+export async function getUserAccountsCount(userId: string) {
   return await db.userAccount.count({ where: { userId } });
 }

@@ -36,7 +36,11 @@ export function SidebarItems({ user, isCompact = false }: SidebarItemsProps) {
     return sectionItems.reduce((acc, section) => {
       if (section.items) {
         const items = section.items.map((item) => {
-          if (["categories", "transactions", "accounts"].includes(item.key)) {
+          if (
+            ["categories", "transactions", "accounts", "budgets"].includes(
+              item.key
+            )
+          ) {
             item.endContent = (
               <Chip size="sm" variant="flat">
                 {data?.[item.key] > 999 ? "999+" : data?.[item.key]}

@@ -12,7 +12,7 @@ import TransactionsAreaChart from "./charts/area";
 import BaseCurrencyFilter from "./base-currency-filter";
 // import FloatingButton from "./float-button";
 // import Notifications from "./notifications";
-// import FinancialGoals from "./financial-goals";
+import Budgets from "./budgets";
 
 export default function DashboardPage() {
   const { data, isLoading } = useGetSummary();
@@ -99,7 +99,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
         {/* <Notifications /> */}
-        {/* <FinancialGoals /> */}
+        <Budgets />
       </div>
     </div>
   );

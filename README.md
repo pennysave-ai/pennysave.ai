@@ -56,6 +56,12 @@ npm run prisma:migrate:prod
 npm run populate:db:dev
 ```
 
+#### Run Stripe Server
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
 # TODO
 
 When it's gonna be possible and thre will be stable cash flow we need to update current vercel plan to a pro (https://vercel.com/pricing) to support more than two cron jobs. After we can add the following job to a vercel.json file to update currency automatically.

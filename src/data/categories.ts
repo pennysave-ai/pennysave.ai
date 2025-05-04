@@ -23,7 +23,7 @@ export async function getUserCategories(userId?: string) {
  * @param userId - User ID
  * @returns {Promise<number>}
  */
-export async function getCategoriesCount(userId?: string) {
+export async function getCategoriesCount(userId: string) {
   return await db.category.count({ where: { userId } });
 }
 

@@ -146,8 +146,8 @@ model BudgetAccount {
 
 // Enum to represent budget frequency
 enum BudgetFrequency {
-  MONTHLY
   WEEKLY
+  MONTHLY
   YEARLY
   QUARTERLY
 }
@@ -157,6 +157,8 @@ model Budget {
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
+  icon          String
+  enableNotifications Boolean @default(false)
   description   String
   totalAmount   Float
   currencyId    String
@@ -176,7 +178,6 @@ model BudgetAllocation {
   categoryId    String
   category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   allocatedAmount Float
-  spentAmount   Float     @default(0)
 }
 // Model for financial reports
 model Report {

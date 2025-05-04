@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
       await upsertStripeAccounts(payload);
       break;
     }
-    // Financial connections account Transactions are read to fetch
+    // Financial connections account Transactions are ready to fetch
     case "financial_connections.account.refreshed_transactions": {
       const financialConnectionAccountId = stripeEvent.data.object.id;
       // Check if we already have the account
