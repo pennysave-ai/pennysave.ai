@@ -37,6 +37,19 @@ export default function AreaExpenceByCategory({
   emptyDataPayload,
   isEmptyData,
 }: AreaIncomeAndExpencesProps) {
+  const summaryData = data?.reduce((acc, graphData) => {
+    for (const key in graphData) {
+      if (key !== "date") {
+        acc[key] = (Number(acc[key]) || 0) + Number(graphData[key]);
+      }
+    }
+    return acc;
+  }, {});
+  const sortedKeys = Object.keys(summaryData).sort((a, b) => {
+    const aValue = summaryData[a];
+    const bValue = summaryData[b];
+    return Number(bValue) - Number(aValue);
+  });
   return (
     <ResponsiveContainer
       className="[&_.recharts-surface]:outline-none"
@@ -53,27 +66,25 @@ export default function AreaExpenceByCategory({
       >
         <defs>
           {!!data.length &&
-            Object.keys(data[0])
-              .filter((key) => key !== "date")
-              .map((_, i) => (
-                <linearGradient
-                  id={`gradient-${i}`}
-                  x1="0"
-                  x2="0"
-                  y1="0"
-                  y2="1"
-                  key={i}
-                >
-                  <stop offset="10%" stopColor={COLORS[i]} stopOpacity={0.3} />
-                  <stop
-                    offset="100%"
-                    stopColor={
-                      !!COLORS[i] ? convertHexToRgba(COLORS[i], 0.9) : ""
-                    }
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              ))}
+            sortedKeys.map((_, i) => (
+              <linearGradient
+                id={`gradient-${i}`}
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+                key={i}
+              >
+                <stop offset="10%" stopColor={COLORS[i]} stopOpacity={0.3} />
+                <stop
+                  offset="100%"
+                  stopColor={
+                    !!COLORS[i] ? convertHexToRgba(COLORS[i], 0.9) : ""
+                  }
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            ))}
           <linearGradient id="colorGradientNoData" x1="0" x2="0" y1="0" y2="1">
             <stop
               offset="10%"
@@ -152,28 +163,26 @@ export default function AreaExpenceByCategory({
           />
         )}
         {!!data.length &&
-          Object.keys(data[0])
-            .filter((key) => key !== "date")
-            .map((key, i) => {
-              return (
-                <Area
-                  key={i}
-                  activeDot={{
-                    stroke: COLORS[i],
-                    strokeWidth: 2,
-                    fill: COLORS[i],
-                    r: 5,
-                  }}
-                  animationDuration={1000}
-                  animationEasing="ease"
-                  dataKey={key}
-                  fill={`url(#gradient-${i})`}
-                  stroke={`${COLORS[i]}`}
-                  strokeWidth={2}
-                  type="monotone"
-                />
-              );
-            })}
+          sortedKeys.map((key, i) => {
+            return (
+              <Area
+                key={i}
+                activeDot={{
+                  stroke: COLORS[i],
+                  strokeWidth: 2,
+                  fill: COLORS[i],
+                  r: 5,
+                }}
+                animationDuration={1000}
+                animationEasing="ease"
+                dataKey={key}
+                fill={`url(#gradient-${i})`}
+                stroke={`${COLORS[i]}`}
+                strokeWidth={2}
+                type="monotone"
+              />
+            );
+          })}
         {isEmptyData && (
           <>
             <Area
