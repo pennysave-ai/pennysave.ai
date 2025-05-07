@@ -780,7 +780,7 @@ export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
             isDisabled={isAccountsLoading}
             isLoading={isAccountsLoading}
             className="mt-2"
-            label="Transaction categories included in the budget:"
+            label="Categories included in the budget:"
             selectionMode="multiple"
             selectedKeys={budgetAllocations.map(({ categoryId }) => categoryId)}
             onSelectionChange={handleSelectedCategoryChange}
