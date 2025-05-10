@@ -36,6 +36,9 @@ export default function AmountInput({
     if (isExpence) return "danger";
     return "default";
   };
+  const handleValueChange = (newValue: string | undefined) => {
+    onChange(newValue);
+  };
   return (
     <div className="relative">
       <Tooltip content="Use [+] to add income and [-] to add expence">
@@ -77,7 +80,7 @@ export default function AmountInput({
         aria-label="Amount"
         prefix={prefix}
         value={value}
-        onValueChange={(value) => onChange(value)}
+        onValueChange={handleValueChange}
         disabled={disabled}
         placeholder={placeholder}
         className={cn([
