@@ -18,6 +18,10 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.enable !== "boolean") {
     return NextResponse.json("Bad Request", { status: 400 });
   }
+  // Check if user has an active subscription to enable notifications
+  if (!user.hasActiveStripeSubscription && body.enable) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
   try {
     const updatedBudget = await toggleBudgetNotifications(
       user.id,

@@ -21,13 +21,13 @@ const PAID_FEATURES = [
   { id: 1, name: "Enable Monthly email reports." },
   {
     id: 2,
-    name: "Set your financial goals, notifications and alarms about your expenses.",
+    name: "Enable email notifications then your budget is exceeded.",
   },
   {
     id: 3,
     name: "Connect your bank card, to track your transactions automatically.",
   },
-  { id: 4, name: "Create a sharebale accounts to track your family budgets" },
+  // { id: 4, name: "Create a sharebale accounts to track your family budgets" },
 ];
 
 export const PaywallModal = () => {

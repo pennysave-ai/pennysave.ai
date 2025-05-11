@@ -13,7 +13,11 @@ import {
 import { useDeleteBudget } from "@/features/budgets/hooks";
 import { Button } from "@heroui/button";
 
-export default function BudgetsWrapper() {
+export default function BudgetsWrapper({
+  hasActiveSubscription,
+}: {
+  hasActiveSubscription: boolean;
+}) {
   const { isOpen, onOpenChange } = useDisclosure();
   const deleteBudget = useDeleteBudget();
   const [selectedBudget, setSelectedBudget] = useState<{
@@ -35,7 +39,10 @@ export default function BudgetsWrapper() {
 
   return (
     <>
-      <Budgets onDeleteModalOpen={onDeleteModalOpen} />
+      <Budgets
+        onDeleteModalOpen={onDeleteModalOpen}
+        hasActiveSubscription={hasActiveSubscription}
+      />
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="opaque">
         <ModalContent>
           {(onClose) => (

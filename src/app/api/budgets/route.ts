@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
   if (!user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
+  // Check if user has an active subscription to enable notifications
+  if (!user.hasActiveStripeSubscription && body.enableNotifications) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
   try {
     const newBudget = await createBudget(user.id, body);
     return NextResponse.json({ data: newBudget });
@@ -58,6 +62,10 @@ export async function PATCH(req: NextRequest) {
   }
   const user = session.user;
   if (!user.id) {
+    return NextResponse.json("Unautorized", { status: 401 });
+  }
+  // Check if user has an active subscription to enable notifications
+  if (!user.hasActiveStripeSubscription && body.enableNotifications) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
