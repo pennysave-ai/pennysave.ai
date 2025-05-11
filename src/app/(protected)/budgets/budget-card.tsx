@@ -26,12 +26,16 @@ interface BudgetCardProps {
   currencies?: { id: string; name: string }[];
   openSideBar: (budget: Budget) => void;
   onDeleteModalOpen: (id: string, name: string) => void;
+  hasActiveSubscription: boolean;
+  onPaywallModalOpen: () => void;
 }
 export default function BudgetCard({
   budget,
   openSideBar,
   currencies = [],
+  hasActiveSubscription,
   onDeleteModalOpen,
+  onPaywallModalOpen,
 }: BudgetCardProps) {
   const toggleBudgetNotifications = useToggleBudgetNotifications();
   const deleteBudget = useDeleteBudget();
@@ -48,6 +52,10 @@ export default function BudgetCard({
     currencies.find((currency) => currency.id === budget.currencyId)?.name ||
     BASE_CURRENCY;
   const handleEnableNotifications = async () => {
+    if (!hasActiveSubscription) {
+      onPaywallModalOpen();
+      return;
+    }
     toggleBudgetNotifications.mutate({
       id: budget.id!,
       enable: !budget.enableNotifications,

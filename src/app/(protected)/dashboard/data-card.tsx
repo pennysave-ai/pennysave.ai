@@ -7,13 +7,13 @@ import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
 import { Tooltip } from "@heroui/tooltip";
 
 import { Card } from "@heroui/card";
-import { Button } from "@heroui/button";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/dropdown";
+// import { Button } from "@heroui/button";
+// import {
+//   Dropdown,
+//   DropdownItem,
+//   DropdownMenu,
+//   DropdownTrigger,
+// } from "@heroui/dropdown";
 import { Skeleton } from "@heroui/skeleton";
 import { cn } from "@heroui/theme";
 import { Icon } from "@iconify/react";
@@ -213,7 +213,7 @@ export default function DataCard({
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <Dropdown
+          {/* <Dropdown
             isDisabled={displayOnly}
             classNames={{
               content: "min-w-[120px]",
@@ -241,7 +241,7 @@ export default function DataCard({
               <DropdownItem key="export-data">Export Data</DropdownItem>
               <DropdownItem key="set-alert">Set Alert</DropdownItem>
             </DropdownMenu>
-          </Dropdown>
+          </Dropdown> */}
         </section>
       </Card>
     </div>

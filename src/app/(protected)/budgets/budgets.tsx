@@ -1,5 +1,5 @@
 "use client";
-
+import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@heroui/skeleton";
 import CurrencyInput from "react-currency-input-field";
@@ -33,13 +33,14 @@ import {
 } from "@/lib/utils";
 import { BASE_CURRENCY } from "@/constants";
 import { Budget } from "@/data/budgets";
-
+import { useModal } from "@/app/providers/modal";
 import Sliders from "./sliders";
 import BudgetCard from "./budget-card";
 import IconPicker from "./icon-picker";
 
 interface BudgetsProps {
   onDeleteModalOpen: (id: string, name: string) => void;
+  hasActiveSubscription: boolean;
 }
 
 type BudgetState = {
@@ -62,8 +63,12 @@ type BudgetState = {
       }[];
 };
 
-export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
+export function Budgets({
+  onDeleteModalOpen,
+  hasActiveSubscription,
+}: BudgetsProps) {
   const { isOpen, onOpenChange } = useDisclosure();
+  const { onOpen: onPaywallModalOpen } = useModal();
   const { data: currencyData, isLoading: isCurrencyLoading } =
     useGetCurrencies();
   const { data: accountData, isLoading: isAccountsLoading } = useGetAccounts();
@@ -74,6 +79,8 @@ export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
   const { data: budgetsData, isLoading: isBudgetsLoading } = useGetBudgets();
+  const searchParams = useSearchParams();
+
   const [formState, setFormState] = useState<BudgetState>({
     id: "",
     name: "",
@@ -87,6 +94,13 @@ export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
     budgetAllocations: [],
   });
   const [amountByCategories, setAmountByCategories] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (searchParams.get("create") === "new_budget") {
+      openSideBar();
+    }
+  }, []);
+
   useEffect(() => {
     if (currencyData) {
       setFormState((prevState) => ({
@@ -571,6 +585,10 @@ export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
   };
 
   const handleNotificationChange = () => {
+    if (!hasActiveSubscription) {
+      onPaywallModalOpen();
+      return;
+    }
     setFormState((prevState) => ({
       ...prevState,
       enableNotifications: !prevState.enableNotifications,
@@ -660,6 +678,8 @@ export function Budgets({ onDeleteModalOpen }: BudgetsProps) {
                   openSideBar={openSideBar}
                   currencies={currencyData?.data}
                   onDeleteModalOpen={onDeleteModalOpen}
+                  hasActiveSubscription={hasActiveSubscription}
+                  onPaywallModalOpen={onPaywallModalOpen}
                 />
               ))}
         </div>

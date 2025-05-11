@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { Card } from "@heroui/card";
 import { cn } from "@heroui/theme";
 import { Link } from "@heroui/link";
@@ -7,9 +8,14 @@ import { useGetBudgets } from "@/features/budgets/hooks";
 import { Icon } from "@iconify/react";
 import { Budget } from "@/data/budgets";
 import { convertAmountFromMilliunits } from "@/lib/utils";
+import { Button } from "@heroui/button";
 
 export default function Budgets() {
   const { data: budgets, isLoading } = useGetBudgets();
+  const router = useRouter();
+  const handleRedirect = () => {
+    router.push("/budgets?create=new_budget");
+  };
   const renderBudget = (budget: Budget) => {
     const percentage =
       budget.totalAmount > 0
@@ -62,12 +68,32 @@ export default function Budgets() {
       className="border border-transparent dark:border-default-100 lg:col-span-2 md:col-span-1 p-4"
     >
       {isLoading ? (
-        <Skeleton className="w-44 h-5 rounded" />
+        <div className="flex flex-col gap-y-5">
+          <Skeleton className="w-44 h-5 rounded flex" />
+          <Skeleton className="w-60 h-3 rounded flex" />
+        </div>
       ) : (
         <h3 className="text-small font-medium text-default-500">My Budgets</h3>
       )}
       <div className="mt-3 flex-col flex gap-y-2">
-        {budgets?.map((budget: Budget) => renderBudget(budget))}
+        {!!budgets?.length ? (
+          budgets.map((budget: Budget) => renderBudget(budget))
+        ) : isLoading ? null : (
+          <div className="flex justify-between items-center flex-col md:flex-row gap-y-4">
+            <div className="text-default-500 text-sm">
+              You have no added Budgets yet
+            </div>
+            <Button
+              size="sm"
+              color="primary"
+              className="w-full md:w-auto"
+              startContent={<Icon icon="solar:add-circle-bold" width={20} />}
+              onPress={handleRedirect}
+            >
+              Add Budget
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

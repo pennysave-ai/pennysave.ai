@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { Icon } from "@iconify/react";
+// import { Icon } from "@iconify/react";
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@heroui/button";
+// import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 
 import { Card } from "@heroui/card";
 import { Skeleton } from "@heroui/skeleton";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/dropdown";
+// import {
+//   Dropdown,
+//   DropdownItem,
+//   DropdownMenu,
+//   DropdownTrigger,
+// } from "@heroui/dropdown";
 import AreaIncomeAndExpences from "./area-income-and-expences";
 import AreaExpenceByCategory from "./area-expence-by-category";
 
@@ -111,7 +111,7 @@ export default function TransactionsAreaChart({
                 isEmptyData={isEmptyData}
               />
             )}
-            <Dropdown
+            {/* <Dropdown
               classNames={{
                 content: "min-w-[120px]",
               }}
@@ -136,7 +136,7 @@ export default function TransactionsAreaChart({
                 <DropdownItem key="export-data">Export Data</DropdownItem>
                 <DropdownItem key="set-alert">Set Alert</DropdownItem>
               </DropdownMenu>
-            </Dropdown>
+            </Dropdown> */}
           </>
         )}
       </section>
