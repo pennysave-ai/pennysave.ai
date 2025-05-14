@@ -58,6 +58,15 @@ npm run populate:db:dev
 
 #### Run Stripe Server
 
+Start ngrok first
+
+```bash
+ngrok http 3000
+```
+
+copy started ngrok adress and paste it in env.local file
+run stripe
+
 ```bash
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 ```
