@@ -22,12 +22,16 @@ export const metadata: Metadata = {
   description:
     "Your personal AI financial advisor. Track your expenses, manage your budget, and achieve your financial goals.",
   keywords: [
-    "finance tracking",
-    "expense management",
-    "budgeting",
-    "financial goals",
-    "pennysave.ai",
-    "smart finance app",
+    "money management tool",
+    "personal finance software",
+    "budget planner app",
+    "budget tracker",
+    "track expenses online",
+    "online money managers",
+    "personal accounting software",
+    "best budgeting tools",
+    "best personal finance software",
+    "personal budget software",
   ],
 };
 
