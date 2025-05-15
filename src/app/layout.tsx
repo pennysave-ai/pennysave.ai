@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import Providers from "@/app/providers";
 import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
@@ -50,18 +51,18 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <script
-        async
+      <Script
         src="https://www.googletagmanager.com/gtag/js?id=AW-17082312814"
-      ></script>
-      <script>
+        strategy="afterInteractive"
+      />
+      <Script id="gtag-init" strategy="afterInteractive">
         {`
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ dataLayer?.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'AW-17082312814');
-`}
-      </script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){ dataLayer?.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'AW-17082312814');
+          `}
+      </Script>
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
