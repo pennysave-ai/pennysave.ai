@@ -22,12 +22,16 @@ export const metadata: Metadata = {
   description:
     "How can I optimize my expences? Get personalized insights and recommendations to help you save money, reduce debt, and improve your financial health",
   keywords: [
-    "finance tracking",
-    "expense management",
-    "budgeting",
-    "financial goals",
-    "pennysave.ai",
-    "smart finance app",
+    "money management tool",
+    "personal finance software",
+    "budget planner app",
+    "budget tracker",
+    "track expenses online",
+    "online money managers",
+    "personal accounting software",
+    "best budgeting tools",
+    "best personal finance software",
+    "personal budget software",
   ],
 };
 
