@@ -11,19 +11,7 @@ import {
   getUserTransactions,
 } from "@/data/transactions";
 
-export async function GET(
-  req: NextRequest,
-  {}: {
-    params: Promise<{
-      sortBy: string;
-      sortDirection: string;
-      globalFilter: string;
-      page: string;
-      start: string;
-      end: string;
-    }>;
-  }
-) {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) {
     return NextResponse.json("Unautorized", { status: 401 });
@@ -32,7 +20,7 @@ export async function GET(
   const searchParams = req.nextUrl.searchParams;
 
   const validationResult = getTransactionsSchema.safeParse({
-    sortBy: searchParams.get("sortBy"),
+    sortBy: searchParams.get("sortBy") || "createdAt",
     sortDirection: searchParams.get("sortDirection"),
     globalFilter: searchParams.get("globalFilter"),
     page: searchParams.get("page"),
@@ -48,24 +36,27 @@ export async function GET(
   try {
     const defaultTo = new Date();
     const defaultFrom = subDays(defaultTo, 30);
-    const { sortBy, sortDirection, globalFilter, page, pageSize } =
-      validationResult.data;
-    const { start, end } = validationResult.data;
 
-    const startDate = start
-      ? parse(start, "yyyy-MM-dd", new Date())
+    const startDate = validationResult.data?.start
+      ? parse(validationResult.data?.start, "yyyy-MM-dd", new Date())
       : defaultFrom;
-    const endDate = end ? parse(end, "yyyy-MM-dd", new Date()) : defaultTo;
+    const endDate = validationResult.data?.end
+      ? parse(validationResult.data?.end, "yyyy-MM-dd", new Date())
+      : defaultTo;
     // If notes is empty, return empty string
     const transactions = await getUserTransactions(
       user.id!,
       startDate,
       endOfDay(endDate),
-      sortBy || "createdAt",
-      sortDirection || "ascending",
-      globalFilter?.trim(),
-      page ? parseInt(page, 10) : 1,
-      pageSize ? parseInt(pageSize, 10) : 10
+      validationResult.data?.sortBy || "createdAt",
+      validationResult.data?.sortDirection || "ascending",
+      validationResult.data?.globalFilter?.trim(),
+      validationResult.data?.page
+        ? parseInt(validationResult.data?.page, 10)
+        : 1,
+      validationResult.data?.pageSize
+        ? parseInt(validationResult.data?.pageSize, 10)
+        : 10
     );
 
     // Convert nulls to empty strings
@@ -89,11 +80,11 @@ export async function GET(
       user.id!,
       startDate,
       endOfDay(endDate),
-      globalFilter?.trim()
+      validationResult.data?.globalFilter?.trim()
     );
     return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
-  } catch {
-    return NextResponse.json("Error while fetching transactions", {
+  } catch (e) {
+    return NextResponse.json(`Error while fetching transactions ${e}`, {
       status: 500,
     });
   }
