@@ -79,18 +79,17 @@ export const categorySchema = z.object({
 });
 
 export const getTransactionsSchema = z.object({
-  from: z
-    .string()
-    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
-      message: "From date must be in yyyy-mm-dd format",
-    })
-    .optional(),
-  to: z
-    .string()
-    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
-      message: "To date must be in yyyy-mm-dd format",
-    })
-    .optional(),
+  start: z.string().regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+    message: "Start date must be in yyyy-mm-dd format",
+  }),
+  end: z.string().regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+    message: "End date must be in yyyy-mm-dd format",
+  }),
+  sortBy: z.string().optional(),
+  sortDirection: z.enum(["ascending", "descending"]).optional(),
+  globalFilter: z.string().optional(),
+  page: z.string().optional(),
+  pageSize: z.string().optional(),
   accountId: z.string().uuid().optional(),
 });
 

@@ -8,25 +8,37 @@ import {
   getUserTransactionsCountByAccount,
   deleteTransactions,
   updateTransaction,
-  getUserTransactionsByAccountandCreatedDate,
+  getUserTransactions,
 } from "@/data/transactions";
 
-export async function GET(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+  {}: {
+    params: Promise<{
+      sortBy: string;
+      sortDirection: string;
+      globalFilter: string;
+      page: string;
+      start: string;
+      end: string;
+    }>;
+  }
+) {
   const session = await auth();
   if (!session) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  const { searchParams } = req.nextUrl;
-
-  const to = searchParams.get("to") || undefined;
-  const from = searchParams.get("from") || undefined;
-  const accountId = searchParams.get("accountId") || undefined;
+  const searchParams = req.nextUrl.searchParams;
 
   const validationResult = getTransactionsSchema.safeParse({
-    from,
-    to,
-    accountId,
+    sortBy: searchParams.get("sortBy"),
+    sortDirection: searchParams.get("sortDirection"),
+    globalFilter: searchParams.get("globalFilter"),
+    page: searchParams.get("page"),
+    pageSize: searchParams.get("pageSize"),
+    start: searchParams.get("start"),
+    end: searchParams.get("end"),
   });
 
   if (!validationResult.success) {
@@ -36,17 +48,24 @@ export async function GET(req: NextRequest) {
   try {
     const defaultTo = new Date();
     const defaultFrom = subDays(defaultTo, 30);
+    const { sortBy, sortDirection, globalFilter, page, pageSize } =
+      validationResult.data;
+    const { start, end } = validationResult.data;
 
-    const startDate = from
-      ? parse(from, "yyyy-MM-dd", new Date())
+    const startDate = start
+      ? parse(start, "yyyy-MM-dd", new Date())
       : defaultFrom;
-    const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
-    // if notes is empty, return empty string
-    const transactions = await getUserTransactionsByAccountandCreatedDate(
+    const endDate = end ? parse(end, "yyyy-MM-dd", new Date()) : defaultTo;
+    // If notes is empty, return empty string
+    const transactions = await getUserTransactions(
       user.id!,
-      accountId!,
       startDate,
-      endOfDay(endDate)
+      endOfDay(endDate),
+      sortBy || "createdAt",
+      sortDirection || "ascending",
+      globalFilter?.trim(),
+      page ? parseInt(page, 10) : 1,
+      pageSize ? parseInt(pageSize, 10) : 10
     );
 
     // Convert nulls to empty strings
@@ -68,9 +87,9 @@ export async function GET(req: NextRequest) {
     }));
     const count = await getUserTransactionsCountByAccount(
       user.id!,
-      accountId!,
       startDate,
-      endOfDay(endDate)
+      endOfDay(endDate),
+      globalFilter?.trim()
     );
     return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
   } catch {
