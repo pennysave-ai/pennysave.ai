@@ -10,7 +10,7 @@ import {
   getUserTransactionsCountByAccount,
   deleteTransactions,
   updateTransaction,
-  getUserTransactionsByAccountandCreatedDate,
+  getUserTransactions,
 } from "@/data/transactions";
 
 // Mock next/server
@@ -66,9 +66,7 @@ describe("Transactions API", () => {
       (getTransactionsSchema.safeParse as jest.Mock).mockReturnValue({
         success: true,
       });
-      (
-        getUserTransactionsByAccountandCreatedDate as jest.Mock
-      ).mockResolvedValue([
+      (getUserTransactions as jest.Mock).mockResolvedValue([
         {
           id: "transaction-1",
           payee: "Payee 1",
@@ -91,7 +89,6 @@ describe("Transactions API", () => {
 
       const response = await GET(mockReq as unknown as NextRequest);
       const data = await response.json();
-
       expect(response.status).toBe(200);
       expect(data).toEqual({
         data: [

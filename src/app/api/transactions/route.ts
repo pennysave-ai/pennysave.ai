@@ -8,7 +8,7 @@ import {
   getUserTransactionsCountByAccount,
   deleteTransactions,
   updateTransaction,
-  getUserTransactionsByAccountandCreatedDate,
+  getUserTransactions,
 } from "@/data/transactions";
 
 export async function GET(req: NextRequest) {
@@ -17,16 +17,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const user = session.user;
-  const { searchParams } = req.nextUrl;
-
-  const to = searchParams.get("to") || undefined;
-  const from = searchParams.get("from") || undefined;
-  const accountId = searchParams.get("accountId") || undefined;
+  const searchParams = req.nextUrl.searchParams;
 
   const validationResult = getTransactionsSchema.safeParse({
-    from,
-    to,
-    accountId,
+    sortBy: searchParams.get("sortBy") || "createdAt",
+    sortDirection: searchParams.get("sortDirection"),
+    globalFilter: searchParams.get("globalFilter"),
+    page: searchParams.get("page"),
+    pageSize: searchParams.get("pageSize"),
+    start: searchParams.get("start"),
+    end: searchParams.get("end"),
   });
 
   if (!validationResult.success) {
@@ -37,16 +37,26 @@ export async function GET(req: NextRequest) {
     const defaultTo = new Date();
     const defaultFrom = subDays(defaultTo, 30);
 
-    const startDate = from
-      ? parse(from, "yyyy-MM-dd", new Date())
+    const startDate = validationResult.data?.start
+      ? parse(validationResult.data?.start, "yyyy-MM-dd", new Date())
       : defaultFrom;
-    const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
-    // if notes is empty, return empty string
-    const transactions = await getUserTransactionsByAccountandCreatedDate(
+    const endDate = validationResult.data?.end
+      ? parse(validationResult.data?.end, "yyyy-MM-dd", new Date())
+      : defaultTo;
+    // If notes is empty, return empty string
+    const transactions = await getUserTransactions(
       user.id!,
-      accountId!,
       startDate,
-      endOfDay(endDate)
+      endOfDay(endDate),
+      validationResult.data?.sortBy || "createdAt",
+      validationResult.data?.sortDirection || "ascending",
+      validationResult.data?.globalFilter?.trim(),
+      validationResult.data?.page
+        ? parseInt(validationResult.data?.page, 10)
+        : 1,
+      validationResult.data?.pageSize
+        ? parseInt(validationResult.data?.pageSize, 10)
+        : 10
     );
 
     // Convert nulls to empty strings
@@ -68,13 +78,13 @@ export async function GET(req: NextRequest) {
     }));
     const count = await getUserTransactionsCountByAccount(
       user.id!,
-      accountId!,
       startDate,
-      endOfDay(endDate)
+      endOfDay(endDate),
+      validationResult.data?.globalFilter?.trim()
     );
     return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
-  } catch {
-    return NextResponse.json("Error while fetching transactions", {
+  } catch (e) {
+    return NextResponse.json(`Error while fetching transactions ${e}`, {
       status: 500,
     });
   }

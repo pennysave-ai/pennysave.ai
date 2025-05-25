@@ -293,26 +293,29 @@ export async function getUserTransactionsCount(userId: string) {
 /**
  * Get user transactions count by account and creation date
  * @param {String} userId - User ID
- * @param {String} accountId - Account ID
  * @param {Date} startDate - Start date
  * @param {Date} endDate - End date
+ * @param {String} text - text to search
  * @returns {Promise<number>} - Number of transactions
  */
 export async function getUserTransactionsCountByAccount(
   userId: string,
-  accountId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  text?: string
 ) {
   return await db.transaction.count({
     where: {
-      accountId,
       account: {
         userId,
       },
       createdAt: {
         gte: startDate,
         lte: endDate,
+      },
+      notes: {
+        contains: text,
+        mode: "insensitive",
       },
     },
   });
@@ -381,17 +384,58 @@ export async function updateTransaction(
 /**
  * Get user transactions by account and creation date
  * @param {String} userId - User ID
- * @param {String} accountId - Account ID
  * @param {Date} startDate - Start date
  * @param {Date} endDate - End date
+ * @param {String} text - text to search
+ * @param {String} page - Page number
+ * @param {String} pageSize - Page size
+ * @param {String} sortBy - Sort by field
+ * @param {String} sortDirection - Sort direction (ascending or descending)
  * @returns {Promise} - Promise object represents the transactions data
  */
-export async function getUserTransactionsByAccountandCreatedDate(
+export async function getUserTransactions(
   userId: string,
-  accountId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  sortBy: string,
+  sortDirection: string,
+  text?: string,
+  page: number = 1,
+  pageSize: number = 10
 ) {
+  const sortOrder = sortDirection === "ascending" ? "asc" : "desc";
+  const validSortFields = [
+    "createdAt",
+    "amount",
+    "account.name",
+    "account.institution.name",
+    "category.name",
+    "payee",
+    "notes",
+  ];
+  if (!validSortFields.includes(sortBy)) {
+    throw new Error(
+      `Invalid sort field: ${sortBy}. Valid fields are: ${validSortFields.join(
+        ", "
+      )}`
+    );
+  }
+  // Make nested object from sortBy string
+  const getGetNestedSortBy = (sortBy: string, sortOrder: string = "desc") => {
+    if (sortBy === "account.institution.name") {
+      return {
+        account: {
+          institutionName: sortOrder,
+        },
+      };
+    }
+    const keys = sortBy.split(".");
+    type NestedSortObject = { [key: string]: string | NestedSortObject };
+    return keys.reduceRight<NestedSortObject>((acc, key) => {
+      return { [key]: acc };
+    }, sortOrder as unknown as NestedSortObject);
+  };
+  const dbSortBy = getGetNestedSortBy(sortBy, sortOrder);
   return await db.transaction.findMany({
     select: {
       id: true,
@@ -413,7 +457,6 @@ export async function getUserTransactionsByAccountandCreatedDate(
       },
     },
     where: {
-      accountId,
       account: {
         userId,
       },
@@ -421,8 +464,34 @@ export async function getUserTransactionsByAccountandCreatedDate(
         gte: startDate,
         lte: endDate,
       },
+      OR: [
+        {
+          payee: {
+            contains: text,
+            mode: "insensitive",
+          },
+        },
+        {
+          category: {
+            name: {
+              contains: text,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          notes: {
+            contains: text,
+            mode: "insensitive",
+          },
+        },
+      ],
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: {
+      ...(dbSortBy as Record<string, string | Record<string, string>>),
+    },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
   });
 }
 

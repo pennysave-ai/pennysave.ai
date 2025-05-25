@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { debounce } from "lodash";
 import dynamic from "next/dynamic";
 import { useMediaQuery } from "usehooks-ts";
 import type { Key } from "@react-types/shared";
@@ -10,12 +11,12 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@heroui/dropdown";
+import { CalendarDate } from "@internationalized/date";
 import {
   useDeleteTransaction,
   type TransactionResponseItem,
 } from "@/features/transactions/hooks";
 import {
-  // Table,
   SortDescriptor,
   Selection,
   TableHeader,
@@ -114,21 +115,62 @@ export const columns = [
   { name: "Actions", uid: "actions" },
 ];
 
-interface CategoriesTableProps {
-  transactions: TransactionResponseItem[] | [];
-  isLoading: boolean;
+interface TransactionTableProps {
   onOpenSidebar: (transaction: TransactionResponseItem) => void;
+  data?: TransactionResponseItem[] | undefined;
+  isLoading: boolean;
+  tableSettings: {
+    currentPage: number;
+    pageSize: number;
+    sortBy: {
+      column: string;
+      direction: "ascending" | "descending";
+    };
+    globalFilter: string;
+    start?: CalendarDate;
+    end?: CalendarDate;
+  };
+  setTableSettings: React.Dispatch<
+    React.SetStateAction<{
+      currentPage: number;
+      pageSize: number;
+      sortBy: {
+        column: string;
+        direction: "ascending" | "descending";
+      };
+      globalFilter: string;
+      start?: CalendarDate;
+      end?: CalendarDate;
+    }>
+  >;
+  count: number;
 }
 
 export default function TransactionsTable({
-  transactions = [],
-  isLoading,
   onOpenSidebar,
-}: CategoriesTableProps) {
+  isLoading,
+  data,
+  tableSettings,
+  setTableSettings,
+  count,
+}: TransactionTableProps) {
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
+  const [pageQuantity, setPageQuantity] = useState(1);
+  const { sortBy, pageSize, currentPage } = tableSettings;
+  useEffect(() => {
+    setSelectedKeys(new Set([]));
+  }, [data]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      const quantity = Math.ceil(count / pageSize) || 1;
+      setPageQuantity(quantity);
+    }
+  }, [count, pageSize, JSON.stringify(data), isLoading]);
+
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const deleteTransaction = useDeleteTransaction();
-  const [filterValue, setFilterValue] = useState("");
-  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
+
   const [deleteCategoriesData, setDeleteCategoriesData] = useState<{
     type: "bulk" | "individual";
     categoriesToDelete: string[];
@@ -140,12 +182,6 @@ export default function TransactionsTable({
     new Set(INITIAL_VISIBLE_COLUMNS)
   );
   const isTablet = useMediaQuery("(max-width: 1023px)");
-  const [rowsPerPage] = useState(25);
-  const [page, setPage] = useState(1);
-  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "name",
-    direction: "ascending",
-  });
 
   const handleDelete = useMemoizedCallback(async (payload, onClose) => {
     const { categoriesToDelete: ids, type } = payload;
@@ -155,7 +191,7 @@ export default function TransactionsTable({
     } else {
       const newSelectedKeys =
         selectedKeys === "all"
-          ? new Set(transactions.map((item) => item.id))
+          ? new Set(data?.map((item) => item.id))
           : new Set(selectedKeys);
       ids.forEach((id: string) => {
         newSelectedKeys.delete(id);
@@ -169,95 +205,17 @@ export default function TransactionsTable({
     if (visibleColumns === "all") return columns;
     return columns
       .map((item) => {
-        if (item.uid === sortDescriptor.column) {
+        if (item.uid === sortBy.column) {
           return {
             ...item,
-            sortDirection: sortDescriptor.direction,
+            sortDirection: sortBy.direction,
           };
         }
 
         return item;
       })
       .filter((column) => Array.from(visibleColumns).includes(column.uid));
-  }, [visibleColumns, sortDescriptor]);
-
-  const filteredItems = useMemo(() => {
-    let filteredTransactions = transactions ? [...transactions] : [];
-    if (filterValue) {
-      filteredTransactions = filteredTransactions.filter(
-        (transaction) =>
-          transaction?.notes
-            ?.toLowerCase()
-            .includes(filterValue.toLowerCase()) ||
-          transaction?.payee
-            ?.toLowerCase()
-            .includes(filterValue.toLowerCase()) ||
-          transaction?.category?.name
-            ?.toLowerCase()
-            .includes(filterValue.toLowerCase())
-      );
-    }
-    return filteredTransactions;
-  }, [filterValue, transactions]);
-
-  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
-  const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    return filteredItems.slice(start, end);
-  }, [page, filteredItems, rowsPerPage]);
-
-  const sortedItems = useMemo(() => {
-    return [...items].sort(
-      (a: TransactionResponseItem, b: TransactionResponseItem) => {
-        const col = sortDescriptor.column as keyof TransactionResponseItem;
-        if (col.includes(".")) {
-          const [first, second, third] = col.split(".");
-          if (third) {
-            // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'TransactionResponseItem'
-            const firstValue = a[first][second][third] ?? "";
-            // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'TransactionResponseItem'
-            const secondValue = b[first][second][third] ?? "";
-            const cmp =
-              firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
-            return sortDescriptor.direction === "descending" ? -cmp : cmp;
-          }
-          const firstValue =
-            (a[first as keyof TransactionResponseItem] as any)?.[second] ?? ""; // eslint-disable-line
-          const secondValue =
-            (b[first as keyof TransactionResponseItem] as any)?.[second] ?? ""; // eslint-disable-line
-          const cmp =
-            firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
-          return sortDescriptor.direction === "descending" ? -cmp : cmp;
-        }
-        const first = a[col] as string;
-        const second = b[col] as string;
-        const cmp = first < second ? -1 : first > second ? 1 : 0;
-        return sortDescriptor.direction === "descending" ? -cmp : cmp;
-      }
-    );
-  }, [sortDescriptor, items]);
-
-  const filterSelectedKeys = useMemo(() => {
-    if (selectedKeys === "all") return selectedKeys;
-    let resultKeys = new Set<Key>();
-
-    if (filterValue) {
-      filteredItems.forEach((item) => {
-        const stringId = String(item.id);
-
-        if ((selectedKeys as Set<string>).has(stringId)) {
-          resultKeys.add(stringId);
-        }
-      });
-    } else {
-      resultKeys = selectedKeys;
-    }
-
-    return resultKeys;
-  }, [selectedKeys, filteredItems, filterValue]);
+  }, [visibleColumns, sortBy]);
 
   const getColumnProps = useMemoizedCallback((columnName) => ({
     onClick: () => handleColumnNameClick(columnName),
@@ -347,15 +305,16 @@ export default function TransactionsTable({
               <Button
                 isIconOnly={!isTablet}
                 size="sm"
-                color="primary"
                 aria-label="edit account"
                 variant={isTablet ? "flat" : "light"}
-                className={isTablet ? "w-full" : ""}
+                className={
+                  isTablet ? "text-default-400 w-full" : "text-default-400"
+                }
                 onPress={() => {
                   onOpenSidebar(transaction);
                 }}
               >
-                <Icon icon="solar:pen-2-bold" width={22} />
+                <Icon icon="solar:pen-2-outline" width={22} />
               </Button>
               <Button
                 isIconOnly={!isTablet}
@@ -382,41 +341,34 @@ export default function TransactionsTable({
     }
   );
 
-  const onSearchChange = useMemoizedCallback((value?: string) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
-  });
+  const onSearchChange = useMemoizedCallback(
+    debounce((value?: string) => {
+      setTableSettings((prev) => ({
+        ...prev,
+        globalFilter: value || "",
+        page: 1,
+      }));
+    }, 500)
+  );
 
+  // loadash debaouce function to changes state with delay
   const onSelectionChange = useMemoizedCallback((keys: Selection) => {
     if (keys === "all") {
-      if (filterValue) {
-        const resultKeys = new Set(
-          filteredItems.map((item) => String(item.id))
-        );
-
-        setSelectedKeys(resultKeys);
-      } else {
-        setSelectedKeys(keys);
-      }
+      setSelectedKeys(keys);
     } else if (keys.size === 0) {
       setSelectedKeys(new Set());
     } else {
       const resultKeys = new Set<Key>();
-
       keys.forEach((v) => {
         resultKeys.add(v);
       });
       const selectedValue =
         selectedKeys === "all"
-          ? new Set(filteredItems.map((item) => String(item.id)))
+          ? new Set(data?.map((item) => String(item.id)))
           : selectedKeys;
 
       selectedValue.forEach((v) => {
-        if (items.some((item) => String(item.id) === v)) {
+        if (data?.some((item) => String(item.id) === v)) {
           return;
         }
         resultKeys.add(v);
@@ -437,52 +389,9 @@ export default function TransactionsTable({
               }
               placeholder="Search by notes, payee or category"
               size="sm"
-              value={filterValue}
               onValueChange={onSearchChange}
             />
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <Dropdown>
-                  <DropdownTrigger>
-                    <Button
-                      className="bg-default-100 text-default-800 w-full md:w-auto"
-                      size="sm"
-                      startContent={
-                        <Icon
-                          className="text-default-400"
-                          icon="solar:sort-linear"
-                          width={16}
-                        />
-                      }
-                    >
-                      Sort
-                    </Button>
-                  </DropdownTrigger>
-                  <DropdownMenu
-                    aria-label="Sort"
-                    items={headerColumns.filter(
-                      (c) => !["actions", "teams"].includes(c.uid)
-                    )}
-                  >
-                    {(item) => (
-                      <DropdownItem
-                        key={item.uid}
-                        onPress={() => {
-                          setSortDescriptor({
-                            column: item.uid,
-                            direction:
-                              sortDescriptor.direction === "ascending"
-                                ? "descending"
-                                : "ascending",
-                          });
-                        }}
-                      >
-                        {item.name}
-                      </DropdownItem>
-                    )}
-                  </DropdownMenu>
-                </Dropdown>
-              </div>
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <Dropdown closeOnSelect={false}>
                   <DropdownTrigger>
@@ -520,12 +429,12 @@ export default function TransactionsTable({
           <Divider className="h-5 hidden md:flex" orientation="vertical" />
           <div className="flex items-center gap-4 w-full md:w-auto md:justify-start justify-between h-8 md:h-auto">
             <div className="whitespace-nowrap text-sm text-default-800">
-              {filterSelectedKeys === "all"
+              {selectedKeys === "all"
                 ? "All items selected"
-                : `${filterSelectedKeys.size} Selected`}
+                : `${selectedKeys.size} Selected`}
             </div>
 
-            {(filterSelectedKeys === "all" || filterSelectedKeys.size > 0) && (
+            {(selectedKeys === "all" || selectedKeys.size > 0) && (
               <Dropdown>
                 <DropdownTrigger>
                   <Button
@@ -547,12 +456,12 @@ export default function TransactionsTable({
                     key="bulk-delete"
                     onPress={() => {
                       const keys =
-                        filterSelectedKeys === "all"
-                          ? transactions?.map((item) => item.id)
-                          : (Array.from(filterSelectedKeys) as string[]);
+                        selectedKeys === "all"
+                          ? data?.map((item) => item.id)
+                          : (Array.from(selectedKeys) as string[]);
                       setDeleteCategoriesData({
                         type: "bulk",
-                        categoriesToDelete: keys,
+                        categoriesToDelete: keys ?? [],
                       });
                       onOpen();
                     }}
@@ -567,18 +476,18 @@ export default function TransactionsTable({
       </div>
     );
   }, [
-    filterValue,
     visibleColumns,
-    filterSelectedKeys,
     headerColumns,
-    sortDescriptor,
+    sortBy,
     onSearchChange,
     setVisibleColumns,
     onOpen,
-    transactions,
+    data,
   ]);
 
   const bottomContent = useMemo(() => {
+    // console.log("@currentPage", currentPage);
+    // console.log("@pages", pages);
     return (
       <div className="flex flex-col items-center justify-end px-2 py-2 sm:flex-row">
         <Pagination
@@ -586,21 +495,41 @@ export default function TransactionsTable({
           showControls
           showShadow
           color="primary"
-          page={page}
-          total={pages}
-          onChange={setPage}
+          page={currentPage}
+          total={pageQuantity}
+          onChange={(page) => {
+            setTableSettings((prev) => ({
+              ...prev,
+              currentPage: page,
+            }));
+          }}
         />
       </div>
     );
-  }, [page, pages]);
+  }, [currentPage, pageQuantity]);
 
-  const handleColumnNameClick = useMemoizedCallback((column) => {
-    setSortDescriptor({
-      column,
-      direction:
-        sortDescriptor.direction === "ascending" ? "descending" : "ascending",
-    });
+  const handleColumnNameClick = async (column: string) => {
+    const newDirection =
+      sortBy.direction === "ascending" ? "descending" : "ascending";
+    setTableSettings((prev) => ({
+      ...prev,
+      sortBy: {
+        column,
+        direction: newDirection,
+      },
+    }));
+  };
+  const onSortChange = useMemoizedCallback((sortDescriptor: SortDescriptor) => {
+    setTableSettings((prev) => ({
+      ...prev,
+      sortBy: {
+        column: sortDescriptor.column.toString(),
+        direction:
+          sortDescriptor.direction === "ascending" ? "ascending" : "descending",
+      },
+    }));
   });
+
   return (
     <div className="h-full w-full mt-6">
       <Table
@@ -616,13 +545,13 @@ export default function TransactionsTable({
           thead: "hidden lg:table-header-group",
           tr: `!shadow-none ${isTablet ? "flex flex-col" : ""}`,
         }}
-        selectedKeys={filterSelectedKeys}
+        selectedKeys={selectedKeys}
         selectionMode="multiple"
-        sortDescriptor={sortDescriptor}
+        sortDescriptor={sortBy}
         topContent={topContent}
         topContentPlacement="outside"
         onSelectionChange={onSelectionChange}
-        onSortChange={setSortDescriptor}
+        onSortChange={onSortChange}
         hideHeader={isTablet}
       >
         <TableHeader columns={headerColumns}>
@@ -656,9 +585,9 @@ export default function TransactionsTable({
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner className="mt-4" label="Loading..." />}
+          loadingContent={<Spinner size="lg" variant="dots" />}
           emptyContent={"Bummer! No items found"}
-          items={sortedItems}
+          items={data || []}
         >
           {(item) => (
             <TableRow key={item.id}>

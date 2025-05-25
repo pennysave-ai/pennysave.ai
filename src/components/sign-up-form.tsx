@@ -65,7 +65,7 @@ export default function SignUpForm() {
         />
         <SubmitButton isDisabled={!gdprConsent}>Sign Up</SubmitButton>
       </form>
-      <OauthButtons />
+      <OauthButtons title="OR Sign Up with" />
     </>
   );
 }

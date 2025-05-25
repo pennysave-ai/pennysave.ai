@@ -4,12 +4,12 @@ import { Divider } from "@heroui/divider";
 import { Google, Apple, Github } from "@/app/icons";
 import * as actions from "@/actions";
 
-export function OauthButtons() {
+export function OauthButtons({ title }: { title?: string }) {
   return (
     <>
       <div className="flex items-center gap-4 py-2">
         <Divider className="flex-1" />
-        <p className="shrink-0 text-tiny text-default-500">OR</p>
+        <p className="shrink-0 text-tiny text-default-500">{title}</p>
         <Divider className="flex-1" />
       </div>
       <div className="flex flex-col gap-2">
@@ -20,7 +20,7 @@ export function OauthButtons() {
             variant="bordered"
             className="w-full"
           >
-            Continue with Google
+            Google
           </Button>
         </form>
         <form action={actions.appleSignIn}>
@@ -30,7 +30,7 @@ export function OauthButtons() {
             variant="bordered"
             className="w-full"
           >
-            Continue with Apple
+            Apple
           </Button>
         </form>
         <form action={actions.githubSignIn}>
@@ -40,7 +40,7 @@ export function OauthButtons() {
             variant="bordered"
             className="w-full"
           >
-            Continue with Github
+            Github
           </Button>
         </form>
       </div>

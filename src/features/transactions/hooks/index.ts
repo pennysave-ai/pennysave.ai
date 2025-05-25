@@ -7,8 +7,6 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 
-import { useSearchParams } from "next/navigation";
-
 const onSuccess = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
     predicate: (query: Query<unknown, Error, unknown, QueryKey>) =>
@@ -93,25 +91,47 @@ type Meta = {
   count: number;
 };
 
-export const useGetTransactions = () => {
-  const params = useSearchParams();
-  const from = params.get("from") || "";
-  const to = params.get("to") || "";
-  const accountId = params.get("accountId") || "";
-  const queryParams = new URLSearchParams();
-
-  if (from) queryParams.append("from", from);
-  if (to) queryParams.append("to", to);
-  if (accountId) queryParams.append("accountId", accountId);
-
-  const url =
-    queryParams.size > 0
-      ? `/api/transactions?${queryParams.toString()}`
-      : "/api/transactions";
-  const query = useQuery({
-    queryKey: ["transactions", { from, to, accountId }],
-    queryFn: async () => {
-      const response = await fetch(url);
+export const useGetTransactions = ({
+  sortBy,
+  sortDirection,
+  globalFilter,
+  page,
+  start,
+  end,
+  pageSize,
+}: {
+  sortBy: string;
+  sortDirection: "ascending" | "descending";
+  globalFilter: string;
+  page: string;
+  pageSize: string;
+  start: string;
+  end: string;
+}) => {
+  return useQuery({
+    queryKey: [
+      "transactions",
+      {
+        sortBy,
+        sortDirection,
+        globalFilter,
+        page,
+        start,
+        end,
+        pageSize,
+      },
+    ],
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    refetchOnMount: false,
+    queryFn: async ({ queryKey }) => {
+      const [, queryParams] = queryKey;
+      console.log("Query Params:", queryParams);
+      const response = await fetch(
+        `/api/transactions?${new URLSearchParams(queryParams)}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
       }
@@ -119,21 +139,6 @@ export const useGetTransactions = () => {
       return { data, meta } as { data: TransactionResponseItem[]; meta: Meta };
     },
   });
-  return query;
-};
-
-export const useGetTransaction = (id: string) => {
-  const query = useQuery({
-    queryKey: ["transaction", { id }],
-    queryFn: async () => {
-      const response = await fetch(`/api/transactions/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch transaction");
-      }
-      return await response.json();
-    },
-  });
-  return query;
 };
 
 export const useDeleteTransaction = () => {
