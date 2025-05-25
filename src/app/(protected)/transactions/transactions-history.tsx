@@ -112,13 +112,6 @@ export default function TransactionsHistory({
     }));
   };
 
-  const handleAmountChange = (value: string | undefined) => {
-    setFormState({
-      ...formState,
-      amount: value || "",
-    });
-  };
-
   return (
     <div className="px-4 flex w-full flex-col items-center -mt-[72px] lg:-mt-36">
       <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto w-full mb-4 place-content-end">
