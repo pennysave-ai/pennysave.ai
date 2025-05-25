@@ -48,7 +48,7 @@ export default function TransactionsHistory({
     end?: CalendarDate;
   }>({
     currentPage: 1,
-    pageSize: 5,
+    pageSize: 50,
     sortBy: {
       column: "createdAt",
       direction: "ascending",
