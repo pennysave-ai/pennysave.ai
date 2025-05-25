@@ -19,9 +19,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "pennysave.ai",
+  title: "PennySave.ai - Take control of your finances with ease",
   description:
-    "Your personal AI financial advisor. Track your expenses, manage your budget, and achieve your financial goals.",
+    "How can I optimize my expences? Get personalized insights and recommendations to help you save money, reduce debt, and improve your financial health",
   keywords: [
     "money management tool",
     "personal finance software",

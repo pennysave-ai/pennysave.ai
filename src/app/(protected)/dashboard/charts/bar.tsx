@@ -24,7 +24,6 @@ interface BarProps {
 }
 
 export default function BarGraph({ data, colors, currency }: BarProps) {
-  console.log("data", data);
   const isEmptyData = !!data && data.length === 0;
   const emptyDataPayload = Array.from({ length: 5 })
     .map(() => ({
