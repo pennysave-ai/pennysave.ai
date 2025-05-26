@@ -10,30 +10,15 @@ export default function HeroButtons() {
     router.push("/auth/sign-up");
   };
 
-  const handleSignIn = () => {
-    router.push("/auth/sign-in");
-  };
-
   return (
-    <>
-      <Button
-        color="primary"
-        variant="flat"
-        size="lg"
-        className="rounded-full"
-        onPress={handleSignUp}
-      >
-        Register Now
-      </Button>
-      <Button
-        color="primary"
-        variant="solid"
-        size="lg"
-        className="rounded-full"
-        onPress={handleSignIn}
-      >
-        Sign in
-      </Button>
-    </>
+    <Button
+      color="primary"
+      variant="solid"
+      size="lg"
+      className="rounded-full"
+      onPress={handleSignUp}
+    >
+      Try Now for Free
+    </Button>
   );
 }
