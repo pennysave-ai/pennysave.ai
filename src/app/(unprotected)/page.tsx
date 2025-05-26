@@ -26,7 +26,7 @@ export default async function HomePage() {
             with Ease!
           </div>
           <div className="text-lg text-default-500 text-center">
-            A convenient tool for managing your finances.
+            A Free convenient Tool for managing your finances.
           </div>
           <div className="flex gap-4 mt-8">
             <Suspense fallback={<div>Loading CTA buttons...</div>}>
