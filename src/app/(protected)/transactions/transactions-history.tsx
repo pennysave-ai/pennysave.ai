@@ -51,7 +51,7 @@ export default function TransactionsHistory({
     pageSize: 50,
     sortBy: {
       column: "createdAt",
-      direction: "ascending",
+      direction: "descending",
     },
     start: today(getLocalTimeZone()).subtract({ days: DEFAULT_DATA_PERIOD }),
     end: today(getLocalTimeZone()),
