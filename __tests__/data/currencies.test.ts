@@ -157,12 +157,17 @@ describe("Currencies Data Access", () => {
       });
     });
 
-    it("should return null if currency is not found", async () => {
-      (db.currency.findUnique as jest.Mock).mockResolvedValue(null);
+    it("should return default currency if currency is not found", async () => {
+      (db.currency.findUnique as jest.Mock).mockResolvedValue({
+        symbol: BASE_CURRENCY.toLocaleUpperCase(),
+      });
 
       const result = await getCurrencyById("non-existent-id");
 
-      expect(result).toBeNull();
+      expect(result).toHaveProperty(
+        "symbol",
+        BASE_CURRENCY.toLocaleUpperCase()
+      );
       expect(db.currency.findUnique).toHaveBeenCalledWith({
         where: { id: "non-existent-id" },
       });
@@ -249,12 +254,14 @@ describe("Currencies Data Access", () => {
       });
     });
 
-    it("should throw an error if currency is not found by ID", async () => {
-      (db.currency.findUnique as jest.Mock).mockResolvedValue(null);
+    it("should return default currency if id is wrong", async () => {
+      (db.currency.findUnique as jest.Mock).mockResolvedValue({
+        symbol: BASE_CURRENCY.toLocaleUpperCase(),
+      });
 
-      await expect(getTargetCurrency(null, "non-existent-id")).rejects.toThrow(
-        "Currency not found"
-      );
+      await expect(
+        getTargetCurrency(null, "non-existent-id")
+      ).resolves.toHaveProperty("symbol", BASE_CURRENCY.toLocaleUpperCase());
       expect(db.currency.findUnique).toHaveBeenCalledWith({
         where: { id: "non-existent-id" },
       });

@@ -27,6 +27,8 @@ export default function BaseCurrencyFilter({
         query.set("currencyId", currencyId);
       }
     }
+    // Save currency id to local storage
+    localStorage.setItem("currencyId", currencyId);
     router.push(`${pathname}?${query.toString()}`);
   };
   return (

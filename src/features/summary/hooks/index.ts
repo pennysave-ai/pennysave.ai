@@ -35,7 +35,10 @@ export const useGetSummary = () => {
   const from = params.get("from") || "";
   const to = params.get("to") || "";
   const accountId = params.get("accountId") || "";
-  const currencyId = params.get("currencyId") || "";
+  const currencyId =
+    params.get("currencyId") ||
+    (typeof window !== "undefined" && localStorage?.getItem("currencyId")) ||
+    "";
   const queryParams = new URLSearchParams();
 
   if (from) queryParams.append("from", from);
