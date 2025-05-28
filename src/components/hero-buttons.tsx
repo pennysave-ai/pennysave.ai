@@ -18,7 +18,7 @@ export default function HeroButtons() {
       className="rounded-full"
       onPress={handleSignUp}
     >
-      Try Now for Free
+      Get Started For Free
     </Button>
   );
 }

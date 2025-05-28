@@ -60,11 +60,20 @@ export async function getAllCurrencies() {
  * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
  */
 export async function getCurrencyById(currencyId: string) {
-  return await db.currency.findUnique({
+  const currency = await db.currency.findUnique({
     where: {
       id: currencyId,
     },
   });
+  // if currency not found, return the base currency
+  if (!currency) {
+    const baseCurrency = await getCurrencyByName(BASE_CURRENCY.toUpperCase());
+    if (!baseCurrency) {
+      throw new Error("Base currency not found");
+    }
+    return baseCurrency;
+  }
+  return currency;
 }
 
 /**
