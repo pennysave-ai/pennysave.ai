@@ -20,7 +20,6 @@ import {
 import TransactionsTable from "./transactions-table";
 import Sidebar from "./sidebar";
 import { useLocale } from "@react-aria/i18n";
-import { DEFAULT_DATA_PERIOD } from "@/constants";
 import { DateValue, RangeValue } from "@heroui/calendar";
 
 interface TransactionsHistoryProps {
