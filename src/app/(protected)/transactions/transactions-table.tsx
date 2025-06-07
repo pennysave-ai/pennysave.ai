@@ -586,7 +586,7 @@ export default function TransactionsTable({
         <TableBody
           isLoading={isLoading}
           loadingContent={<Spinner size="lg" variant="dots" />}
-          emptyContent={"Bummer! No items found"}
+          emptyContent={"No items found"}
           items={data || []}
         >
           {(item) => (

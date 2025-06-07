@@ -221,6 +221,24 @@ export const convertDateStringToCalendarDate = (
 };
 
 /**
+ * Converts a CalendarDate object to a date string.
+ * @param {CalendarDate} date - The CalendarDate object to convert.
+ * @returns {string | null}
+ */
+export const convertCalendarDateToDateString = (
+  date: CalendarDate | null
+): string | null => {
+  if (!date) {
+    return null;
+  }
+  try {
+    const jsDate = new Date(date.year, date.month - 1, date.day);
+    return format(jsDate, "yyyy-MM-dd");
+  } catch {
+    return null;
+  }
+};
+/**
  * Function to convert hex to RGBA
  * @param hex
  * @param alpha

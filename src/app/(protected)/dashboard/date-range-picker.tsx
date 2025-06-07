@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import { DateRangePicker } from "@heroui/date-picker";
 import { Button, ButtonGroup } from "@heroui/button";
@@ -11,51 +11,35 @@ import {
   getLocalTimeZone,
   CalendarDate,
 } from "@internationalized/date";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { useLocale } from "@react-aria/i18n";
-import { DEFAULT_DATA_PERIOD } from "@/constants";
-import { convertDateStringToCalendarDate } from "@/lib/utils";
 
-export default function RangePicker() {
-  const searchParams = useSearchParams();
+interface RangePickerProps {
+  start: CalendarDate;
+  end: CalendarDate;
+  onDateRangeChange: ({
+    start,
+    end,
+  }: {
+    start: CalendarDate;
+    end: CalendarDate;
+  }) => void;
+}
+
+export default function RangePicker({
+  onDateRangeChange,
+  start,
+  end,
+}: RangePickerProps) {
   const { locale } = useLocale();
   const now = today(getLocalTimeZone());
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-
-  const start = convertDateStringToCalendarDate(from);
-  const end = convertDateStringToCalendarDate(to);
-
-  const [value, setValue] = useState<{
-    end: CalendarDate;
-    start: CalendarDate;
-  } | null>({
-    end: end ? end : today(getLocalTimeZone()),
-    start: start
-      ? start
-      : today(getLocalTimeZone()).subtract({ days: DEFAULT_DATA_PERIOD }),
-  });
-
-  useEffect(() => {
-    const query = new URLSearchParams(searchParams);
-    if (value?.start) {
-      const from = `${value.start.year}-${value.start.month}-${value.start.day}`;
-      query.set("from", from);
-    }
-    if (value?.end) {
-      const to = `${value.end.year}-${value.end.month}-${value.end.day}`;
-      query.set("to", to);
-    }
-    router.push(`${pathname}?${query.toString()}`);
-  }, [value?.end, value?.start]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
     <div className="flex flex-col gap-4 w-full">
       <DateRangePicker
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
         maxValue={today(getLocalTimeZone())}
         CalendarTopContent={
           <ButtonGroup
@@ -68,7 +52,8 @@ export default function RangePicker() {
             <Button
               className="text-xs"
               onPress={() => {
-                setValue({
+                setIsOpen(false);
+                onDateRangeChange({
                   start: now.subtract({ days: 30 }),
                   end: now,
                 });
@@ -78,7 +63,8 @@ export default function RangePicker() {
             </Button>
             <Button
               onPress={() => {
-                setValue({
+                setIsOpen(false);
+                onDateRangeChange({
                   start: startOfWeek(now, locale),
                   end: now,
                 });
@@ -87,12 +73,13 @@ export default function RangePicker() {
               This week
             </Button>
             <Button
-              onPress={() =>
-                setValue({
+              onPress={() => {
+                setIsOpen(false);
+                onDateRangeChange({
                   start: startOfMonth(now),
                   end: now,
-                })
-              }
+                });
+              }}
             >
               This month
             </Button>
@@ -108,8 +95,15 @@ export default function RangePicker() {
           },
         }}
         label="Period"
-        value={value}
-        onChange={setValue}
+        value={{ start, end }}
+        onChange={(value) => {
+          if (value) {
+            onDateRangeChange({
+              start: value.start as CalendarDate,
+              end: value.end as CalendarDate,
+            });
+          }
+        }}
       />
     </div>
   );
