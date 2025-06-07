@@ -53,7 +53,7 @@ export const useGetSummary = ({
       : "/api/summary";
   const query = useQuery({
     queryKey: ["summary", { start, end, accountId, currencyId }],
-    queryFn: async ({ queryKey }) => {
+    queryFn: async () => {
       if (!start || !end || !accountId || !currencyId) {
         return null;
       }
