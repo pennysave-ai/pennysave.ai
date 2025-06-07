@@ -44,7 +44,8 @@ export const useGetSummary = ({
 
   if (start) queryParams.append("start", start);
   if (end) queryParams.append("end", end);
-  if (accountId) queryParams.append("accountId", accountId);
+  if (accountId && accountId !== "all")
+    queryParams.append("accountId", accountId);
   if (currencyId) queryParams.append("currencyId", currencyId);
 
   const url =
