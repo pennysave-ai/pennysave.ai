@@ -1,7 +1,6 @@
 import { convertAmountFromMilliunits } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
-import { useSearchParams } from "next/navigation";
 import {
   type CategoryResponse,
   type DailyDataResponse,
@@ -30,19 +29,21 @@ export type Summary = {
   };
 };
 
-export const useGetSummary = () => {
-  const params = useSearchParams();
-  const from = params.get("from") || "";
-  const to = params.get("to") || "";
-  const accountId = params.get("accountId") || "";
-  const currencyId =
-    params.get("currencyId") ||
-    (typeof window !== "undefined" && localStorage?.getItem("currencyId")) ||
-    "";
+export const useGetSummary = ({
+  start = null,
+  end = null,
+  accountId = null,
+  currencyId = null,
+}: {
+  start?: string | null;
+  end?: string | null;
+  accountId?: string | null;
+  currencyId?: string | null;
+}) => {
   const queryParams = new URLSearchParams();
 
-  if (from) queryParams.append("from", from);
-  if (to) queryParams.append("to", to);
+  if (start) queryParams.append("start", start);
+  if (end) queryParams.append("end", end);
   if (accountId) queryParams.append("accountId", accountId);
   if (currencyId) queryParams.append("currencyId", currencyId);
 
@@ -51,8 +52,11 @@ export const useGetSummary = () => {
       ? `/api/summary?${queryParams.toString()}`
       : "/api/summary";
   const query = useQuery({
-    queryKey: ["summary", { from, to, accountId, currencyId }],
-    queryFn: async () => {
+    queryKey: ["summary", { start, end, accountId, currencyId }],
+    queryFn: async ({ queryKey }) => {
+      if (!start || !end || !accountId || !currencyId) {
+        return null;
+      }
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch summary");

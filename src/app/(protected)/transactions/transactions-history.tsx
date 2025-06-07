@@ -53,8 +53,8 @@ export default function TransactionsHistory({
       column: "createdAt",
       direction: "descending",
     },
-    start: today(getLocalTimeZone()).subtract({ days: DEFAULT_DATA_PERIOD }),
-    end: today(getLocalTimeZone()),
+    start: startOfMonth(now),
+    end: now,
     globalFilter: "",
   });
   const { isOpen, onOpen, onOpenChange } = useDisclosure();

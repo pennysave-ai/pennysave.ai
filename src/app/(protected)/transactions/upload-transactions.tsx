@@ -326,7 +326,7 @@ export default function UploadTransactions({
                   );
                 })}
               </TableHeader>
-              <TableBody emptyContent="Bummer! No items found">
+              <TableBody emptyContent="No items found">
                 {body.map((item, i) => (
                   <TableRow key={i}>
                     {(columnKey) => {

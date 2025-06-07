@@ -507,7 +507,7 @@ export default function CategoriesTable({
         <TableBody
           isLoading={isLoading}
           loadingContent={<Spinner className="mt-4" label="Loading..." />}
-          emptyContent={"Bummer! No items found"}
+          emptyContent={"No items found"}
           items={sortedItems}
         >
           {(item) => (

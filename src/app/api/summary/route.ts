@@ -434,8 +434,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const user = session.user;
 
-  const to = searchParams.get("to");
-  const from = searchParams.get("from");
+  const to = searchParams.get("end");
+  const from = searchParams.get("start");
   const accountId = searchParams.get("accountId");
   const currencyId = searchParams.get("currencyId");
   const defaultTo = new Date();

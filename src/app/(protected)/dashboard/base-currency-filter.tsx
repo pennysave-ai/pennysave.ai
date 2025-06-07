@@ -1,40 +1,25 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-
-import { useGetCurrencies } from "@/features/currencies/hooks";
 import { Select, SelectItem } from "@heroui/select";
-import { BASE_CURRENCY } from "@/constants";
 
 export default function BaseCurrencyFilter({
   currencyId,
+  accountId,
+  onChange,
+  isLoading,
+  data,
 }: {
   currencyId: string;
+  accountId: string;
+  onChange: (currencyId: string) => void;
+  isLoading: boolean;
+  data: { id: string; name: string }[] | undefined;
 }) {
-  const { data, isLoading } = useGetCurrencies();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const accointId = searchParams.get("accountId");
-
-  const onChange = (currencyId: string) => {
-    const query = new URLSearchParams(searchParams);
-    if (currencyId) {
-      if (currencyId === BASE_CURRENCY) {
-        query.delete("currencyId");
-      } else {
-        query.set("currencyId", currencyId);
-      }
-    }
-    // Save currency id to local storage
-    localStorage.setItem("currencyId", currencyId);
-    router.push(`${pathname}?${query.toString()}`);
-  };
   return (
     <Select
       className="max-w-[120px]"
-      isDisabled={!!accointId}
+      isDisabled={accountId !== "all" || isLoading}
       isLoading={isLoading}
       label="Show in"
       disallowEmptySelection
@@ -43,7 +28,7 @@ export default function BaseCurrencyFilter({
       selectedKeys={[currencyId]}
     >
       <>
-        {data?.data.map(({ id, name }) => (
+        {data?.map(({ id, name }) => (
           <SelectItem key={id}>{name}</SelectItem>
         ))}
       </>
