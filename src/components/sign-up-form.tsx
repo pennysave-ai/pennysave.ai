@@ -20,6 +20,7 @@ export default function SignUpForm() {
           name="username"
           placeholder="Enter your username"
           type="text"
+          size="lg"
           variant="bordered"
           validationBehavior="aria"
           isInvalid={!!formState?.errors.username}
