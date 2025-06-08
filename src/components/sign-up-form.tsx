@@ -1,5 +1,5 @@
 "use client";
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState } from "react";
 import { Input } from "@heroui/input";
 import TermsAndPrivacyPolicy from "@/components/terms-and-privacy-policy";
 
