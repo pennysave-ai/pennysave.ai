@@ -28,6 +28,7 @@ export function PasswordInput({
     <Input
       label={label}
       name={name}
+      size="lg"
       placeholder={placeholder}
       isInvalid={isInvalid}
       errorMessage={errorMessage}

@@ -31,6 +31,7 @@ export default function SignUpForm() {
           name="email"
           placeholder="Enter your email"
           type="text"
+          size="lg"
           variant="bordered"
           validationBehavior="aria"
           isInvalid={!!formState?.errors.email}
