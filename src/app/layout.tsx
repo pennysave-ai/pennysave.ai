@@ -50,6 +50,10 @@ export default async function RootLayout({
           href="https://api.iconify.design"
           crossOrigin="anonymous"
         />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+        />
       </head>
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=AW-17082312814"
