@@ -31,7 +31,7 @@ export default function TermsAndPrivacyPolicy({
           <Checkbox
             name="gdprConsent"
             size="sm"
-            checked={gdprConsent}
+            isSelected={gdprConsent}
             onValueChange={setGdprConsent}
             classNames={{
               base: "p-0",

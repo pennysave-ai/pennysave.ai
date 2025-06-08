@@ -34,6 +34,7 @@ export default function ResetPasswordForm() {
       <Input
         label="Email Address"
         name="email"
+        size="lg"
         placeholder="Enter your email"
         type="text"
         variant="bordered"

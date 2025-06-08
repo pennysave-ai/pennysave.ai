@@ -16,6 +16,7 @@ export function OauthButtons({ title }: { title?: string }) {
         <form action={actions.googleSignIn}>
           <Button
             type="submit"
+            size="lg"
             startContent={<Google />}
             variant="bordered"
             className="w-full"
@@ -26,6 +27,7 @@ export function OauthButtons({ title }: { title?: string }) {
         <form action={actions.appleSignIn}>
           <Button
             type="submit"
+            size="lg"
             startContent={<Apple />}
             variant="bordered"
             className="w-full"
@@ -36,6 +38,7 @@ export function OauthButtons({ title }: { title?: string }) {
         <form action={actions.githubSignIn}>
           <Button
             type="submit"
+            size="lg"
             startContent={<Github />}
             variant="bordered"
             className="w-full"

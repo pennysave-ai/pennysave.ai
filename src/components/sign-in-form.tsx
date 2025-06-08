@@ -48,6 +48,7 @@ export default function SignInForm() {
     <form className="flex flex-col gap-3" action={action}>
       <Input
         label="Email Address"
+        size="lg"
         name="email"
         placeholder="Enter your email"
         type="text"
