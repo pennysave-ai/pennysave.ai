@@ -27,6 +27,7 @@ export function PasswordInput({
   return (
     <Input
       label={label}
+      autoComplete="new-password"
       name={name}
       size="lg"
       placeholder={placeholder}
