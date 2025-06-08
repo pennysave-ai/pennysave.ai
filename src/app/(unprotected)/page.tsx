@@ -8,6 +8,7 @@ import dashboardLight_900 from "@/app/public/dashboard_light_900.webp";
 const Features = lazy(() => import("@/components/features"));
 const HowTo = lazy(() => import("@/components/how-to"));
 const HeroButtons = lazy(() => import("@/components/hero-buttons"));
+const TestimonialsSection = lazy(() => import("@/components/testimonials"));
 
 export default async function HomePage() {
   return (
@@ -52,6 +53,9 @@ export default async function HomePage() {
         </section>
         <Suspense fallback={<div>Loading Features section...</div>}>
           <Features />
+        </Suspense>
+        <Suspense fallback={<div>Loading Testimonials section...</div>}>
+          <TestimonialsSection />
         </Suspense>
         <Suspense fallback={<div>Loading How to section...</div>}>
           <HowTo />

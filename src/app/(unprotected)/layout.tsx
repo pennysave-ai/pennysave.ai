@@ -112,10 +112,10 @@ export default function UnprotectedRoadsLayout({
                 <NavbarItem>
                   <Link
                     className="text-default-600"
-                    href="#get-started"
+                    href="#testimonials"
                     size="sm"
                   >
-                    Get started
+                    Testimonials
                   </Link>
                 </NavbarItem>
                 <NavbarItem>

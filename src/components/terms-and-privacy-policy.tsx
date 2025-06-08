@@ -26,16 +26,19 @@ export default function TermsAndPrivacyPolicy({
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <>
-      <div className="flex items-start px-1 py-2 flex-col gap-y-2">
-        <div className="flex justify-start items-center gap-x-1">
+      <div className="flex items-center justify-between p-2">
+        <div className="flex w-full justify-between">
           <Checkbox
             name="gdprConsent"
             size="sm"
             checked={gdprConsent}
             onValueChange={setGdprConsent}
+            classNames={{
+              base: "p-0",
+            }}
           >
-            <div className="flex text-sm justify-start gap-x-1">
-              To continue please accept our{" "}
+            <div className="flex text-sm justify-start gap-x-2 mr-1">
+              To continue please accept our
             </div>
           </Checkbox>
           <Link className="cursor-pointer" onPress={onOpen} size="sm">
