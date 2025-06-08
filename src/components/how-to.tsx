@@ -1,15 +1,15 @@
 "use server";
 import { Card, CardBody } from "@heroui/card";
+import { Link } from "@heroui/link";
 
 export default async function HowTo() {
   return (
-    <section id="get-started" className="flex flex-col items-center mt-20 px-6">
+    <section id="get-started" className="flex flex-col items-center mt-28 px-6">
       <h2 className="text-4xl font-bold text-center">
-        Just{" "}
+        How{" "}
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
-          3 simple steps
-        </span>{" "}
-        to get started.
+          It Works.
+        </span>
       </h2>
       <div className="flex flex-col md:flex-row gap-y-3 md:gap-x-3 mt-12">
         <Card fullWidth className="border-none" shadow="sm">
@@ -17,8 +17,14 @@ export default async function HowTo() {
             <div className="flex gap-x-4 items-center h-full">
               <div className="text-4xl font-bold text-default">1</div>
               <div className="text-default-600">
-                Join us today, with one click using your Google or Apple account
-                or by filling out the form.
+                <Link
+                  href="/auth/sign-up"
+                  className="text-blue-500 hover:underline"
+                >
+                  Join us today
+                </Link>{" "}
+                with one click using your Google or Apple account or by filling
+                out the form.
               </div>
             </div>
           </CardBody>
@@ -40,9 +46,11 @@ export default async function HowTo() {
             <div className="flex gap-x-4 items-center h-full">
               <div className="text-4xl font-bold text-default">3</div>
               <div className="text-default-600">
-                Use the dashboard to analize your transactions, use our AI
-                financial advisor and get additional insights. Enable financial
-                reports subscription to get mothly report about your finances.
+                Use the dashboard to analyze your transactions, create a budget
+                and enable notifications to stay on top of your finances.&nbsp;
+                {/* use our AI financial advisor and get additional insights.  */}
+                Enable financial reports subscription to get mothly report about
+                your finances.
               </div>
             </div>
           </CardBody>
