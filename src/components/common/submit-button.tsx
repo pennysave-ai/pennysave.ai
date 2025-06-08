@@ -19,6 +19,7 @@ export function SubmitButton({
     <Button
       type="submit"
       color="primary"
+      size="lg"
       isDisabled={pending || isDisabled}
       isLoading={pending}
       className={className}
