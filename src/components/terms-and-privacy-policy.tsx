@@ -27,22 +27,19 @@ export default function TermsAndPrivacyPolicy({
   return (
     <>
       <div className="flex items-center justify-between p-2">
-        <div className="flex w-full justify-between">
+        <div className="flex w-full align-center gap-x-3">
           <Checkbox
             name="gdprConsent"
-            size="sm"
             isSelected={gdprConsent}
             onValueChange={setGdprConsent}
             classNames={{
-              base: "p-0",
+              base: "p-0 flex items-center",
             }}
           >
-            <div className="flex text-sm justify-start gap-x-2 mr-1">
-              To continue please accept our
-            </div>
+            I agree with the{" "}
           </Checkbox>
-          <Link className="cursor-pointer" onPress={onOpen} size="sm">
-            Privacy policy
+          <Link className="cursor-pointer" onPress={onOpen}>
+            privacy policy
           </Link>
         </div>
       </div>
