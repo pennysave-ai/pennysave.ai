@@ -6,6 +6,7 @@ export const publicRoutes = [
   "/robots.txt",
   "/sitemap.xml",
   "/privacy-policy",
+  "/terms-of-service",
   "/auth/verify-email",
   "/api/webhooks/stripe",
   "/api/webhooks/cron/update-exchange-rates",

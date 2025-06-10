@@ -10,6 +10,14 @@ export function Footer() {
         <Link
           className="text-sm cursor-pointer dark:text-primary-600"
           onPress={() => {
+            router.push("/terms-of-service");
+          }}
+        >
+          Terms of service
+        </Link>
+        <Link
+          className="text-sm cursor-pointer dark:text-primary-600"
+          onPress={() => {
             router.push("/privacy-policy");
           }}
         >
