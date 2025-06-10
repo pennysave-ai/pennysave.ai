@@ -115,3 +115,7 @@ export async function googleSignIn() {
 export async function appleSignIn() {
   return signIn("apple", { redirectTo: DEFAULT_LOGGED_IN_REDIRECT });
 }
+
+export async function xSignIn() {
+  return signIn("twitter", { redirectTo: DEFAULT_LOGGED_IN_REDIRECT });
+}

@@ -10,3 +10,4 @@ export { Edit } from "./edit";
 export { Delete } from "./delete";
 export { Loader } from "./loader";
 export { Apple } from "./apple";
+export { X } from "./x";

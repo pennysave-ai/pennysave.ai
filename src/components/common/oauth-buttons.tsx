@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 
-import { Google, Apple, Github } from "@/app/icons";
+import { Google, Apple, Github, X } from "@/app/icons";
 import * as actions from "@/actions";
 
 export function OauthButtons({ title }: { title?: string }) {
@@ -13,39 +13,28 @@ export function OauthButtons({ title }: { title?: string }) {
         <Divider className="flex-1" />
       </div>
       <div className="flex flex-col gap-2">
-        <form action={actions.googleSignIn}>
-          <Button
-            type="submit"
-            size="lg"
-            startContent={<Google />}
-            variant="bordered"
-            className="w-full"
-          >
-            Google
-          </Button>
-        </form>
-        <form action={actions.appleSignIn}>
-          <Button
-            type="submit"
-            size="lg"
-            startContent={<Apple />}
-            variant="bordered"
-            className="w-full"
-          >
-            Apple
-          </Button>
-        </form>
-        <form action={actions.githubSignIn}>
-          <Button
-            type="submit"
-            size="lg"
-            startContent={<Github />}
-            variant="bordered"
-            className="w-full"
-          >
-            Github
-          </Button>
-        </form>
+        <div className="flex justify-evenly">
+          <form action={actions.xSignIn}>
+            <Button type="submit" isIconOnly aria-label="Like" radius="full">
+              <X />
+            </Button>
+          </form>
+          <form action={actions.googleSignIn}>
+            <Button type="submit" isIconOnly aria-label="Like" radius="full">
+              <Google />
+            </Button>
+          </form>
+          <form action={actions.appleSignIn}>
+            <Button type="submit" isIconOnly aria-label="Like" radius="full">
+              <Apple />
+            </Button>
+          </form>
+          <form action={actions.githubSignIn}>
+            <Button type="submit" isIconOnly aria-label="Like" radius="full">
+              <Github />
+            </Button>
+          </form>
+        </div>
       </div>
     </>
   );

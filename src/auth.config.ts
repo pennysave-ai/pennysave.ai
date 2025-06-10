@@ -6,6 +6,8 @@ import type { NextAuthConfig } from "next-auth";
 
 import Github from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
+
+import TwitterProvider from "next-auth/providers/twitter";
 import AppleProvider from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import { THIRD_PARTY_ERROR } from "@/constants";
@@ -19,6 +21,8 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
 const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
 const AUTH_SECRET = process.env.AUTH_SECRET;
+const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID;
+const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
   throw new Error("Missing github oauth credentials");
@@ -26,6 +30,10 @@ if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
   throw new Error("Missing google oauth credentials");
+}
+
+if (!TWITTER_CLIENT_ID || !TWITTER_CLIENT_SECRET) {
+  throw new Error("Missing X oauth credentials");
 }
 
 // Custom error for third-party sign-in
@@ -46,6 +54,10 @@ export default {
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
       clientSecret: APPLE_CLIENT_SECRET!,
+    }),
+    TwitterProvider({
+      clientId: TWITTER_CLIENT_ID,
+      clientSecret: TWITTER_CLIENT_SECRET,
     }),
     Credentials({
       async authorize(credentials): Promise<User | null | ThirdPartyError> {

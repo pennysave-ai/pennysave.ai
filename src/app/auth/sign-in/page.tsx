@@ -16,7 +16,7 @@ export default function SignIn() {
         <Suspense fallback={<div>Loading...</div>}>
           <SignInForm />
         </Suspense>
-        <OauthButtons title="OR Sign In with" />
+        <OauthButtons title="OR Quick Sign In with" />
         <AuthCardFooter
           title="Need to create an account?"
           text="Sign Up"
