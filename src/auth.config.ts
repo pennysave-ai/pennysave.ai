@@ -97,4 +97,16 @@ export default {
     },
   },
   secret: AUTH_SECRET,
+  logger: {
+    // Error code descriptions https://authjs.dev/reference/core/errors
+    error(code) {
+      console.error(`NextAuth Error: ${code}`);
+    },
+    warn(code) {
+      console.warn(`NextAuth Warning: ${code}`);
+    },
+    debug(code, metadata) {
+      console.log(`NextAuth Debug: ${code}`, metadata);
+    },
+  },
 } satisfies NextAuthConfig;
