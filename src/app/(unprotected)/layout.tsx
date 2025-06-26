@@ -102,7 +102,7 @@ export default function UnprotectedRoadsLayout({
                 Home
               </Link>
             </NavbarItem>
-            {pathName !== "/privacy-policy" && (
+            {pathName === "/" && (
               <>
                 <NavbarItem>
                   <Link className="text-default-600" href="#features" size="sm">
