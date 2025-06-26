@@ -1,5 +1,6 @@
-import { NextResponse, NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
 import {
   DEFAULT_LOGGED_IN_REDIRECT,
   apiAuthPrefix,
@@ -7,13 +8,11 @@ import {
   publicRoutes,
 } from "@/routes";
 
-// const { auth } = NextAuth(authConfig);
+const { auth } = NextAuth(authConfig);
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export default auth((req) => {
   const { nextUrl } = req;
-
-  // const isLoggedIn = !!req.auth;
-  const isLoggedIn = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const isLoggedIn = !!req.auth;
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
@@ -23,7 +22,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
   // Set custom header with current path
   // This is used to get current path in server side rendered pages
-  // response.headers.set("x-current-path", nextUrl.pathname);
+  response.headers.set("x-current-path", nextUrl.pathname);
 
   // Allow API routes to be accessed without authentication
   if (isApiAuthRoute) {
@@ -32,20 +31,18 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   if (isAuthRoute) {
     // If user is authenticated redirect user from login or register pages
     if (isLoggedIn) {
-      return NextResponse.redirect(
-        new URL(DEFAULT_LOGGED_IN_REDIRECT, nextUrl)
-      );
+      return Response.redirect(new URL(DEFAULT_LOGGED_IN_REDIRECT, nextUrl));
     }
     return response;
   }
 
   // Redirect to login page if user is not authenticated
   if (!isLoggedIn && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+    return Response.redirect(new URL("/", nextUrl));
   }
 
   return response;
-}
+});
 
 export const config = {
   matcher: [
