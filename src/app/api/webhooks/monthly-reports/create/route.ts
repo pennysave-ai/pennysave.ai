@@ -11,6 +11,11 @@ import { getPrevMonthSummaries } from "@/data/transactions";
  * @returns {Promise<NextResponse>}
  */
 async function handler(req: Request): Promise<NextResponse> {
+  if (
+    req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json("Unauthorized", { status: 401 });
+  }
   const { userIds, startOfPreviousMonth, endOfPreviousMonth } =
     await req.json();
 
@@ -21,6 +26,7 @@ async function handler(req: Request): Promise<NextResponse> {
       endOfPreviousMonth
     );
     for (const userData of usersData) {
+      // Queue each user data for processing
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/process-user`,
         body: {
@@ -29,6 +35,10 @@ async function handler(req: Request): Promise<NextResponse> {
           endOfPreviousMonth,
         },
         retries: 3, // Retry up to 3 times if the endpoint fails
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        },
       });
     }
     return NextResponse.json({
