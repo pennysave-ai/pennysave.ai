@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect } from "react";
 import { debounce } from "lodash";
 import dynamic from "next/dynamic";
 import { useMediaQuery } from "usehooks-ts";
-import type { Key } from "@react-types/shared";
 import {
   Dropdown,
   DropdownTrigger,
@@ -351,31 +350,15 @@ export default function TransactionsTable({
     }, 500)
   );
 
-  // loadash debaouce function to changes state with delay
-  const onSelectionChange = useMemoizedCallback((keys: Selection) => {
+  const onSelectionChange = (keys: Selection) => {
     if (keys === "all") {
       setSelectedKeys(keys);
     } else if (keys.size === 0) {
       setSelectedKeys(new Set());
     } else {
-      const resultKeys = new Set<Key>();
-      keys.forEach((v) => {
-        resultKeys.add(v);
-      });
-      const selectedValue =
-        selectedKeys === "all"
-          ? new Set(data?.map((item) => String(item.id)))
-          : selectedKeys;
-
-      selectedValue.forEach((v) => {
-        if (data?.some((item) => String(item.id) === v)) {
-          return;
-        }
-        resultKeys.add(v);
-      });
-      setSelectedKeys(new Set(resultKeys));
+      setSelectedKeys(new Set(keys));
     }
-  });
+  };
 
   const topContent = useMemo(() => {
     return (
@@ -425,7 +408,6 @@ export default function TransactionsTable({
               </div>
             </div>
           </div>
-
           <Divider className="h-5 hidden md:flex" orientation="vertical" />
           <div className="flex items-center gap-4 w-full md:w-auto md:justify-start justify-between h-8 md:h-auto">
             <div className="whitespace-nowrap text-sm text-default-800">
@@ -480,6 +462,7 @@ export default function TransactionsTable({
     headerColumns,
     sortBy,
     onSearchChange,
+    selectedKeys,
     setVisibleColumns,
     onOpen,
     data,
@@ -590,7 +573,7 @@ export default function TransactionsTable({
           items={data || []}
         >
           {(item) => (
-            <TableRow key={item.id}>
+            <TableRow key={String(item.id)}>
               {(columnKey) => (
                 <TableCell>{renderCell(item, columnKey)}</TableCell>
               )}

@@ -14,18 +14,9 @@ export async function GET(
   if (
     req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
   ) {
-    return NextResponse.json("Unautorized", { status: 401 });
+    return NextResponse.json("Unauthorized", { status: 401 });
   }
   try {
-    // Get all the users who has and enabled monthly reports
-    const users = await db.user.findMany({
-      select: {
-        id: true,
-      },
-      where: {
-        sendMonthlyReport: true,
-      },
-    });
     // Detrmine start and end of the previous month
     const now = new Date();
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -35,19 +26,43 @@ export async function GET(
       endOfPreviousMonth.getMonth(),
       1
     );
-    const userIds = users.map((user) => user.id);
 
+    // Get all the users who has and enabled monthly reports and have transactions in the previous month
+    const users = await db.user.findMany({
+      where: {
+        sendMonthlyReport: true,
+        userAccounts: {
+          some: {
+            transactions: {
+              some: {
+                createdAt: {
+                  gte: startOfPreviousMonth,
+                  lte: endOfPreviousMonth,
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
     // Batch user IDs and queue requests
-    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-      const batch = userIds.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < users.length; i += BATCH_SIZE) {
+      const batch = users.slice(i, i + BATCH_SIZE);
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/create`,
         body: {
-          userIds: batch,
+          userIds: batch.map((user) => user.id),
           startOfPreviousMonth,
           endOfPreviousMonth,
         },
         retries: 3,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        },
       });
     }
     return NextResponse.json({

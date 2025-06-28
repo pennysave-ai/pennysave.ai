@@ -6,6 +6,11 @@ import { bulkUpsertReports } from "@/data/reports";
 export const maxDuration = 60;
 
 async function handler(req: Request): Promise<NextResponse> {
+  if (
+    req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json("Unauthorized", { status: 401 });
+  }
   const { userData } = await req.json();
   try {
     if (!userData) {
@@ -26,7 +31,7 @@ async function handler(req: Request): Promise<NextResponse> {
         Authorization: `Bearer ${process.env.LLM_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-r1:70b",
+        model: process.env.LLM_MODEL,
         system:
           "You are a professional friendly and fun financial assistant specializing in personal finances.",
         prompt: `Analyze my transactions, budgets, spending, and earnings for the given month 
