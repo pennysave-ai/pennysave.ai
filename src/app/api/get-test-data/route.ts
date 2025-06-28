@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getPrevMonthSummaries } from "@/data/transactions";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session) {
     return NextResponse.json("Unautorized", { status: 401 });
