@@ -67,7 +67,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4 bordered">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/0ad3ebf3-7079-4663-9a74-1d231de99990.jpg"
+                  src="/images/0ad3ebf3-7079-4663-9a74-1d231de99990.webp"
                   name="David G."
                 />
                 <div>
@@ -87,7 +87,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/a0b0a959-59a4-4e75-ae6e-aec177531933.jpg"
+                  src="/images/a0b0a959-59a4-4e75-ae6e-aec177531933.webp"
                   name="Rowan Y."
                 />
                 <div>
@@ -107,7 +107,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/da54c4a6-8b71-49d4-b20e-15f31894a057.jpg"
+                  src="/images/da54c4a6-8b71-49d4-b20e-15f31894a057.webp"
                   name="Charlotte M."
                 />
                 <div>
@@ -127,7 +127,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/028570b0-91f4-4104-99ab-d67474f72f75.jpg"
+                  src="/images/028570b0-91f4-4104-99ab-d67474f72f75.webp"
                   name="Mateo R."
                 />
                 <div>
@@ -147,7 +147,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/6a9201d0-53ff-433a-b290-60f1998ecac3.jpg"
+                  src="/images/6a9201d0-53ff-433a-b290-60f1998ecac3.webp"
                   name="Henry C."
                 />
                 <div>
@@ -167,7 +167,7 @@ function TestimonialsSection() {
             <Card className="shadow-lg p-4">
               <CardHeader className="flex items-center gap-4">
                 <Avatar
-                  src="/images/f60e75e2-d776-4b49-ab21-8a13fe9a1a5d.jpg"
+                  src="/images/f60e75e2-d776-4b49-ab21-8a13fe9a1a5d.webp"
                   name="Aurora L."
                 />
                 <div>

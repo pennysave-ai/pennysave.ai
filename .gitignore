@@ -39,7 +39,7 @@ next-env.d.ts
 /prisma/.prisma/client
 
 # public files
-/public
+# /public
 
 # private files
 backup_codes
