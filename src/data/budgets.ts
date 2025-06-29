@@ -90,16 +90,20 @@ export async function createBudget(userId: string, budget: Budget) {
 /**
  * Fetches all budgets for a user
  * @param {String} userId - User ID
+ * @param {Date} startDate - Start date for filtering transactions
+ * @param {Date} endDate - End date for filtering transactions
  * @returns {Promise} - Promise object represents the budgets data
  * */
 export async function getBudgets(
-  userId: string
+  userId: string,
+  startDate: Date,
+  endDate: Date
 ): Promise<Omit<Budget, "allocateByCategories">[]> {
   if (!userId) {
     throw new Error("Bad Request");
   }
   const budgets = await db.budget.findMany({
-    where: { userId },
+    where: { userId, createdAt: { lte: endDate } },
     select: {
       id: true,
       name: true,
@@ -138,7 +142,10 @@ export async function getBudgets(
 
   for (const budget of budgets) {
     // Get the start date for the current period based on the budget's frequency
-    const startDate = getStartDateForFrequency(budget.frequency);
+    const periodStartDate = getStartDateForFrequency(
+      budget.frequency,
+      startDate
+    );
 
     // Extract category IDs and account IDs
     const categoryIds = budget.budgetAllocations.map(
@@ -155,7 +162,7 @@ export async function getBudgets(
     const transactions = await db.transaction.findMany({
       where: {
         createdAt: {
-          gte: startDate,
+          gte: periodStartDate,
         },
         AND: [
           { categoryId: { in: categoryIds } },

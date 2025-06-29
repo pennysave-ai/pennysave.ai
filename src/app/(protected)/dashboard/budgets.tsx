@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import { CalendarDate } from "@internationalized/date";
 import { Card } from "@heroui/card";
 import { cn } from "@heroui/theme";
 import { Link } from "@heroui/link";
@@ -7,11 +8,29 @@ import { Progress } from "@heroui/progress";
 import { useGetBudgets } from "@/features/budgets/hooks";
 import { Icon } from "@iconify/react";
 import { Budget } from "@/data/budgets";
-import { convertAmountFromMilliunits } from "@/lib/utils";
 import { Button } from "@heroui/button";
+import { BASE_CURRENCY } from "@/constants";
+import {
+  convertCalendarDateToDateString,
+  convertAmountFromMilliunits,
+  formatCurrency,
+} from "@/lib/utils";
 
-export default function Budgets() {
-  const { data: budgets, isLoading } = useGetBudgets();
+interface BudgetProps {
+  startDate?: CalendarDate;
+  endDate?: CalendarDate;
+  currencies?: { id: string; name: string }[];
+}
+
+export default function Budgets({
+  startDate,
+  endDate,
+  currencies,
+}: BudgetProps) {
+  const { data: budgets, isFetching } = useGetBudgets({
+    start: startDate ? convertCalendarDateToDateString(startDate) : "",
+    end: endDate ? convertCalendarDateToDateString(endDate) : "",
+  });
   const router = useRouter();
   const handleRedirect = () => {
     router.push("/budgets?create=new_budget");
@@ -21,6 +40,13 @@ export default function Budgets() {
       budget.totalAmount > 0
         ? ((budget?.totalTransactions ?? 0) / budget.totalAmount) * 100
         : 0;
+    const totalAmount = convertAmountFromMilliunits(budget.totalAmount);
+    const totalTransactions = convertAmountFromMilliunits(
+      budget.totalTransactions || 0
+    );
+    const currencyName =
+      currencies?.find((currency) => currency.id === budget.currencyId)?.name ||
+      BASE_CURRENCY;
     return (
       <div key={budget.id} className="flex">
         <Progress
@@ -51,13 +77,22 @@ export default function Budgets() {
           radius="sm"
           showValueLabel={true}
           valueLabel={
-            <div className="flex gap-x-1 text-xs">
-              <div>{`${percentage.toFixed(2)}%`}</div>
+            <div className="flex text-xs">
+              <div>{`${percentage.toFixed(2)}%`}/</div>
+              <div className="flex gap-x-1">
+                <div>
+                  {formatCurrency(
+                    totalAmount - totalTransactions,
+                    currencyName
+                  )}
+                </div>
+                <div>left</div>
+              </div>
             </div>
           }
           size="sm"
-          value={convertAmountFromMilliunits(budget?.totalTransactions || 0)}
-          maxValue={convertAmountFromMilliunits(budget.totalAmount)}
+          value={totalTransactions}
+          maxValue={totalAmount}
         />
       </div>
     );
@@ -67,7 +102,7 @@ export default function Budgets() {
       as="dl"
       className="border border-transparent dark:border-default-100 lg:col-span-2 md:col-span-1 p-4"
     >
-      {isLoading ? (
+      {isFetching ? (
         <div className="flex flex-col gap-y-5">
           <Skeleton className="w-44 h-5 rounded flex" />
           <Skeleton className="w-60 h-3 rounded flex" />
@@ -78,7 +113,7 @@ export default function Budgets() {
       <div className="mt-3 flex-col flex gap-y-2">
         {!!budgets?.length ? (
           budgets.map((budget: Budget) => renderBudget(budget))
-        ) : isLoading ? null : (
+        ) : isFetching ? null : (
           <div className="flex justify-between items-center flex-col md:flex-row gap-y-4">
             <div className="text-default-500 text-sm">
               You have no added Budgets yet

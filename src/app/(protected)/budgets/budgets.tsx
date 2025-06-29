@@ -78,7 +78,7 @@ export function Budgets({
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
-  const { data: budgetsData, isLoading: isBudgetsLoading } = useGetBudgets();
+  const { data: budgetsData, isLoading: isBudgetsLoading } = useGetBudgets({});
   const searchParams = useSearchParams();
 
   const [formState, setFormState] = useState<BudgetState>({
@@ -381,9 +381,9 @@ export function Budgets({
           accounts: prevState.accounts.has("all")
             ? new Set()
             : Array.from(keys).filter((key) => key != "all").length ==
-              accountData?.data.length
-            ? new Set([...keys, "all"])
-            : new Set([...keys]),
+                accountData?.data.length
+              ? new Set([...keys, "all"])
+              : new Set([...keys]),
         };
       });
     }
@@ -454,25 +454,25 @@ export function Budgets({
           budgetAllocations: prevStateAllocationHasAll
             ? []
             : keys.size === categoriesData?.data.length
-            ? [
-                ...allAllocations,
-                {
-                  categoryId: "all",
-                  name: "All",
-                  allocatedAmount: "0.00",
-                  spent: 0,
-                },
-              ]
-            : categoriesData?.data
-                ?.filter(({ id }) => Array.from(keys).includes(id))
-                .map(({ id, name }) => ({
-                  categoryId: id,
-                  allocatedAmount: amountByCategories
-                    ? allocationAmount
-                    : "0.00",
-                  name,
-                  spent: 0,
-                })) || [],
+              ? [
+                  ...allAllocations,
+                  {
+                    categoryId: "all",
+                    name: "All",
+                    allocatedAmount: "0.00",
+                    spent: 0,
+                  },
+                ]
+              : categoriesData?.data
+                  ?.filter(({ id }) => Array.from(keys).includes(id))
+                  .map(({ id, name }) => ({
+                    categoryId: id,
+                    allocatedAmount: amountByCategories
+                      ? allocationAmount
+                      : "0.00",
+                    name,
+                    spent: 0,
+                  })) || [],
         };
       });
     }

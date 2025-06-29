@@ -275,20 +275,23 @@ export const convertUnixTimestampToISO = (timestamp: number): string => {
 /**
  * Get the start date for budget frequency period
  * @param {string} frequency - The frequency of the budget
+ * @param {Date} startDate - The start date of the budget
  * @returns {Date}
  * @throws {Error} - If the frequency is not valid
  */
-export const getStartDateForFrequency = (frequency: string): Date => {
-  const now = new Date();
+export const getStartDateForFrequency = (
+  frequency: string,
+  startDate: Date = new Date()
+): Date => {
   switch (frequency) {
     case "WEEKLY":
-      return startOfWeek(now, { weekStartsOn: 1 }); // Start of the week (Monday)
+      return startOfWeek(startDate, { weekStartsOn: 1 }); // Start of the week (Monday)
     case "MONTHLY":
-      return startOfMonth(now); // Start of the month
+      return startOfMonth(startDate); // Start of the month
     case "YEARLY":
-      return startOfYear(now); // Start of the year
+      return startOfYear(startDate); // Start of the year
     case "QUARTERLY":
-      return startOfQuarter(now); // Start of the quarter
+      return startOfQuarter(startDate); // Start of the quarter
     default:
       throw new Error("Invalid budget frequency");
   }

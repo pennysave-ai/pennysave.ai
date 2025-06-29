@@ -17,11 +17,21 @@ const onSuccess = (queryClient: QueryClient) => {
   });
 };
 
-export const useGetBudgets = () => {
+export const useGetBudgets = ({
+  start = null,
+  end = null,
+}: {
+  start?: string | null;
+  end?: string | null;
+}) => {
+  const queryParams = new URLSearchParams();
+
+  if (start) queryParams.append("start", start);
+  if (end) queryParams.append("end", end);
   const query = useQuery({
-    queryKey: ["budgets"],
+    queryKey: ["budgets", { start, end }],
     queryFn: async () => {
-      const response = await fetch("/api/budgets");
+      const response = await fetch(`/api/budgets?${queryParams.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch accounts");
       }

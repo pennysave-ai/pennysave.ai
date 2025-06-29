@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { parse, endOfDay } from "date-fns";
 import {
   createBudget,
   getBudgets,
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) {
     return NextResponse.json("Unautorized", { status: 401 });
@@ -42,7 +43,15 @@ export async function GET() {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    const budgets = await getBudgets(user.id);
+    const { searchParams } = req.nextUrl;
+    const to = searchParams.get("end");
+    const from = searchParams.get("start");
+    const startDate = from ? parse(from, "yyyy-MM-dd", new Date()) : new Date();
+    const endDate = to
+      ? endOfDay(parse(to, "yyyy-MM-dd", new Date()))
+      : new Date();
+
+    const budgets = await getBudgets(user.id, startDate, endDate);
     return NextResponse.json({ data: budgets });
   } catch (e) {
     return NextResponse.json("Error while fetching budgets" + e, {
