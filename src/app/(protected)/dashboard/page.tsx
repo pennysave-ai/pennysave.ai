@@ -212,7 +212,11 @@ export default function DashboardPage() {
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-1 lg:grid-cols-3 max-w-screen-2xl mx-auto px-4 w-full relative">
         {/* <Notifications /> */}
-        <Budgets />
+        <Budgets
+          startDate={start}
+          endDate={end}
+          currencies={currencyData?.data}
+        />
       </div>
     </div>
   );
