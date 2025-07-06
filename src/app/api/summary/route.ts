@@ -441,12 +441,20 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("start");
   const accountId = searchParams.get("accountId");
   const currencyId = searchParams.get("currencyId");
-  const defaultTo = new Date();
+  const defaultTo = new Date(
+    Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      new Date().getUTCDate()
+    )
+  );
   const defaultFrom = subDays(defaultTo, DEFAULT_DATA_PERIOD);
 
-  const startDate = from ? parse(from, "yyyy-MM-dd", new Date()) : defaultFrom;
+  const startDate = from
+    ? parse(from, "yyyy-MM-dd", new Date(Date.UTC(1970, 0, 1)))
+    : defaultFrom;
   const endDate = to
-    ? endOfDay(parse(to, "yyyy-MM-dd", new Date()))
+    ? endOfDay(parse(to, "yyyy-MM-dd", new Date(Date.UTC(1970, 0, 1))))
     : endOfDay(defaultTo);
   const periodLength = differenceInDays(endDate, startDate) + 1;
 

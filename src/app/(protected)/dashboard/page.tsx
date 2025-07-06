@@ -110,8 +110,6 @@ export default function DashboardPage() {
     localStorage.setItem("currencyId", currencyId);
   };
   const onAccountChange = (accountId: string) => {
-    // console.log("@accountData", accountData);
-    // console.log("@accountId", accountId);
     let currencyId = null;
     if (accountId === "all") {
       currencyId = localStorage.getItem("currencyId");
