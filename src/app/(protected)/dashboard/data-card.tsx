@@ -70,10 +70,10 @@ export default function DataCard({
       return <Icon height={16} icon="solar:arrow-right-up-linear" width={16} />;
   };
   const prevPeriodStartDate = prevPeriod?.start
-    ? format(parseISO(prevPeriod?.start), "PP")
+    ? format(parseISO(prevPeriod?.start.slice(0, 10)), "PP")
     : "";
   const prevPeriodEndDate = prevPeriod?.end
-    ? format(parseISO(prevPeriod?.end), "PP")
+    ? format(parseISO(prevPeriod?.end.slice(0, 10)), "PP")
     : "";
 
   if (isLoading) {
