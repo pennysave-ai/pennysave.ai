@@ -36,9 +36,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: err?.message }, { status: 400 });
   }
 
-  const hostname = req.url?.split("/")[2].split(":")[0];
-  const port = process.env.NEXT_PUBLIC_WEBSOCKET_PORT;
-
   switch (stripeEvent.type) {
     // First payment is successful and subscription is created
     case "checkout.session.completed": {
