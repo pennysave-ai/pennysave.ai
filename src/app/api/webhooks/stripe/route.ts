@@ -36,9 +36,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: err?.message }, { status: 400 });
   }
 
-  const hostname = req.url?.split("/")[2].split(":")[0];
-  const port = process.env.NEXT_PUBLIC_WEBSOCKET_PORT;
-
   switch (stripeEvent.type) {
     // First payment is successful and subscription is created
     case "checkout.session.completed": {
@@ -71,7 +68,7 @@ export async function POST(req: NextRequest) {
 
       // Notify user of successful subscription
       const ws = new WebSocket(
-        `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+        `${PROTOCOL}://${process.env.WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
       );
       ws.on("open", function open() {
         ws.send(
@@ -113,7 +110,7 @@ export async function POST(req: NextRequest) {
         });
         console.log("Subscription canceled", user.id);
         const ws = new WebSocket(
-          `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+          `${PROTOCOL}://${process.env.WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
         );
         ws.on("open", function open() {
           ws.send(
@@ -159,7 +156,7 @@ export async function POST(req: NextRequest) {
           },
         });
         const ws = new WebSocket(
-          `${PROTOCOL}://${hostname}:${port}?id=STRIPE_WEBHOOK`
+          `${PROTOCOL}://${process.env.WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
         );
         ws.on("open", function open() {
           ws.send(
