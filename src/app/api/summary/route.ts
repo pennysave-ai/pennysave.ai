@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   subDays,
-  parse,
   differenceInDays,
   isSameDay,
   endOfDay,
@@ -10,7 +9,7 @@ import {
 } from "date-fns";
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { convertCurrency } from "@/lib/utils";
+import { convertCurrency, parseUTCDate, parseUTCEndOfDay } from "@/lib/utils";
 import { type Currency } from "@prisma/client";
 import { getTargetCurrency } from "@/data/currencies";
 import { DEFAULT_DATA_PERIOD } from "@/constants";
@@ -450,12 +449,8 @@ export async function GET(req: NextRequest) {
   );
   const defaultFrom = subDays(defaultTo, DEFAULT_DATA_PERIOD);
 
-  const startDate = from
-    ? parse(from, "yyyy-MM-dd", new Date(Date.UTC(1970, 0, 1)))
-    : defaultFrom;
-  const endDate = to
-    ? endOfDay(parse(to, "yyyy-MM-dd", new Date(Date.UTC(1970, 0, 1))))
-    : endOfDay(defaultTo);
+  const startDate = from ? parseUTCDate(from) : defaultFrom;
+  const endDate = to ? parseUTCEndOfDay(to) : defaultTo;
   const periodLength = differenceInDays(endDate, startDate) + 1;
 
   // If the period is less than month pick the same dates from the previous month

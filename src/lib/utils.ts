@@ -51,6 +51,20 @@ export function formatCurrency(value: number, currency: string): string {
   }).format(value);
 }
 
+/** Function to convert data to UTC format
+ * @param dateStr - The date string to convert.
+ * @returns {Date} - The date in UTC format.
+ */
+export function parseUTCDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+/** Function to conver data to UTC End of the Day */
+export function parseUTCEndOfDay(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+}
 /**
  * Function to parse ISO 8601 string to CalendarDate
  * @param dateString - The date string to convert.
