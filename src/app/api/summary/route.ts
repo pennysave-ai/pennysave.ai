@@ -5,6 +5,8 @@ import {
   differenceInDays,
   isSameDay,
   endOfDay,
+  isSameMonth,
+  subMonths,
 } from "date-fns";
 import { db } from "@/db";
 import { auth } from "@/auth";
@@ -434,6 +436,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const user = session.user;
 
+  let lastPeriodStart, lastPeriodEnd;
   const to = searchParams.get("end");
   const from = searchParams.get("start");
   const accountId = searchParams.get("accountId");
@@ -446,8 +449,16 @@ export async function GET(req: NextRequest) {
     ? endOfDay(parse(to, "yyyy-MM-dd", new Date()))
     : endOfDay(defaultTo);
   const periodLength = differenceInDays(endDate, startDate) + 1;
-  const lastPeriodStart = subDays(startDate, periodLength);
-  const lastPeriodEnd = subDays(endDate, periodLength);
+
+  // If the period is less than month pick the same dates from the previous month
+  // Otherwise pick the the same range 30, 40, etc. days ago
+  if (!isSameMonth(startDate, endDate)) {
+    lastPeriodStart = subDays(startDate, periodLength);
+    lastPeriodEnd = subDays(endDate, periodLength);
+  } else {
+    lastPeriodStart = subMonths(startDate, 1);
+    lastPeriodEnd = subMonths(endDate, 1);
+  }
   try {
     const targetCurrency = await getTargetCurrency(accountId, currencyId);
     const currentPeriod = await fetchFinancialData(

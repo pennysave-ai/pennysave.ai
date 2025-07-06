@@ -38,6 +38,7 @@ export const useGetBudgets = ({
       const { data } = await response.json();
       return data;
     },
+    refetchOnWindowFocus: false,
   });
   return query;
 };

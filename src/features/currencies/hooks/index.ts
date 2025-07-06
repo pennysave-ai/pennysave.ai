@@ -14,6 +14,7 @@ export const useGetCurrencies = () => {
       const { data } = await response.json();
       return { data } as { data: CurrencyItem[] };
     },
+    refetchOnWindowFocus: false,
   });
   return query;
 };
