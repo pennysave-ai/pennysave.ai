@@ -18,7 +18,7 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
 
   const connectWebSocket = () => {
     const socket = new WebSocket(
-      `${PROTOCOL}://${window.location.hostname}:${process.env.NEXT_PUBLIC_WEBSOCKET_PORT}?id=${userId}`
+      `${PROTOCOL}://${process.env.WEBSOCKET_URL}?id=${userId}`
     );
 
     socket.onopen = () => {
