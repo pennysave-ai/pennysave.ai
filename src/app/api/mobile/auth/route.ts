@@ -19,15 +19,18 @@ async function verifyAppleToken(identityToken: string) {
     const { keys } = await res.json();
 
     // Decode Apple's token header to find which key was used
-    const decodedHeader: any = jwt.decode(identityToken, { complete: true });
-    if (!decodedHeader || !decodedHeader.header) {
+    const decodedHeader = jwt.decode(identityToken, {
+      complete: true,
+    }) as { header: jwt.JwtHeader } | null;
+    if (!decodedHeader || !decodedHeader?.header) {
       throw new Error("Invalid Apple identity token");
     }
     const { kid, alg } = decodedHeader.header;
 
     // Find corresponding key in Apple's JWKS
     const appleKey = keys.find(
-      (key: any) => key.kid === kid && key.alg === alg
+      (key: { kid: string | undefined; alg: string }) =>
+        key.kid === kid && key.alg === alg
     );
     if (!appleKey) throw new Error("Public key for Apple token not found");
 
@@ -59,7 +62,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let userPayload: any;
+    let userPayload: jwt.JwtPayload | null = null;
 
     if (idToken) {
       // Verify Google ID token
@@ -68,9 +71,10 @@ export async function POST(req: NextRequest) {
           idToken,
           audience: process.env.GOOGLE_CLIENT_ID!,
         });
-        userPayload = ticket.getPayload();
+        const payload = ticket.getPayload();
+        userPayload = payload ? (payload as jwt.JwtPayload) : null;
         if (!userPayload) throw new Error("Invalid Google ID token");
-      } catch (error) {
+      } catch {
         return NextResponse.json(
           { error: "Invalid Google ID token" },
           { status: 401 }
@@ -124,10 +128,13 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ token }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Authentication failed:", error);
     return NextResponse.json(
-      { error: error.message || "Authentication failed" },
+      {
+        error:
+          (error as { message?: string })?.message || "Authentication failed",
+      },
       { status: 401 }
     );
   }
