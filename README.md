@@ -150,3 +150,5 @@ Clean logo screen. App on phone and desktop. CTA: Start Free Today + App Store /
 Voiceover:
 
 "Try [Your App Name] free today. And never ask ‘Where did my money go?’ again."
+
+
