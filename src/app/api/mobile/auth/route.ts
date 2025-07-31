@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract user details
-    const email = userPayload.email || userPayload.sub;
+    const email = userPayload?.email || userPayload?.sub;
     if (!email) {
       return NextResponse.json(
         { error: "Email not found in token" },
@@ -116,9 +116,9 @@ export async function POST(req: NextRequest) {
 
     const payload = {
       email,
-      name: userPayload.name || "",
-      picture: userPayload.picture || "",
-      sub: userPayload.sub,
+      name: userPayload?.name || "",
+      picture: userPayload?.picture || "",
+      sub: userPayload?.sub,
       provider: idToken ? "google" : "apple",
       // Add any other user data you need
     };
