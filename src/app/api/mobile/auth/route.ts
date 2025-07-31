@@ -45,7 +45,8 @@ async function verifyAppleToken(identityToken: string) {
 
     return payload;
   } catch (error) {
-    throw new Error(`Apple token verification failed: ${error?.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Apple token verification failed: ${errorMessage}`);
   }
 }
 
