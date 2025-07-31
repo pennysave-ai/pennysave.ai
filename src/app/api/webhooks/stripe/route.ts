@@ -16,7 +16,6 @@ import { STRIPE_PLANS } from "@/lib/stripe";
 import { convertUnixTimestampToISO } from "@/lib/utils";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
-const PROTOCOL = process.env.NODE_ENV === "production" ? "wss" : "ws";
 const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "";
 
 export async function POST(req: NextRequest) {
@@ -68,9 +67,7 @@ export async function POST(req: NextRequest) {
       // TODO: Send email to user
 
       // Notify user of successful subscription
-      const ws = new WebSocket(
-        `${PROTOCOL}://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
-      );
+      const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
       ws.on("open", function open() {
         ws.send(
           JSON.stringify({
@@ -110,9 +107,7 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log("Subscription canceled", user.id);
-        const ws = new WebSocket(
-          `${PROTOCOL}://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
-        );
+        const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
         ws.on("open", function open() {
           ws.send(
             JSON.stringify({
@@ -156,9 +151,7 @@ export async function POST(req: NextRequest) {
               : null,
           },
         });
-        const ws = new WebSocket(
-          `${PROTOCOL}://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`
-        );
+        const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
         ws.on("open", function open() {
           ws.send(
             JSON.stringify({

@@ -15,6 +15,7 @@ export const publicRoutes = [
   "/api/webhooks/monthly-reports/create",
   "/api/webhooks/monthly-reports/send",
   "/api/webhooks/monthly-reports/process-user",
+  "/api/mobile/auth",
 ];
 
 /**
@@ -32,7 +33,7 @@ export const authRoutes = [
 ];
 
 /**
- * Api authentication routes prefix
+ * API authentication routes prefix
  * @type {string}
  */
 export const apiAuthPrefix = "/api/auth";
