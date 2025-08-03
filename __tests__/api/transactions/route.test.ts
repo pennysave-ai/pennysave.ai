@@ -5,6 +5,7 @@ import { GET, POST, DELETE, PATCH } from "@/app/api/transactions/route";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
+import { getAuthenticatedUser } from "@/auth.helper";
 import {
   createTransaction,
   getUserTransactionsCountByAccount,
@@ -38,6 +39,11 @@ jest.mock("resend", () => {
     })),
   };
 });
+
+jest.mock("@/auth.helper", () => ({
+  getAuthenticatedUser: jest.fn(),
+}));
+
 process.env.RESEND_API_KEY = "test-api-key";
 
 describe("Transactions API", () => {
@@ -46,12 +52,13 @@ describe("Transactions API", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockUser);
   });
 
   describe("GET /api/transactions", () => {
     it("should return 401 if not authenticated", async () => {
       (auth as jest.Mock).mockResolvedValue(null);
-
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const mockReq = {
         nextUrl: { searchParams: new URLSearchParams() },
       };

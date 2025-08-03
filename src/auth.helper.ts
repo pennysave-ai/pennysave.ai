@@ -58,8 +58,8 @@ export async function getAuthenticatedUser(req: NextRequest) {
           monthlyReports: decoded.monthlyReports,
         },
       };
-    } catch (error) {
-      throw error;
+    } catch {
+      return null;
     }
   }
 
