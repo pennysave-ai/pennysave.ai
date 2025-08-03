@@ -10,30 +10,30 @@ import {
   updateTransaction,
   getUserTransactions,
 } from "@/data/transactions";
+import { getAuthenticatedUser } from "@/auth.helper";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const user = session.user;
-  const searchParams = req.nextUrl.searchParams;
-
-  const validationResult = getTransactionsSchema.safeParse({
-    sortBy: searchParams.get("sortBy") || "createdAt",
-    sortDirection: searchParams.get("sortDirection"),
-    globalFilter: searchParams.get("globalFilter"),
-    page: searchParams.get("page"),
-    pageSize: searchParams.get("pageSize"),
-    start: searchParams.get("start"),
-    end: searchParams.get("end"),
-  });
-
-  if (!validationResult.success) {
-    return NextResponse.json("Bad Request", { status: 400 });
-  }
-
   try {
+    const user = await getAuthenticatedUser(req);
+    if (!user || !user.id) {
+      return NextResponse.json("Unautorized", { status: 401 });
+    }
+    const searchParams = req.nextUrl.searchParams;
+
+    const validationResult = getTransactionsSchema.safeParse({
+      sortBy: searchParams.get("sortBy") || "createdAt",
+      sortDirection: searchParams.get("sortDirection"),
+      globalFilter: searchParams.get("globalFilter"),
+      page: searchParams.get("page"),
+      pageSize: searchParams.get("pageSize"),
+      start: searchParams.get("start"),
+      end: searchParams.get("end"),
+    });
+
+    if (!validationResult.success) {
+      return NextResponse.json("Bad Request", { status: 400 });
+    }
+
     const defaultTo = new Date();
     const defaultFrom = subDays(defaultTo, 30);
 

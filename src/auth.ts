@@ -3,7 +3,11 @@ import authConfig from "@/auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import { db } from "@/db";
-import { getUserById } from "@/data";
+import {
+  getUserById,
+  getOauthAccountByProviderAndId,
+  createOauthAccount,
+} from "@/data";
 
 export type ExtendedUser = DefaultSession["user"] & {
   role: UserRole;
@@ -57,7 +61,48 @@ export const {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider !== "credentials") return true;
+      // Allow OAuth providers to proceed
+      if (account?.provider !== "credentials") {
+        // Check if user with this email already exists
+        if (user.email) {
+          const existingUser = await db.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (existingUser) {
+            // Link the OAuth account to existing user
+            // Check if this account is already linked
+            const existingAccount = await getOauthAccountByProviderAndId(
+              account?.provider,
+              account?.providerAccountId
+            );
+            if (!existingAccount) {
+              // Create the account link manually
+              try {
+                await createOauthAccount({
+                  userId: existingUser.id,
+                  type: account?.type || "oauth",
+                  provider: account?.provider || "unknown",
+                  providerAccountId: account?.providerAccountId || "unknown",
+                  access_token: account?.access_token,
+                  refresh_token: account?.refresh_token,
+                  expires_at: account?.expires_at,
+                  token_type: account?.token_type,
+                  scope: account?.scope,
+                  id_token: account?.id_token,
+                });
+              } catch (error) {
+                console.error("Failed to link account:", error);
+                return false;
+              }
+            }
+
+            // This tells NextAuth to link the account to the existing user
+            return true;
+          }
+        }
+        return true;
+      }
       if (user && user.id) {
         const existingUser = await getUserById(user.id);
         // Prevent sign in if the user is not verified

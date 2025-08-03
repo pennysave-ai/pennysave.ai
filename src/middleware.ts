@@ -24,6 +24,11 @@ export default auth((req) => {
   // This is used to get current path in server side rendered pages
   response.headers.set("x-current-path", nextUrl.pathname);
 
+  // Allow ALL API routes to pass through (auth handled in individual routes)
+  if (nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   // Allow API routes to be accessed without authentication
   if (isApiAuthRoute) {
     return response;
@@ -35,7 +40,6 @@ export default auth((req) => {
     }
     return response;
   }
-
   // Redirect to login page if user is not authenticated
   if (!isLoggedIn && !isPublicRoute) {
     return Response.redirect(new URL("/", nextUrl));

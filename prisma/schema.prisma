@@ -27,6 +27,45 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+// A model to handle JWT sessions for mobile clients
+model MobileJWTToken {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Token Family Management
+  familyId      String    @unique // Unique identifier for token family
+  tokenVersion  Int       @default(1) // Version number for rotation
+  
+  // Hashed tokens for security
+  accessTokenHash   String    @unique
+  refreshTokenHash  String    @unique
+  
+  // Token metadata
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime
+  refreshExpiresAt DateTime
+  
+  // Family invalidation tracking
+  familyInvalidated Boolean  @default(false)
+  invalidatedAt     DateTime?
+  invalidatedReason String?   // "compromised", "logout", "suspicious_activity"
+
+  // Usage tracking for anomaly detection
+  lastUsedAt    DateTime?
+  usageCount    Int       @default(0)
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId, isActive])
+  @@index([familyId, tokenVersion])
+  @@index([userId, familyInvalidated])
+  @@index([expiresAt])
+  @@index([refreshExpiresAt])
+}
+
 model Session {
   id           String   @id @default(uuid())
   sessionToken String   @unique
@@ -61,6 +100,7 @@ model User {
   report Report[]
   sendMonthlyReport Boolean? @default(false)
   gdprConsent DateTime?
+  mobileTokens  MobileJWTToken[]
 }
 
 model Transaction {

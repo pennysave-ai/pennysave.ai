@@ -1,11 +1,9 @@
 "use server";
 
-import { db } from "@/db";
-import bcrypt from "bcryptjs";
 import { signUpSchema } from "@/schemas";
 import { generateVerificationToken } from "@/data/verification-token";
 import { sendVerificationEmail } from "@/lib/mail";
-import { getUserByEmail } from "@/data/user";
+import { getUserByEmail, createUserWithPassword } from "@/data/user";
 
 interface SignUserUpErrors {
   errors: {
@@ -59,16 +57,12 @@ export async function signUp(
     };
   }
 
-  const hashedPassword = await bcrypt.hash(password as string, 10);
   try {
     // Create a new user
-    await db.user.create({
-      data: {
-        name: username as string,
-        email: email as string,
-        password: hashedPassword,
-        gdprConsent: new Date(),
-      },
+    await createUserWithPassword({
+      email: email as string,
+      password: password as string,
+      name: username as string,
     });
     const verificationToken = await generateVerificationToken(email as string);
     await sendVerificationEmail(

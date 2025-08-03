@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
 import jwkToPem from "jwk-to-pem";
+// import { OAuth2Client } from "google-auth-library";
+// import { db } from "@/db"; // Add this import
+import { getUserByEmail, createUserWithOauth } from "@/data/user";
+// import { createOauthAccount } from "@/data/oauthAccounts";
 
 // Initialize Google OAuth2 client with your client ID
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const JWT_SECRET = process.env.APPLE_MOBILE_JWT_SECRET || "";
-const JWT_EXPIRES_IN = "1h";
+// Use the same secret as NextAuth.js
+const JWT_SECRET = process.env.AUTH_SECRET || "";
+// const JWT_EXPIRES_IN = "1h";
 
 // Helper to verify Apple identity token
 async function verifyAppleToken(identityToken: string) {
@@ -45,11 +49,36 @@ async function verifyAppleToken(identityToken: string) {
 
     return payload;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Apple token verification failed: ${errorMessage}`);
+    throw new Error(`Apple token verification failed: ${error?.message}`);
   }
 }
 
+// Helper to find or create user in database
+// async function findOrCreateUser(userInfo: {
+//   email: string;
+//   name?: string;
+//   picture?: string;
+//   provider: string;
+// }) {
+//   let user = await getUserByEmail(userInfo.email);
+
+//   if (!user) {
+//     // Create new user if doesn't exist
+//     user = await db.user.create({
+//       data: {
+//         email: userInfo.email,
+//         name: userInfo.name || "",
+//         image: userInfo.picture || "",
+//         emailVerified: new Date(), // Auto-verify OAuth users
+//         gdprConsent: new Date(),
+//       },
+//     });
+//   }
+
+//   return user;
+// }
+// A route handler for mobile authentication
+// This handles both Google and Apple sign-in
 export async function POST(req: NextRequest) {
   try {
     console.log("Authentication request received");
@@ -67,24 +96,24 @@ export async function POST(req: NextRequest) {
 
     if (idToken) {
       // Verify Google ID token
-      try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken,
-          audience: process.env.GOOGLE_CLIENT_ID!,
-        });
-        const payload = ticket.getPayload();
-        userPayload = payload ? (payload as jwt.JwtPayload) : null;
-        if (!userPayload) throw new Error("Invalid Google ID token");
-      } catch {
-        return NextResponse.json(
-          { error: "Invalid Google ID token" },
-          { status: 401 }
-        );
-      }
+      // try {
+      //   const ticket = await googleClient.verifyIdToken({
+      //     idToken,
+      //     audience: process.env.GOOGLE_CLIENT_ID!,
+      //   });
+      //   const payload = ticket.getPayload();
+      //   userPayload = payload ? (payload as jwt.JwtPayload) : null;
+      //   if (!userPayload) throw new Error("Invalid Google ID token");
+      // } catch {
+      //   return NextResponse.json(
+      //     { error: "Invalid Google ID token" },
+      //     { status: 401 }
+      //   );
+      // }
     } else if (appleIdentityToken) {
       // Verify Apple identity token
       try {
-        console.log("recieved apple identity token", appleIdentityToken);
+        console.log("received apple identity token", appleIdentityToken);
         userPayload = await verifyAppleToken(appleIdentityToken);
         if (!userPayload) throw new Error("Invalid Apple identity token");
       } catch (error) {
@@ -104,31 +133,106 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const existingUser = await getUserByEmail(email);
 
-    // Here: Implement user lookup/creation in your database if needed
-    // Example:
-    // const user = await findOrCreateUser({
-    //   email,
-    //   name: userPayload.name || "",
-    //   picture: userPayload.picture || "",
-    //   provider: idToken ? "google" : "apple",
+    // If user does not exist, create a new user and link the account
+    if (!existingUser) {
+      try {
+        const user = await createUserWithOauth({
+          email,
+          name: userPayload?.name || "",
+          image: userPayload?.picture || "",
+        });
+        return NextResponse.json({
+          token: "test",
+          refreshToken: "test",
+          data: {
+            userPayload,
+            user,
+          },
+        });
+        // Create Oauth account for the created user
+        // await createOauthAccount({
+        //   userId: user.id,
+        //   type: "oauth",
+        //   provider: idToken ? "google" : "apple",
+        //   providerAccountId: userPayload?.sub || "",
+
+        // });
+      } catch (error) {
+        console.error("Error creating user:", error);
+        return NextResponse.json(
+          { error: "Failed to create user" },
+          { status: 500 }
+        );
+      }
+    }
+    // Get user's subscription and other data (same as your NextAuth JWT callback)
+    // const existingUser = await db.user.findUnique({
+    //   select: {
+    //     id: true,
+    //     email: true,
+    //     name: true,
+    //     image: true,
+    //     role: true,
+    //     hasActiveStripeSubscription: true,
+    //     stripePriceId: true,
+    //     stripeSubscriptionEndDate: true,
+    //     stripeSubscriptionCancelAtDate: true,
+    //     sendMonthlyReport: true,
+    //   },
+    //   where: { id: user.id },
     // });
 
-    const payload = {
-      email,
-      name: userPayload?.name || "",
-      picture: userPayload?.picture || "",
-      sub: userPayload?.sub,
-      provider: idToken ? "google" : "apple",
-      // Add any other user data you need
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Create JWT token with NextAuth.js compatible structure
+    const tokenPayload = {
+      sub: existingUser.id,
+      email: existingUser.email,
+      name: existingUser.name,
+      picture: existingUser.image,
+      role: existingUser.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
+
+      // Add the same fields as your NextAuth JWT callback
+      activeSubscription: existingUser.hasActiveStripeSubscription,
+      priceId: existingUser.stripePriceId,
+      expires: existingUser.stripeSubscriptionEndDate,
+      cancelAt: existingUser.stripeSubscriptionCancelAtDate,
+      monthlyReports: existingUser.sendMonthlyReport,
     };
 
-    // Issue your own JWT token representing a session for your app
-    const token = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
+    // Use the same secret as NextAuth.js
+    const token = jwt.sign(tokenPayload, JWT_SECRET);
 
-    return NextResponse.json({ token }, { status: 200 });
+    return NextResponse.json(
+      {
+        token,
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name,
+          image: existingUser.image,
+          role: existingUser.role,
+          hasActiveStripeSubscription: existingUser.hasActiveStripeSubscription,
+          subscription: existingUser.hasActiveStripeSubscription
+            ? {
+                priceId: existingUser.stripePriceId,
+                expires: existingUser.stripeSubscriptionEndDate,
+                cancelAt: existingUser.stripeSubscriptionCancelAtDate,
+              }
+            : undefined,
+          notifications: {
+            monthlyReports: existingUser.sendMonthlyReport,
+          },
+        },
+      },
+      { status: 200 }
+    );
   } catch (error: unknown) {
     console.error("Authentication failed:", error);
     return NextResponse.json(

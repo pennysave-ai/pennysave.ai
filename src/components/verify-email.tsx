@@ -52,10 +52,10 @@ export default function VerifyEmail() {
               color="primary"
               className="w-full"
               onPress={() => {
-                window.location.href = "/";
+                window.location.href = "/auth/sign-in";
               }}
             >
-              Go back to the home page
+              Go back to the auth page
             </Button>
           </div>
         )}
