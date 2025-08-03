@@ -81,7 +81,7 @@ export const {
               try {
                 await createOauthAccount({
                   userId: existingUser.id,
-                  type: account?.type || "oauth",
+                  type: account?.type || "oidc",
                   provider: account?.provider || "unknown",
                   providerAccountId: account?.providerAccountId || "unknown",
                   access_token: account?.access_token,

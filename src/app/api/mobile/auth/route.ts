@@ -4,7 +4,8 @@ import jwkToPem from "jwk-to-pem";
 // import { OAuth2Client } from "google-auth-library";
 // import { db } from "@/db"; // Add this import
 import { getUserByEmail, createUserWithOauth } from "@/data/user";
-// import { createOauthAccount } from "@/data/oauthAccounts";
+import { createOauthAccount } from "@/data/oauthAccounts";
+// import next from "next";
 
 // Initialize Google OAuth2 client with your client ID
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -141,25 +142,42 @@ export async function POST(req: NextRequest) {
       try {
         const user = await createUserWithOauth({
           email,
-          name: userPayload?.name || "",
-          image: userPayload?.picture || "",
+          name: userPayload?.name || userPayload?.email,
+          image: userPayload?.picture,
         });
+        // Create Auth account for the created user
+        const accountData = {
+          userId: user.id,
+          type: "oidc",
+          provider: idToken ? "google" : "apple",
+          providerAccountId: userPayload?.sub || "",
+          expires_at: userPayload?.exp,
+          token_type: "bearer",
+          id_token: idToken || appleIdentityToken,
+        };
+        if (idToken) {
+          // Google OAuth
+          await createOauthAccount({
+            ...accountData,
+            access_token: idToken,
+            refresh_token: null, // Google ID tokens don't include refresh tokens either
+            scope:
+              "openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+          });
+        } else {
+          // Apple Oauth
+          await createOauthAccount({
+            ...accountData,
+            access_token: appleIdentityToken,
+            refresh_token: null, // Apple doesn't provide refresh tokens
+            scope: null,
+          });
+        }
+        // TODO: Create JWT tokens access and refresh tokens compatible with NextAuth.js and return as a response
         return NextResponse.json({
-          token: "test",
-          refreshToken: "test",
-          data: {
-            userPayload,
-            user,
-          },
+          token: "nsdskaksdasdsa",
+          refreshToken: "nsdskaksdasdsa",
         });
-        // Create Oauth account for the created user
-        // await createOauthAccount({
-        //   userId: user.id,
-        //   type: "oauth",
-        //   provider: idToken ? "google" : "apple",
-        //   providerAccountId: userPayload?.sub || "",
-
-        // });
       } catch (error) {
         console.error("Error creating user:", error);
         return NextResponse.json(

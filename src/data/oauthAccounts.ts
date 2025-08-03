@@ -31,13 +31,18 @@ export async function createOauthAccount(accountData: {
   provider: string;
   providerAccountId: string;
   access_token?: string;
-  refresh_token?: string;
+  refresh_token?: string | null;
   expires_at?: number;
   token_type?: string;
-  scope?: string;
+  scope?: string | null;
   id_token?: string;
 }): Promise<Account> {
-  return await db.account.create({
-    data: accountData,
-  });
+  try {
+    return await db.account.create({
+      data: accountData,
+    });
+  } catch (error) {
+    console.error("Error creating OAuth account:", error);
+    throw new Error("Failed to create OAuth account");
+  }
 }
