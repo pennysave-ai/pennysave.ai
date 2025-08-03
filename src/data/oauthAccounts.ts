@@ -31,10 +31,10 @@ export async function createOauthAccount(accountData: {
   provider: string;
   providerAccountId: string;
   access_token?: string;
-  refresh_token?: string;
+  refresh_token?: string | null;
   expires_at?: number;
   token_type?: string;
-  scope?: string;
+  scope?: string | null;
   id_token?: string;
 }): Promise<Account> {
   return await db.account.create({
