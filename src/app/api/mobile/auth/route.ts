@@ -5,6 +5,7 @@ import jwkToPem from "jwk-to-pem";
 // import { db } from "@/db"; // Add this import
 import { getUserByEmail, createUserWithOauth } from "@/data/user";
 import { createOauthAccount } from "@/data/oauthAccounts";
+import { JWTTokenManager } from "./JWTTokenManager";
 // import next from "next";
 
 // Initialize Google OAuth2 client with your client ID
@@ -173,10 +174,17 @@ export async function POST(req: NextRequest) {
             scope: null,
           });
         }
-        // TODO: Create JWT tokens access and refresh tokens compatible with NextAuth.js and return as a response
+        const tokens = await JWTTokenManager.createTokenFamily({
+          ...user,
+          email: user.email ?? "", // Ensure email is always a string
+          name: user.name ?? "", // Ensure name is always a string
+          hasActiveStripeSubscription:
+            user.hasActiveStripeSubscription ?? false, // Ensure boolean
+          sendMonthlyReport: user?.sendMonthlyReport ?? false, // Ensure boolean
+        });
         return NextResponse.json({
-          token: "nsdskaksdasdsa",
-          refreshToken: "nsdskaksdasdsa",
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
         });
       } catch (error) {
         console.error("Error creating user:", error);
@@ -185,26 +193,6 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-    }
-    // Get user's subscription and other data (same as your NextAuth JWT callback)
-    // const existingUser = await db.user.findUnique({
-    //   select: {
-    //     id: true,
-    //     email: true,
-    //     name: true,
-    //     image: true,
-    //     role: true,
-    //     hasActiveStripeSubscription: true,
-    //     stripePriceId: true,
-    //     stripeSubscriptionEndDate: true,
-    //     stripeSubscriptionCancelAtDate: true,
-    //     sendMonthlyReport: true,
-    //   },
-    //   where: { id: user.id },
-    // });
-
-    if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Create JWT token with NextAuth.js compatible structure
