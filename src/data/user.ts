@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/db";
+import bcrypt from "bcryptjs";
 
 /**
  * Get user by Stripe customer ID
@@ -59,6 +60,61 @@ export async function setNotificationPreferences({
     },
     data: {
       sendMonthlyReport: monthlyReports,
+    },
+  });
+}
+
+/**
+ * Create a new user with password
+ * @param {string} email - User's email
+ * @param {string} password - User's password
+ * @param {string} name - User's name
+ * @returns {Promise<User>} - Returns the created user
+ */
+export async function createUserWithPassword({
+  email,
+  password,
+  name,
+}: {
+  email: string;
+  password: string;
+  name: string;
+}) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  return db.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+      gdprConsent: new Date(),
+    },
+  });
+}
+
+/**
+ * Create user with OAuth account
+ * @param {Object} userData - User data
+ * @param {string} userData.email - User's email
+ * @param {string} userData.name - User's name
+ * @param {string} userData.image - User's profile picture
+ * @returns {Promise<User>} - Returns the created user
+ */
+export async function createUserWithOauth({
+  email,
+  name,
+  image,
+}: {
+  email: string;
+  name: string;
+  image: string;
+}) {
+  return db.user.create({
+    data: {
+      email,
+      name,
+      image,
+      gdprConsent: new Date(),
+      emailVerified: new Date(),
     },
   });
 }
