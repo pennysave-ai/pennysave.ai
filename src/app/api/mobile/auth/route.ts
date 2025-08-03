@@ -135,21 +135,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    // userPayload
-    //     {
-    //   "iss": "https://appleid.apple.com",
-    //   "aud": "ai.pennysave.app",
-    //   "exp": 1754318365,
-    //   "iat": 1754231965,
-
-    //   "sub": "000450.14f4cd2183134bd79b2c323326cfee77.1604",
-    //   "c_hash": "95f-HSIZQQ6OKgdCHYRmdw",
-    //   "email": "s7gk7b4cyf@privaterelay.appleid.com",
-    //   "email_verified": true,
-    //   "is_private_email": true,
-    //   "auth_time": 1754231965,
-    //   "nonce_supported": true
-    // }
     const existingUser = await getUserByEmail(email);
 
     // If user does not exist, create a new user and link the account
