@@ -62,6 +62,7 @@ describe("categories", () => {
           id: true,
           name: true,
           description: true,
+          icon: true,
         },
       });
     });

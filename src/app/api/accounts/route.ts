@@ -65,6 +65,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
+  if (!body.ids) {
+    return NextResponse.json("Bad Request", { status: 400 });
+  }
   try {
     const deletedAcounts = await deleteAccounts(body.ids, user.id);
     return NextResponse.json({ data: deletedAcounts });

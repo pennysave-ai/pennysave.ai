@@ -34,7 +34,7 @@ export async function getAuthenticatedUser(req: NextRequest) {
   }
 
   // Try Authorization header (for mobile/API testing)
-  const authHeader = req.headers.get("authorization");
+  const authHeader = req?.headers?.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
     try {

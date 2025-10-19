@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import { GET, POST, DELETE, PATCH } from "@/app/api/accounts/route";
+import { getAuthenticatedUser } from "@/auth.helper";
 import { type NextRequest } from "next/server";
 
 // Mock next/server
@@ -13,11 +14,6 @@ jest.mock("next/server", () => ({
     })),
   },
   NextRequest: jest.fn(),
-}));
-
-// Mock the auth module
-jest.mock("@/auth", () => ({
-  auth: jest.fn(),
 }));
 
 // Mock createAccount function
@@ -38,6 +34,11 @@ jest.mock("@/db", () => ({
   },
 }));
 
+// Mock the auth module
+jest.mock("@/auth.helper", () => ({
+  getAuthenticatedUser: jest.fn(),
+}));
+
 // Import mocked modules
 import { auth } from "@/auth";
 import {
@@ -48,9 +49,8 @@ import {
   getUserAccounts,
 } from "@/data/accounts";
 
-describe("API Route: /api/accounts", () => {
+describe("Accounts API", () => {
   const mockUser = { id: "user-id" };
-  const mockSession = { user: mockUser };
   const mockAccount = {
     id: "account-1",
     name: "Test Account",
@@ -65,23 +65,23 @@ describe("API Route: /api/accounts", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockUser);
   });
 
-  describe("GET", () => {
+  describe("GET /api/accounts", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const response = await GET();
       expect(response.status).toBe(401);
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const response = await GET();
       expect(response.status).toBe(401);
     });
 
     it("should return accounts if authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (getUserAccountsCount as jest.Mock).mockResolvedValueOnce(1);
       (getUserAccounts as jest.Mock).mockResolvedValueOnce([mockAccount]);
 
@@ -105,10 +105,9 @@ describe("API Route: /api/accounts", () => {
       });
     });
   });
-  describe("POST", () => {
+  describe("POST /api/accounts", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
-
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ name: "Test Account" }),
       };
@@ -118,8 +117,7 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
-
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ name: "Test Account" }),
       };
@@ -129,8 +127,6 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 400 if name is missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -146,8 +142,6 @@ describe("API Route: /api/accounts", () => {
         currencyId: "USD",
         institutionName: "Test Bank",
       };
-
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (createAccount as jest.Mock).mockResolvedValueOnce(mockNewAccount);
 
       const mockReq = {
@@ -172,7 +166,6 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (createAccount as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to create account")
       );
@@ -189,10 +182,9 @@ describe("API Route: /api/accounts", () => {
       expect(await response.json()).toEqual("Error while creating account");
     });
   });
-  describe("DELETE", () => {
+  describe("DELETE /api/accounts", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
-
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ ids: ["account-1"] }),
       };
@@ -202,7 +194,7 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ ids: ["account-1"] }),
@@ -213,8 +205,6 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 400 if ids are missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -225,7 +215,6 @@ describe("API Route: /api/accounts", () => {
 
     it("should delete accounts successfully", async () => {
       const mockDeleteResult = { count: 2 };
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (deleteAccounts as jest.Mock).mockResolvedValueOnce(mockDeleteResult);
 
       const mockReq = {
@@ -243,8 +232,8 @@ describe("API Route: /api/accounts", () => {
       );
       expect(data).toEqual({ data: mockDeleteResult });
     });
+
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (deleteAccounts as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to delete accounts")
       );
@@ -260,9 +249,9 @@ describe("API Route: /api/accounts", () => {
       expect(data).toEqual("Error while deleting accounts");
     });
   });
-  describe("PATCH", () => {
+  describe("PATCH /api/accounts", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ id: "account-1" }),
@@ -273,7 +262,7 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ id: "account-1" }),
@@ -284,8 +273,6 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should return 400 if id is missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -302,7 +289,6 @@ describe("API Route: /api/accounts", () => {
         institutionName: "Updated Bank",
       };
 
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (updateAccount as jest.Mock).mockResolvedValueOnce([mockUpdatedAccount]);
 
       const mockReq = {
@@ -328,7 +314,6 @@ describe("API Route: /api/accounts", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (updateAccount as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to update account")
       );
