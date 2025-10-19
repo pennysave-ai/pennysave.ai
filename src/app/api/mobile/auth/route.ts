@@ -12,7 +12,7 @@ import { JWTTokenManager } from "./JWTTokenManager";
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Use the same secret as NextAuth.js
-const JWT_SECRET = process.env.AUTH_SECRET || "";
+// const JWT_SECRET = process.env.AUTH_SECRET || "";
 // const JWT_EXPIRES_IN = "1h";
 
 // Helper to verify Apple identity token
@@ -85,6 +85,7 @@ async function verifyAppleToken(identityToken: string) {
 export async function POST(req: NextRequest) {
   try {
     console.log("Authentication request received");
+    console.log("Request", req);
     const body = await req.json();
     const { idToken, appleIdentityToken } = body;
 
@@ -195,51 +196,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create JWT token with NextAuth.js compatible structure
-    const tokenPayload = {
-      sub: existingUser.id,
-      email: existingUser.email,
-      name: existingUser.name,
-      picture: existingUser.image,
-      role: existingUser.role,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
+    const tokens = await JWTTokenManager.createTokenFamily({
+      ...existingUser,
+      email: existingUser.email ?? "",
+      name: existingUser.name ?? "",
+      hasActiveStripeSubscription:
+        existingUser.hasActiveStripeSubscription ?? false,
+      sendMonthlyReport: existingUser?.sendMonthlyReport ?? false,
+    });
 
-      // Add the same fields as your NextAuth JWT callback
-      activeSubscription: existingUser.hasActiveStripeSubscription,
-      priceId: existingUser.stripePriceId,
-      expires: existingUser.stripeSubscriptionEndDate,
-      cancelAt: existingUser.stripeSubscriptionCancelAtDate,
-      monthlyReports: existingUser.sendMonthlyReport,
-    };
+    const { accessToken, refreshToken } = tokens;
 
-    // Use the same secret as NextAuth.js
-    const token = jwt.sign(tokenPayload, JWT_SECRET);
-
-    return NextResponse.json(
-      {
-        token,
-        user: {
-          id: existingUser.id,
-          email: existingUser.email,
-          name: existingUser.name,
-          image: existingUser.image,
-          role: existingUser.role,
-          hasActiveStripeSubscription: existingUser.hasActiveStripeSubscription,
-          subscription: existingUser.hasActiveStripeSubscription
-            ? {
-                priceId: existingUser.stripePriceId,
-                expires: existingUser.stripeSubscriptionEndDate,
-                cancelAt: existingUser.stripeSubscriptionCancelAtDate,
-              }
-            : undefined,
-          notifications: {
-            monthlyReports: existingUser.sendMonthlyReport,
-          },
-        },
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      accessToken,
+      refreshToken,
+    });
   } catch (error: unknown) {
     console.error("Authentication failed:", error);
     return NextResponse.json(

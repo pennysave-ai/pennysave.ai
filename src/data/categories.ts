@@ -14,6 +14,7 @@ export async function getUserCategories(userId?: string) {
       id: true,
       name: true,
       description: true,
+      icon: true,
     },
   });
 }
@@ -38,7 +39,8 @@ export async function getCategoriesCount(userId: string) {
 export async function createCategory(
   name: string,
   userId: string,
-  description?: string
+  description?: string,
+  icon?: string
 ) {
   const validationResult = categorySchema.safeParse({
     name,
@@ -52,6 +54,7 @@ export async function createCategory(
       name,
       userId,
       description,
+      icon,
     },
   });
   return { id: category.id };
@@ -107,13 +110,15 @@ export async function updateCategory(
   id: string,
   userId: string,
   name: string,
-  description?: string
+  description?: string,
+  icon?: string
 ) {
   const category = await db.category.update({
     where: { id, userId },
     data: {
       name,
       description,
+      icon,
     },
   });
   return category;

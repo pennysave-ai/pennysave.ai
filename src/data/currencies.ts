@@ -49,6 +49,7 @@ export async function getAllCurrencies() {
       id: true,
       symbol: true,
       name: true,
+      exchangeRate: true,
     },
   });
   return currencies;

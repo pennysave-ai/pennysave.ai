@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { format } from "date-fns";
+import { format, endOfDay } from "date-fns";
 
 import { db } from "@/db";
 import { formatCurrency } from "@/lib/utils";
@@ -400,6 +400,7 @@ export async function getUserTransactions(
   sortBy: string,
   sortDirection: string,
   text?: string,
+  accountId?: string,
   page: number = 1,
   pageSize: number = 10
 ) {
@@ -431,9 +432,12 @@ export async function getUserTransactions(
     }
     const keys = sortBy.split(".");
     type NestedSortObject = { [key: string]: string | NestedSortObject };
-    return keys.reduceRight<NestedSortObject>((acc, key) => {
-      return { [key]: acc };
-    }, sortOrder as unknown as NestedSortObject);
+    return keys.reduceRight<NestedSortObject>(
+      (acc, key) => {
+        return { [key]: acc };
+      },
+      sortOrder as unknown as NestedSortObject
+    );
   };
   const dbSortBy = getGetNestedSortBy(sortBy, sortOrder);
   return await db.transaction.findMany({
@@ -449,16 +453,19 @@ export async function getUserTransactions(
           name: true,
           last4: true,
           institutionName: true,
-          currency: { select: { symbol: true, name: true } },
+          currency: {
+            select: { symbol: true, name: true, id: true, exchangeRate: true },
+          },
         },
       },
       category: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, icon: true },
       },
     },
     where: {
       account: {
         userId,
+        ...(accountId ? { id: accountId } : {}),
       },
       createdAt: {
         gte: startDate,
@@ -536,4 +543,147 @@ export async function bulkCreateTransactions(
   return await db.transaction.createMany({
     data: transactions,
   });
+}
+
+/**
+ * Get user transaction months
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise Array of transaction months
+ */
+export async function getUserTransactionMonths(userId: string) {
+  const transactions = await db.transaction.findMany({
+    where: {
+      account: {
+        userId,
+      },
+    },
+    select: {
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  // Extract unique months in 'YYYY-MM' format
+  const monthsSet = new Set(
+    transactions.map((t) => format(t.createdAt, "yyyy-MM"))
+  );
+
+  return Array.from(monthsSet);
+}
+
+/**
+ * Get user expenses and income totals by category for a given month
+ * @param {String} userId - User ID
+ * @param {String?} startDate - Month in 'YYYY-MM' format
+ * @param {String?} endDate - Month in 'YYYY-MM' format
+ * @param {String} accountId - Account ID
+ * @param {String} currencyId - Currency ID
+ * @returns {Promise} - Promise object represents the expenses and income totals by category
+ */
+export async function getUserTransactionsTotalsByCategory({
+  userId,
+  startDate,
+  endDate,
+  accountId,
+  currencyId,
+}: {
+  userId: string;
+  startDate?: string;
+  endDate?: string;
+  accountId?: string;
+  currencyId?: string;
+}) {
+  const accountIdFilter = !accountId ? {} : { id: accountId };
+  // Convert to Date objects if provided
+  const start = startDate ? new Date(startDate) : undefined;
+  const end = endDate ? endOfDay(new Date(endDate)) : undefined;
+
+  const transactions = await db.transaction.findMany({
+    where: {
+      account: { userId, ...accountIdFilter },
+      ...(start && end ? { createdAt: { gte: start, lte: end } } : {}),
+    },
+    select: {
+      amount: true,
+      category: { select: { id: true, name: true, icon: true } },
+      account: {
+        select: {
+          currency: {
+            select: { id: true, name: true, symbol: true, exchangeRate: true },
+          },
+        },
+      },
+    },
+  });
+
+  let targetExchangeRate = 1;
+  if (!accountId && currencyId) {
+    // Find the exchange rate for the target currency
+    const targetCurrency = transactions.find(
+      (t) => t.account.currency.id === currencyId
+    )?.account.currency;
+    if (targetCurrency) {
+      targetExchangeRate = targetCurrency.exchangeRate;
+    }
+  }
+
+  const convertedTransactions = transactions.map((t) => {
+    let amount = t.amount;
+    if (!accountId && currencyId && t.account.currency.id !== currencyId) {
+      amount = convertCurrency(
+        t.amount,
+        t.account.currency.exchangeRate,
+        targetExchangeRate
+      );
+    }
+    return {
+      ...t,
+      amount,
+    };
+  });
+
+  const totals: Record<
+    string,
+    { name: string; icon: string | null; amount: number }
+  > = {};
+  let totalExpenses = 0;
+  let totalIncome = 0;
+
+  // Aggregate amounts by category calculate persentaces and totals
+  for (const transaction of convertedTransactions) {
+    const categoryId = transaction.category?.id || "uncategorized";
+    const categoryName = transaction.category?.name || "Uncategorized";
+    const categoryIcon = transaction.category?.icon || null;
+    if (!totals[categoryId]) {
+      totals[categoryId] = {
+        name: categoryName,
+        icon: categoryIcon,
+        amount: 0,
+      };
+    }
+    totals[categoryId].amount += transaction.amount;
+    if (transaction.amount < 0) {
+      totalExpenses += transaction.amount;
+    } else {
+      totalIncome += transaction.amount;
+    }
+  }
+
+  const result = Object.entries(totals).map(([id, { name, icon, amount }]) => ({
+    id,
+    name,
+    icon,
+    amount,
+    percentage:
+      amount < 0
+        ? totalExpenses
+          ? (Number(amount) / Number(totalExpenses)) * 100
+          : 0
+        : totalIncome
+          ? (Number(amount) / Number(totalIncome)) * 100
+          : 0,
+  }));
+  return result;
 }

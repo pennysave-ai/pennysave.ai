@@ -16,6 +16,7 @@ export const publicRoutes = [
   "/api/webhooks/monthly-reports/send",
   "/api/webhooks/monthly-reports/process-user",
   "/api/mobile/auth",
+  "/api/mobile/refresh",
 ];
 
 /**
