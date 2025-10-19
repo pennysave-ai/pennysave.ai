@@ -1,4 +1,5 @@
 import type { User } from "@prisma/client";
+import appleSignin from "apple-signin-auth";
 
 import bcrypt from "bcryptjs";
 import { CredentialsSignin } from "next-auth";
@@ -19,10 +20,22 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
-const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
+const APPLE_TEAM_ID = process.env.APPLE_TEAM_ID;
+const APPLE_KEY_ID = process.env.APPLE_KEY_ID;
+const APPLE_PRIVATE_KEY = process.env.APPLE_PRIVATE_KEY;
 const AUTH_SECRET = process.env.AUTH_SECRET;
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
+
+function getAppleClientSecret() {
+  return appleSignin.getClientSecret({
+    clientID: APPLE_CLIENT_ID ?? "",
+    teamID: APPLE_TEAM_ID ?? "",
+    privateKey: APPLE_PRIVATE_KEY ?? "",
+    keyIdentifier: APPLE_KEY_ID ?? "",
+    expAfter: 15777000, // ~6 months
+  });
+}
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
   throw new Error("Missing github oauth credentials");
@@ -53,7 +66,7 @@ export default {
     }),
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
-      clientSecret: APPLE_CLIENT_SECRET!,
+      clientSecret: getAppleClientSecret(),
     }),
     TwitterProvider({
       clientId: TWITTER_CLIENT_ID,
