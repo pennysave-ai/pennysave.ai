@@ -34,9 +34,9 @@ model MobileJWTToken {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Token Family Management
-  familyId      String    @unique // Unique identifier for token family
-  tokenVersion  Int       @default(1) // Version number for rotation
-  
+  familyId      String
+  tokenVersion  Int      @default(1) // Version number for rotation
+
   // Hashed tokens for security
   accessTokenHash   String    @unique
   refreshTokenHash  String    @unique
@@ -122,6 +122,7 @@ model Category {
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   description String?
+  icon        String?
   transactions Transaction[]
   budgetAllocations BudgetAllocation[]
   @@unique([id])

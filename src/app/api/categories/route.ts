@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import {
   getUserCategories,
   createCategory,
@@ -8,13 +7,10 @@ import {
   updateCategory,
 } from "@/data/categories";
 import { categorySchema } from "@/schemas";
+import { getAuthenticatedUser } from "@/auth.helper";
 
-export async function GET() {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const user = session.user;
+export async function GET(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
   if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
@@ -30,26 +26,24 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
   const body = await req.json();
   if (!body.name) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-  const user = session.user;
-  if (!user.id) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
     const newCategory = await createCategory(
       body.name,
       user.id,
-      body.description
+      body.description,
+      body.icon
     );
     return NextResponse.json({ data: newCategory });
-  } catch {
+  } catch (error) {
+    console.error("Error while creating category:", error);
     return NextResponse.json("Error while creating categories", {
       status: 500,
     });
@@ -57,17 +51,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
   if (!body.ids) {
     return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
     const categories = await deleteCategories(body.ids, user.id);
@@ -80,17 +70,13 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
   if (!body.id) {
     return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
   }
   const validationResult = categorySchema.safeParse({
     name: body.name,
@@ -104,7 +90,8 @@ export async function PATCH(req: NextRequest) {
       body.id,
       user.id,
       body.name,
-      body.description
+      body.description,
+      body.icon
     );
     return NextResponse.json({ data: category });
   } catch {

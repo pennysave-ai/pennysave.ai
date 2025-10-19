@@ -201,3 +201,21 @@ export const createBudgetSchema = z
       path: ["budgetAllocations"], // This points the error to the `budgetAllocations` field
     }
   );
+
+export const getTotalSchema = z.object({
+  userId: z.string().uuid(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+      message: "Start date must be in yyyy-mm-dd format",
+    })
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
+      message: "End date must be in yyyy-mm-dd format",
+    })
+    .optional(),
+  accountId: z.string().uuid().optional(),
+  currencyId: z.string().uuid().optional(),
+});

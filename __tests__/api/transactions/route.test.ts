@@ -3,7 +3,6 @@
  */
 import { GET, POST, DELETE, PATCH } from "@/app/api/transactions/route";
 import { NextRequest } from "next/server";
-import { auth } from "@/auth";
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
 import { getAuthenticatedUser } from "@/auth.helper";
 import {
@@ -48,7 +47,6 @@ process.env.RESEND_API_KEY = "test-api-key";
 
 describe("Transactions API", () => {
   const mockUser = { id: "user-123" };
-  const mockSession = { user: mockUser };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,7 +55,6 @@ describe("Transactions API", () => {
 
   describe("GET /api/transactions", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValue(null);
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const mockReq = {
         nextUrl: { searchParams: new URLSearchParams() },
@@ -69,7 +66,6 @@ describe("Transactions API", () => {
     });
 
     it("should return transactions and count", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (getTransactionsSchema.safeParse as jest.Mock).mockReturnValue({
         success: true,
       });
@@ -118,7 +114,7 @@ describe("Transactions API", () => {
     });
 
     it("should return 400 if validation fails", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
+      // (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockSession);
       (getTransactionsSchema.safeParse as jest.Mock).mockReturnValue({
         success: false,
         error: new Error("Validation error"),
@@ -136,7 +132,7 @@ describe("Transactions API", () => {
 
   describe("POST /api/transactions", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValue(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValue({}),
@@ -148,7 +144,6 @@ describe("Transactions API", () => {
     });
 
     it("should create a new transaction", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (createTransaction as jest.Mock).mockResolvedValue({
         id: "transaction-1",
         amount: 100,
@@ -188,7 +183,6 @@ describe("Transactions API", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (createTransaction as jest.Mock).mockRejectedValue(
         new Error("Database error")
       );
@@ -214,7 +208,7 @@ describe("Transactions API", () => {
 
   describe("DELETE /api/transactions", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValue(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValue({ ids: ["transaction-1"] }),
@@ -226,7 +220,6 @@ describe("Transactions API", () => {
     });
 
     it("should delete transactions", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (deleteTransactions as jest.Mock).mockResolvedValue({ count: 1 });
 
       const mockReq = {
@@ -241,8 +234,6 @@ describe("Transactions API", () => {
     });
 
     it("should return 400 if ids are missing", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValue({}),
       };
@@ -253,7 +244,6 @@ describe("Transactions API", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (deleteTransactions as jest.Mock).mockRejectedValue(
         new Error("Database error")
       );
@@ -270,7 +260,7 @@ describe("Transactions API", () => {
 
   describe("PATCH /api/transactions", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValue(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValue({ id: "transaction-1" }),
@@ -282,7 +272,6 @@ describe("Transactions API", () => {
     });
 
     it("should update a transaction", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
         success: true,
         data: {
@@ -335,7 +324,6 @@ describe("Transactions API", () => {
     });
 
     it("should return 400 if validation fails", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
         success: false,
         error: new Error("Validation error"),
@@ -359,7 +347,6 @@ describe("Transactions API", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValue(mockSession);
       (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
         success: true,
         data: {

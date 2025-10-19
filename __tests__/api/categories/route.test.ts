@@ -3,7 +3,7 @@
  */
 import { NextRequest } from "next/server";
 import { GET, POST, DELETE, PATCH } from "@/app/api/categories/route";
-import { auth } from "@/auth";
+import { getAuthenticatedUser } from "@/auth.helper";
 import {
   getUserCategories,
   createCategory,
@@ -24,8 +24,9 @@ jest.mock("next/server", () => ({
   NextRequest: jest.fn(),
 }));
 
-jest.mock("@/auth", () => ({
-  auth: jest.fn(),
+// Mock the auth module
+jest.mock("@/auth.helper", () => ({
+  getAuthenticatedUser: jest.fn(),
 }));
 
 jest.mock("@/data/categories", () => ({
@@ -42,9 +43,8 @@ jest.mock("@/schemas", () => ({
   },
 }));
 
-describe("API Route: /api/categories", () => {
+describe("Categories API", () => {
   const mockUser = { id: "user-id" };
-  const mockSession = { user: mockUser };
   const mockCategory = {
     id: "category-1",
     name: "Test Category",
@@ -53,23 +53,23 @@ describe("API Route: /api/categories", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockUser);
   });
 
-  describe("GET", () => {
+  describe("GET /api/categories", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const response = await GET();
       expect(response.status).toBe(401);
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
       const response = await GET();
       expect(response.status).toBe(401);
     });
 
     it("should return categories if authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
       (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
 
@@ -84,7 +84,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (getUserCategories as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to fetch categories")
       );
@@ -97,9 +96,9 @@ describe("API Route: /api/categories", () => {
     });
   });
 
-  describe("POST", () => {
+  describe("POST /api/categories", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ name: "Test Category" }),
@@ -110,8 +109,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 400 if name is missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -125,32 +122,31 @@ describe("API Route: /api/categories", () => {
         id: "category-123",
         name: "Test Category",
         description: "Test Description",
+        icon: "🍕",
       };
-
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (createCategory as jest.Mock).mockResolvedValueOnce(mockNewCategory);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({
           name: "Test Category",
           description: "Test Description",
+          icon: "🍕",
         }),
       };
 
       const response = await POST(mockReq as unknown as NextRequest);
       const data = await response.json();
-
       expect(response.status).toBe(200);
       expect(data).toEqual({ data: mockNewCategory });
       expect(createCategory).toHaveBeenCalledWith(
         "Test Category",
         mockUser.id,
-        "Test Description"
+        "Test Description",
+        "🍕"
       );
     });
 
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (createCategory as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to create category")
       );
@@ -168,9 +164,9 @@ describe("API Route: /api/categories", () => {
     });
   });
 
-  describe("DELETE", () => {
+  describe("DELETE /api/categories", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ ids: ["category-1"] }),
@@ -181,7 +177,7 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ ids: ["category-1"] }),
@@ -192,8 +188,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 400 if ids are missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -204,7 +198,6 @@ describe("API Route: /api/categories", () => {
 
     it("should delete categories successfully", async () => {
       const mockDeleteResult = { count: 2 };
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (deleteCategories as jest.Mock).mockResolvedValueOnce(mockDeleteResult);
 
       const mockReq = {
@@ -225,7 +218,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (deleteCategories as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to delete categories")
       );
@@ -244,9 +236,9 @@ describe("API Route: /api/categories", () => {
     });
   });
 
-  describe("PATCH", () => {
+  describe("PATCH /api/categories", () => {
     it("should return 401 if not authenticated", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(null);
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ id: "category-1" }),
@@ -257,7 +249,7 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 401 if user has no id", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce({ user: {} });
+      (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({ id: "category-1" }),
@@ -268,8 +260,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 400 if id is missing", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
-
       const mockReq = {
         json: jest.fn().mockResolvedValueOnce({}),
       };
@@ -279,7 +269,6 @@ describe("API Route: /api/categories", () => {
     });
 
     it("should return 400 if validation fails", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (categorySchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: false,
       });
@@ -300,9 +289,8 @@ describe("API Route: /api/categories", () => {
         id: "category-1",
         name: "Updated Category",
         description: "Updated Description",
+        icon: "🍕",
       };
-
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (categorySchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
       });
@@ -313,6 +301,7 @@ describe("API Route: /api/categories", () => {
           id: "category-1",
           name: "Updated Category",
           description: "Updated Description",
+          icon: "🍕",
         }),
       };
 
@@ -325,12 +314,12 @@ describe("API Route: /api/categories", () => {
         "category-1",
         mockUser.id,
         "Updated Category",
-        "Updated Description"
+        "Updated Description",
+        "🍕"
       );
     });
 
     it("should handle database errors gracefully", async () => {
-      (auth as jest.Mock).mockResolvedValueOnce(mockSession);
       (categorySchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
       });

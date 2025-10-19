@@ -4,8 +4,12 @@ import crypto from "crypto";
 import { db } from "@/db";
 
 const JWT_SECRET = process.env.AUTH_SECRET!;
-const ACCESS_TOKEN_EXPIRES_IN = 15 * 60; // 15 minutes
-const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 60 * 60; // 30 days
+const ACCESS_TOKEN_EXPIRES_IN = parseInt(
+  process.env.MOBILE_ACCESS_TOKEN_EXPIRES_IN || "900"
+); // 15 minutes
+const REFRESH_TOKEN_EXPIRES_IN = parseInt(
+  process.env.MOBILE_REFRESH_TOKEN_EXPIRES_IN || "1209600"
+); // 14 days
 
 interface UserData {
   id: string;
@@ -153,7 +157,7 @@ export class JWTTokenManager {
       }
 
       const refreshTokenHash = this.hashToken(refreshToken);
-
+      console.log("@refreshTokenHash", refreshTokenHash);
       // Find stored token
       const storedToken = await db.mobileJWTToken.findFirst({
         where: {
@@ -183,7 +187,40 @@ export class JWTTokenManager {
       });
 
       if (!storedToken) {
+        // Check for compromise
+        await this.checkForCompromise(payload.familyId, payload.version);
         throw new Error("Invalid or expired refresh token");
+      }
+      // Check if this token version is older than the current active version
+      const currentActiveToken = await db.mobileJWTToken.findFirst({
+        where: {
+          familyId: payload.familyId,
+          isActive: true,
+          familyInvalidated: false,
+        },
+        orderBy: {
+          tokenVersion: "desc",
+        },
+      });
+
+      if (
+        currentActiveToken &&
+        payload.version < currentActiveToken.tokenVersion
+      ) {
+        // 🚨 COMPROMISE DETECTED: Old token being used
+        console.error(`🚨 SECURITY ALERT: Token compromise detected!`);
+        console.error(`Family ID: ${payload.familyId}`);
+        console.error(
+          `Attempted version: ${payload.version}, Current version: ${currentActiveToken.tokenVersion}`
+        );
+        console.error(`User ID: ${storedToken?.userId || "unknown"}`);
+
+        // Invalidate entire token family
+        await this.invalidateTokenFamily(
+          payload.familyId,
+          `compromise_detected_v${payload.version}_attempted`
+        );
+        throw new Error("Token compromise detected. All tokens invalidated.");
       }
 
       // Create new token version
@@ -203,6 +240,7 @@ export class JWTTokenManager {
         sendMonthlyReport: storedToken.user.sendMonthlyReport ?? false,
       };
 
+      // Create NEW token pair (both access and refresh tokens)
       const newTokens = await this.createTokenPair(
         userData,
         storedToken.familyId,
@@ -234,14 +272,54 @@ export class JWTTokenManager {
 
       return {
         accessToken: newTokens.accessToken,
-        expiresIn: ACCESS_TOKEN_EXPIRES_IN,
-        user: storedToken.user,
+        refreshToken: newTokens.refreshToken,
       };
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
         throw new Error(`Invalid refresh token: ${error.message}`);
       }
       throw new Error(`Token refresh failed: ${error}`);
+    }
+  }
+
+  // Compromise detection helper method
+  static async checkForCompromise(familyId: string, attemptedVersion: number) {
+    try {
+      // Check if there are any active tokens with higher version numbers
+      const higherVersionTokens = await db.mobileJWTToken.findMany({
+        where: {
+          familyId: familyId,
+          tokenVersion: { gt: attemptedVersion },
+          familyInvalidated: false,
+        },
+        orderBy: {
+          tokenVersion: "desc",
+        },
+        take: 1,
+      });
+
+      if (higherVersionTokens.length > 0) {
+        const currentVersion = higherVersionTokens[0].tokenVersion;
+
+        console.error(`🚨 SECURITY ALERT: Potential compromise detected!`);
+        console.error(`Family ID: ${familyId}`);
+        console.error(
+          `Attempted version: ${attemptedVersion}, Current version: ${currentVersion}`
+        );
+
+        // Invalidate entire family
+        await this.invalidateTokenFamily(
+          familyId,
+          `compromise_suspected_v${attemptedVersion}_vs_v${currentVersion}`
+        );
+
+        return true; // Compromise detected
+      }
+
+      return false; // No compromise detected
+    } catch (error) {
+      console.error("Error in compromise detection:", error);
+      return false;
     }
   }
 
@@ -318,6 +396,59 @@ export class JWTTokenManager {
         throw new Error(`Token validation failed: ${error.message}`);
       }
       throw new Error(`Token validation failed: ${error}`);
+    }
+  }
+
+  // Revoke access and refresh tokens
+  static async revokeTokens(refreshToken: string) {
+    try {
+      const payload = jwt.verify(refreshToken, JWT_SECRET, {
+        audience: "mobile-app",
+        issuer: "pennysave-api",
+        algorithms: ["HS256"],
+      }) as JWTPayload;
+
+      // Validate refresh token
+      if (payload.type !== "refresh") {
+        throw new Error("Invalid token type");
+      }
+
+      const refreshTokenHash = this.hashToken(refreshToken);
+      const storedToken = await db.mobileJWTToken.findFirst({
+        where: {
+          familyId: payload.familyId,
+          tokenVersion: payload.version,
+          refreshTokenHash: refreshTokenHash,
+          isActive: true,
+          familyInvalidated: false,
+          refreshExpiresAt: { gt: new Date() },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+      if (!storedToken) {
+        // Check for compromise
+        await this.checkForCompromise(payload.familyId, payload.version);
+        throw new Error("Invalid or expired refresh token");
+      }
+
+      await db.mobileJWTToken.updateMany({
+        where: { userId: storedToken.userId },
+        data: {
+          isActive: false,
+          familyInvalidated: true,
+          invalidatedAt: new Date(),
+          invalidatedReason: "user_logout",
+        },
+      });
+    } catch (error) {
+      console.error("Error validating refresh token:", error);
+      throw new Error("Invalid refresh token");
     }
   }
 }

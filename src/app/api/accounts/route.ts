@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import {
   createAccount,
   deleteAccounts,
@@ -8,14 +7,11 @@ import {
   getUserAccountsCount,
 } from "@/data/accounts";
 import { accountSchema } from "@/schemas";
+import { getAuthenticatedUser } from "@/auth.helper";
 
-export async function GET() {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const user = session.user;
-  if (!user.id) {
+export async function GET(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
@@ -27,6 +23,7 @@ export async function GET() {
         id: account.currency.id,
         name: account.currency.name,
         symbol: account.currency.symbol,
+        exchangeRate: account.currency.exchangeRate,
       },
       institution: {
         name: account.institutionName,
@@ -41,17 +38,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
   if (!body.name) {
     return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
     const newAccount = await createAccount(
@@ -67,19 +60,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
   if (!body.ids) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-
   try {
     const deletedAcounts = await deleteAccounts(body.ids, user.id);
     return NextResponse.json({ data: deletedAcounts });
@@ -89,17 +77,13 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const body = await req.json();
   if (!body.id) {
     return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
   }
   const validationResult = accountSchema.safeParse({
     id: body.id,

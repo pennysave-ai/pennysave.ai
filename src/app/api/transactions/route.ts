@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { subDays, parse, endOfDay } from "date-fns";
 
-import { auth } from "@/auth";
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
 import {
   createTransaction,
@@ -19,7 +18,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json("Unautorized", { status: 401 });
     }
     const searchParams = req.nextUrl.searchParams;
-
     const validationResult = getTransactionsSchema.safeParse({
       sortBy: searchParams.get("sortBy") || "createdAt",
       sortDirection: searchParams.get("sortDirection"),
@@ -28,6 +26,7 @@ export async function GET(req: NextRequest) {
       pageSize: searchParams.get("pageSize"),
       start: searchParams.get("start"),
       end: searchParams.get("end"),
+      accountId: searchParams.get("accountId") || undefined,
     });
 
     if (!validationResult.success) {
@@ -51,6 +50,7 @@ export async function GET(req: NextRequest) {
       validationResult.data?.sortBy || "createdAt",
       validationResult.data?.sortDirection || "ascending",
       validationResult.data?.globalFilter?.trim(),
+      validationResult.data?.accountId || undefined,
       validationResult.data?.page
         ? parseInt(validationResult.data?.page, 10)
         : 1,
@@ -91,12 +91,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
-  const user = session.user;
-  if (!user.id) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const payload = await req.json();
@@ -116,17 +112,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  const user = await getAuthenticatedUser(req);
+  const body = await req.json();
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
-  const body = await req.json();
   if (!body.ids) {
     return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
-    return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
     const data = await deleteTransactions(body.ids, user.id);
@@ -139,16 +131,9 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json("Unautorized", { status: 401 });
-  }
+  const user = await getAuthenticatedUser(req);
   const body = await req.json();
-  if (!body.id) {
-    return NextResponse.json("Bad Request", { status: 400 });
-  }
-  const user = session.user;
-  if (!user.id) {
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   const validationResult = updateTransactionSchema.safeParse({

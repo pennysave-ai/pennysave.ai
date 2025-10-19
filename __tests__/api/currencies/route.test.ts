@@ -108,6 +108,7 @@ describe("Currencies Data Access", () => {
           id: true,
           symbol: true,
           name: true,
+          exchangeRate: true,
         },
       });
     });
@@ -123,6 +124,7 @@ describe("Currencies Data Access", () => {
           id: true,
           symbol: true,
           name: true,
+          exchangeRate: true,
         },
       });
     });

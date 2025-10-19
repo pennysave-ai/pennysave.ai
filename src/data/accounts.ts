@@ -283,7 +283,7 @@ export async function getUserAccounts(userId: string) {
       id: true,
       name: true,
       currency: {
-        select: { id: true, name: true, symbol: true },
+        select: { id: true, name: true, symbol: true, exchangeRate: true },
       },
       institutionName: true,
       last4: true,

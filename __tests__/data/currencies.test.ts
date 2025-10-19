@@ -107,8 +107,13 @@ describe("Currencies Data Access", () => {
   describe("getAllCurrencies", () => {
     it("should return all currencies", async () => {
       const mockCurrencies = [
-        { id: "1", symbol: "USD", name: "United States Dollar" },
-        { id: "2", symbol: "EUR", name: "Euro" },
+        {
+          id: "1",
+          symbol: "USD",
+          name: "United States Dollar",
+          exchangeRate: 1,
+        },
+        { id: "2", symbol: "EUR", name: "Euro", exchangeRate: 0.85 },
       ];
       (db.currency.findMany as jest.Mock).mockResolvedValue(mockCurrencies);
 
@@ -120,6 +125,7 @@ describe("Currencies Data Access", () => {
           id: true,
           symbol: true,
           name: true,
+          exchangeRate: true,
         },
       });
     });
@@ -135,6 +141,7 @@ describe("Currencies Data Access", () => {
           id: true,
           symbol: true,
           name: true,
+          exchangeRate: true,
         },
       });
     });

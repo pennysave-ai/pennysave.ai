@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { getAllCurrencies } from "@/data/currencies";
+import { getAuthenticatedUser } from "@/auth.helper";
 
-export async function GET() {
-  const session = await auth();
-  if (!session) {
+export async function GET(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
+  if (!user || !user.id) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
