@@ -69,6 +69,7 @@
     "@upstash/qstash": "^2.7.20",
     "@vercel/analytics": "^1.5.0",
     "apexcharts": "^4.2.0",
+    "apple-signin-auth": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",
     "dotenv-cli": "^7.4.4",
