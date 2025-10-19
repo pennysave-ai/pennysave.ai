@@ -20,6 +20,7 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
+const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
 const APPLE_TEAM_ID = process.env.APPLE_TEAM_ID;
 const APPLE_KEY_ID = process.env.APPLE_KEY_ID;
 const APPLE_PRIVATE_KEY = process.env.APPLE_PRIVATE_KEY;
@@ -27,7 +28,10 @@ const AUTH_SECRET = process.env.AUTH_SECRET;
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
 
-function getAppleClientSecret() {
+// Use this function to generate a new Apple client secret every 6 months
+// it's not working here it's running in a Next.js serverless function environment
+// which cannot run this code at runtime
+export function getAppleClientSecret() {
   return appleSignin.getClientSecret({
     clientID: APPLE_CLIENT_ID ?? "",
     teamID: APPLE_TEAM_ID ?? "",
@@ -66,7 +70,7 @@ export default {
     }),
     AppleProvider({
       clientId: APPLE_CLIENT_ID,
-      clientSecret: getAppleClientSecret(),
+      clientSecret: APPLE_CLIENT_SECRET,
     }),
     TwitterProvider({
       clientId: TWITTER_CLIENT_ID,
