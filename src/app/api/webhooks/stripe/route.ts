@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
-import { WebSocket } from "ws";
 import { BroadcastType } from "@/wstypes";
 import { db } from "@/db";
 import { getAllCurrencies } from "@/data/currencies";
@@ -14,9 +13,9 @@ import {
 import { bulkCreateTransactions } from "@/data/transactions";
 import { STRIPE_PLANS } from "@/lib/stripe";
 import { convertUnixTimestampToISO } from "@/lib/utils";
+import { sendWebSocketMessage } from "@/lib/websocket";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
-const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -67,16 +66,13 @@ export async function POST(req: NextRequest) {
       // TODO: Send email to user
 
       // Notify user of successful subscription
-      const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
-      ws.on("open", function open() {
-        ws.send(
-          JSON.stringify({
-            type: BroadcastType.SUBSCRIPTION_CREATED,
-            recipient: userId,
-          })
-        );
-        ws.close();
-      });
+      await sendWebSocketMessage(
+        {
+          type: BroadcastType.SUBSCRIPTION_CREATED,
+          recipients: [userId],
+        },
+        userId
+      );
       break;
     }
     // Subscription is deleted
@@ -107,16 +103,13 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log("Subscription canceled", user.id);
-        const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
-        ws.on("open", function open() {
-          ws.send(
-            JSON.stringify({
-              type: BroadcastType.SUBSCRIPTION_DELETED,
-              recipient: user.id,
-            })
-          );
-          ws.close();
-        });
+        await sendWebSocketMessage(
+          {
+            type: BroadcastType.SUBSCRIPTION_DELETED,
+            recipients: [user.id],
+          },
+          user.id
+        );
         break;
       } catch (e) {
         console.log("Error canceling subscription", e);
@@ -151,16 +144,14 @@ export async function POST(req: NextRequest) {
               : null,
           },
         });
-        const ws = new WebSocket(`wss://${WEBSOCKET_URL}?id=STRIPE_WEBHOOK`);
-        ws.on("open", function open() {
-          ws.send(
-            JSON.stringify({
-              type: BroadcastType.SUBSCRIPTION_UPDATED,
-              recipient: user.id,
-            })
-          );
-          ws.close();
-        });
+
+        await sendWebSocketMessage(
+          {
+            type: BroadcastType.SUBSCRIPTION_UPDATED,
+            recipients: [user.id],
+          },
+          user.id
+        );
         break;
       }
     }

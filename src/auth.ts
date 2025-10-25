@@ -20,6 +20,7 @@ export type ExtendedUser = DefaultSession["user"] & {
   notifications: {
     monthlyReports: boolean;
   };
+  aud: string;
 };
 
 declare module "next-auth" {
@@ -127,6 +128,7 @@ export const {
       };
       session.user.hasActiveStripeSubscription =
         token.activeSubscription as boolean;
+      session.user.aud = token.aud as string;
       return session;
     },
     async jwt({ token }) {

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BroadcastType } from "@/wstypes";
 import { useGetEntities } from "@/features/entities/hooks";
+import { useFetchWebSocketToken } from "@/features/websocket-token/hooks";
 
 interface WebSocketClientProps {
   userId: string | null;
@@ -11,12 +12,13 @@ interface WebSocketClientProps {
 export default function WebSocketClient({ userId }: WebSocketClientProps) {
   const socketRef = useRef<WebSocket | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const { mutateAsync: fetchWebSocketToken } = useFetchWebSocketToken();
 
   const { refetch: updateEntities } = useGetEntities();
 
-  const connectWebSocket = () => {
+  const connectWebSocket = (token: string) => {
     const socket = new WebSocket(
-      `wss://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?id=${userId}`
+      `wss://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${token}`
     );
 
     socket.onopen = () => {
@@ -60,7 +62,8 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
       const timeout = Math.min(1000 * 2 ** reconnectAttempts, 30000); // Exponential backoff
       setTimeout(() => {
         setReconnectAttempts((prev) => prev + 1);
-        connectWebSocket();
+        if (!userId) return;
+        connectWebSocket(userId);
       }, timeout);
     } else {
       console.error("Max reconnect attempts reached");
@@ -68,8 +71,13 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
   };
 
   useEffect(() => {
-    connectWebSocket();
-
+    (async () => {
+      if (!userId) return;
+      const token = await fetchWebSocketToken(userId);
+      if (token) {
+        connectWebSocket(token);
+      }
+    })();
     return () => {
       if (socketRef.current) {
         socketRef.current.close();

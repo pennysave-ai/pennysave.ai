@@ -10,7 +10,7 @@ const ACCESS_TOKEN_EXPIRES_IN = parseInt(
 const REFRESH_TOKEN_EXPIRES_IN = parseInt(
   process.env.MOBILE_REFRESH_TOKEN_EXPIRES_IN || "1209600"
 ); // 14 days
-
+export const AUDIENCE = "mobile-app";
 interface UserData {
   id: string;
   email: string;
@@ -91,7 +91,7 @@ export class JWTTokenManager {
     const accessToken = jwt.sign(accessTokenPayload, JWT_SECRET, {
       algorithm: "HS256",
       expiresIn: ACCESS_TOKEN_EXPIRES_IN,
-      audience: "mobile-app",
+      audience: AUDIENCE,
       issuer: "pennysave-api",
     });
 
@@ -107,7 +107,7 @@ export class JWTTokenManager {
     const refreshToken = jwt.sign(refreshTokenPayload, JWT_SECRET, {
       algorithm: "HS256",
       expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-      audience: "mobile-app",
+      audience: AUDIENCE,
       issuer: "pennysave-api",
     });
     return {
@@ -147,7 +147,7 @@ export class JWTTokenManager {
     try {
       // Verify refresh token
       const payload = jwt.verify(refreshToken, JWT_SECRET, {
-        audience: "mobile-app",
+        audience: AUDIENCE,
         issuer: "pennysave-api",
         algorithms: ["HS256"],
       }) as JWTPayload;
@@ -157,7 +157,6 @@ export class JWTTokenManager {
       }
 
       const refreshTokenHash = this.hashToken(refreshToken);
-      console.log("@refreshTokenHash", refreshTokenHash);
       // Find stored token
       const storedToken = await db.mobileJWTToken.findFirst({
         where: {
@@ -354,7 +353,7 @@ export class JWTTokenManager {
     try {
       // Verify JWT signature and claims
       const payload = jwt.verify(token, JWT_SECRET, {
-        audience: "mobile-app",
+        audience: AUDIENCE,
         issuer: "pennysave-api",
         algorithms: ["HS256"],
       }) as JWTPayload;
@@ -403,7 +402,7 @@ export class JWTTokenManager {
   static async revokeTokens(refreshToken: string) {
     try {
       const payload = jwt.verify(refreshToken, JWT_SECRET, {
-        audience: "mobile-app",
+        audience: AUDIENCE,
         issuer: "pennysave-api",
         algorithms: ["HS256"],
       }) as JWTPayload;

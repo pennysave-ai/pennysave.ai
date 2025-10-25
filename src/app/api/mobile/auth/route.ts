@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
-// import { OAuth2Client } from "google-auth-library";
-// import { db } from "@/db"; // Add this import
 import { getUserByEmail, createUserWithOauth } from "@/data/user";
 import { createOauthAccount } from "@/data/oauthAccounts";
 import { JWTTokenManager } from "./JWTTokenManager";
-// import next from "next";
-
-// Initialize Google OAuth2 client with your client ID
-// const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-// Use the same secret as NextAuth.js
-// const JWT_SECRET = process.env.AUTH_SECRET || "";
-// const JWT_EXPIRES_IN = "1h";
 
 // Helper to verify Apple identity token
 async function verifyAppleToken(identityToken: string) {
@@ -55,37 +45,10 @@ async function verifyAppleToken(identityToken: string) {
     throw new Error(`Apple token verification failed: ${errorMessage}`);
   }
 }
-
-// Helper to find or create user in database
-// async function findOrCreateUser(userInfo: {
-//   email: string;
-//   name?: string;
-//   picture?: string;
-//   provider: string;
-// }) {
-//   let user = await getUserByEmail(userInfo.email);
-
-//   if (!user) {
-//     // Create new user if doesn't exist
-//     user = await db.user.create({
-//       data: {
-//         email: userInfo.email,
-//         name: userInfo.name || "",
-//         image: userInfo.picture || "",
-//         emailVerified: new Date(), // Auto-verify OAuth users
-//         gdprConsent: new Date(),
-//       },
-//     });
-//   }
-
-//   return user;
-// }
 // A route handler for mobile authentication
 // This handles both Google and Apple sign-in
 export async function POST(req: NextRequest) {
   try {
-    console.log("Authentication request received");
-    console.log("Request", req);
     const body = await req.json();
     const { idToken, appleIdentityToken } = body;
 

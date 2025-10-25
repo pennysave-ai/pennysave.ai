@@ -10,6 +10,8 @@ import {
   getUserTransactions,
 } from "@/data/transactions";
 import { getAuthenticatedUser } from "@/auth.helper";
+import { sendWebSocketMessage } from "@/lib/websocket";
+import { BroadcastType } from "@/wstypes";
 
 export async function GET(req: NextRequest) {
   try {
@@ -101,6 +103,17 @@ export async function POST(req: NextRequest) {
       payload,
       user.email!,
       user?.name || "Customer",
+      user.id
+    );
+    // Send WebSocket message to notify clients about the new transaction
+    await sendWebSocketMessage(
+      {
+        type: BroadcastType.TRANSACTION_CREATED,
+        recipients: [user.id],
+        data: {
+          ...newTransaction,
+        },
+      },
       user.id
     );
     return NextResponse.json({ data: newTransaction });
