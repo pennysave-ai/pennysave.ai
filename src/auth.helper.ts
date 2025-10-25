@@ -39,26 +39,20 @@ export async function getAuthenticatedUser(req: NextRequest) {
     const token = authHeader.substring(7);
     try {
       const decoded = jwt.verify(token, process.env.AUTH_SECRET!) as JWTPayload;
-
       // Convert your token structure to match NextAuth user structure
       return {
         id: decoded.sub,
         email: decoded.email,
         name: decoded.name,
-        role: decoded.role,
+        image: decoded.picture,
+        aud: decoded.aud,
         hasActiveStripeSubscription: decoded.activeSubscription,
-        subscription: decoded.activeSubscription
-          ? {
-              priceId: decoded.priceId,
-              expires: decoded.expires,
-              cancelAt: decoded.cancelAt,
-            }
-          : undefined,
         notifications: {
           monthlyReports: decoded.monthlyReports,
         },
       };
-    } catch {
+    } catch (e) {
+      console.log("JWT verification error:", e);
       return null;
     }
   }

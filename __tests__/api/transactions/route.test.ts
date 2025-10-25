@@ -31,6 +31,10 @@ jest.mock("@/auth", () => ({
 jest.mock("@/schemas");
 jest.mock("@/data/transactions");
 
+jest.mock("@/lib/websocket", () => ({
+  sendWebSocketMessage: jest.fn(),
+}));
+
 jest.mock("resend", () => {
   return {
     Resend: jest.fn().mockImplementation(() => ({
