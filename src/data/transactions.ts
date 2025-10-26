@@ -272,7 +272,7 @@ export async function createTransaction(
       },
     });
 
-    return { id: transaction.id };
+    return { ...transaction };
   } catch (error) {
     console.error("Error creating transaction:", error);
     throw new Error("Failed to create transaction");

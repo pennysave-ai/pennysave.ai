@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       },
       user.id
     );
-    return NextResponse.json({ data: newTransaction });
+    return NextResponse.json({ data: newTransaction.id });
   } catch {
     return NextResponse.json("Error while creating a new transaction", {
       status: 500,
