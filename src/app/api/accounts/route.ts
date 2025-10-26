@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
         symbol: account.currency.symbol,
         exchangeRate: account.currency.exchangeRate,
       },
+      last4: account.last4,
       institution: {
         name: account.institutionName,
-        last4: account.last4,
       },
     }));
     const count = await getUserAccountsCount(user.id);

@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
         },
         last4: transaction.account.last4,
         institution: {
-          name: transaction.account.institutionName,
+          name: transaction.account.institution.name,
         },
       },
     }));

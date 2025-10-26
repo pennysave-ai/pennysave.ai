@@ -22,7 +22,9 @@ export type Transaction = {
     id: string;
     name: string;
     last4: string | null;
-    institutionName: string | null;
+    institution: {
+      name: string | null;
+    };
     currency: {
       symbol: string;
       name: string;
@@ -323,7 +325,14 @@ export async function createTransaction(
       },
     });
 
-    return { ...transaction };
+    // Map institutionName to institution: { name }
+    return {
+      ...transaction,
+      account: {
+        ...transaction.account,
+        institution: { name: transaction.account.institutionName },
+      },
+    };
   } catch (error) {
     console.error("Error creating transaction:", error);
     throw new Error("Failed to create transaction");
@@ -491,7 +500,7 @@ export async function getUserTransactions(
     );
   };
   const dbSortBy = getGetNestedSortBy(sortBy, sortOrder);
-  return await db.transaction.findMany({
+  const transactions = await db.transaction.findMany({
     select: {
       id: true,
       amount: true,
@@ -551,6 +560,15 @@ export async function getUserTransactions(
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
+
+  // Map institutionName to institution: { name }
+  return transactions.map((transaction) => ({
+    ...transaction,
+    account: {
+      ...transaction.account,
+      institution: { name: transaction.account.institutionName },
+    },
+  }));
 }
 
 /**
