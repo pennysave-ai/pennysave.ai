@@ -13,7 +13,7 @@ export async function sendWebSocketMessage(
   message: WebSocketMessage,
   userId: string
 ) {
-  const token = generateWebsocketToken(userId);
+  const token = generateWebsocketToken(userId, "websocket-service");
   try {
     await fetch(
       `https://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}/api/broadcast`,
