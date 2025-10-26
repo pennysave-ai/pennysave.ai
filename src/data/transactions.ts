@@ -12,6 +12,31 @@ import { createTransactionSchema } from "@/schemas";
 import { checkBudgetExceedance } from "@/data/budgets";
 import { sendBudgetExceedNotification } from "@/lib/mail";
 
+export type Transaction = {
+  id: string;
+  amount: number;
+  payee: string | null;
+  notes: string | null;
+  createdAt: Date;
+  account: {
+    id: string;
+    name: string;
+    last4: string | null;
+    institutionName: string | null;
+    currency: {
+      symbol: string;
+      name: string;
+      id: string;
+      exchangeRate: number;
+    };
+  };
+  category: {
+    id: string;
+    name: string;
+    icon: string | null;
+  } | null;
+};
+
 /**
  * Fetch users analytics data for AI model context
  * @param usersIds {String[]} - Array of user IDs
@@ -225,7 +250,7 @@ export async function createTransaction(
   email: string,
   userName: string,
   userId?: string
-) {
+): Promise<Transaction> {
   try {
     const { amount, payee, notes, accountId, categoryId, createdAt } = payload;
     const id = uuid();
@@ -269,6 +294,32 @@ export async function createTransaction(
         accountId,
         categoryId,
         createdAt,
+      },
+      select: {
+        id: true,
+        amount: true,
+        payee: true,
+        notes: true,
+        createdAt: true,
+        account: {
+          select: {
+            id: true,
+            name: true,
+            last4: true,
+            institutionName: true,
+            currency: {
+              select: {
+                symbol: true,
+                name: true,
+                id: true,
+                exchangeRate: true,
+              },
+            },
+          },
+        },
+        category: {
+          select: { id: true, name: true, icon: true },
+        },
       },
     });
 
@@ -403,7 +454,7 @@ export async function getUserTransactions(
   accountId?: string,
   page: number = 1,
   pageSize: number = 10
-) {
+): Promise<Transaction[]> {
   const sortOrder = sortDirection === "ascending" ? "asc" : "desc";
   const validSortFields = [
     "createdAt",
