@@ -15,16 +15,14 @@ export async function sendWebSocketMessage(
 ) {
   const token = generateWebsocketToken(userId);
   try {
-    await fetch(
-      `https://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${token}`,
-      {
-        method: "POST",
-        body: JSON.stringify(message),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    await fetch(`https://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}`, {
+      method: "POST",
+      body: JSON.stringify(message),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     console.log("WebSocket message sent:", message, userId);
   } catch (error) {
     console.error("Error sending WebSocket message:", error);
