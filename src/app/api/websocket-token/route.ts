@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
-    const token = generateWebsocketToken(userId);
+    const token = generateWebsocketToken(userId, user.aud);
     return NextResponse.json({ token });
   } catch (error) {
     console.error("Error generating WebSocket token:", error);
