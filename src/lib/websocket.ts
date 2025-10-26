@@ -25,6 +25,7 @@ export async function sendWebSocketMessage(
         },
       }
     );
+    console.log("WebSocket message sent:", message, userId);
   } catch (error) {
     console.error("Error sending WebSocket message:", error);
     throw new Error("Failed to send WebSocket message");
