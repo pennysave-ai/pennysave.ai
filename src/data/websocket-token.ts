@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 const WEBSOCKET_JWT_SECRET = process.env.WEBSOCKET_JWT_SECRET;
 const EXPIRATION_TIME = 60 * 60; // 1 hour in seconds
 
-export function generateWebsocketToken(userId: string, aud: string): string {
+export function generateWebsocketToken(
+  userId: string,
+  aud: string = "web"
+): string {
   if (!WEBSOCKET_JWT_SECRET) {
     throw new Error("WebSocket JWT secret not configured");
   }
