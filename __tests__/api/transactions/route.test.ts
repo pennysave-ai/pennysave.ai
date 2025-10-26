@@ -84,7 +84,7 @@ describe("Transactions API", () => {
             name: "Account 1",
             currency: { id: "currency-1", name: "Currency 1" },
             last4: "1234",
-            institutionName: "Institution 1",
+            institution: { name: "Institution 1" },
           },
         },
       ]);

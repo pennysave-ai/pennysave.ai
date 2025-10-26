@@ -95,9 +95,9 @@ describe("Accounts API", () => {
             id: mockAccount.id,
             name: mockAccount.name,
             currency: mockAccount.currency,
+            last4: mockAccount.last4,
             institution: {
               name: mockAccount.institutionName,
-              last4: mockAccount.last4,
             },
           },
         ],
