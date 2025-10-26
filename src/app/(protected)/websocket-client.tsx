@@ -21,6 +21,9 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
       `wss://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${token}`
     );
 
+    console.log("WebSocket connection attempt:", socket);
+    console.log("WebSocket connection with the following token:", token);
+
     socket.onopen = () => {
       console.log("WebSocket connection established");
       setReconnectAttempts(0);
@@ -60,10 +63,13 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
   const handleReconnect = () => {
     if (reconnectAttempts < 5) {
       const timeout = Math.min(1000 * 2 ** reconnectAttempts, 30000); // Exponential backoff
-      setTimeout(() => {
+      setTimeout(async () => {
         setReconnectAttempts((prev) => prev + 1);
         if (!userId) return;
-        connectWebSocket(userId);
+        const token = await fetchWebSocketToken(userId);
+        if (token) {
+          connectWebSocket(token);
+        }
       }, timeout);
     } else {
       console.error("Max reconnect attempts reached");
