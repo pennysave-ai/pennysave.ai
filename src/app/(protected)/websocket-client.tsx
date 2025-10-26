@@ -33,12 +33,6 @@ export default function WebSocketClient({ userId }: WebSocketClientProps) {
       console.log("Received message on a client:", event.data);
       const data = JSON.parse(event.data);
       switch (data.type) {
-        case "kick":
-          console.log("Kicked from WebSocket server");
-          socket.close();
-          // Stop reconnection attempts
-          setReconnectAttempts(5);
-          break;
         case BroadcastType.BANK_DATA_UPDATED:
           updateEntities();
           break;
