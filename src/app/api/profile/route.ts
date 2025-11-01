@@ -23,6 +23,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const parts = parse(buffer, boundary);
 
   let name = "";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let filePart: any;
 
   for (const part of parts) {
@@ -44,7 +45,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
         .rotate()
         .resize(100, 100, { fit: "inside" })
         .toBuffer();
-    } catch (err) {
+    } catch {
       return NextResponse.json(
         { error: "Image processing failed" },
         { status: 500 }
