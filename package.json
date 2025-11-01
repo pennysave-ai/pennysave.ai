@@ -115,6 +115,7 @@
     "@types/js-cookie": "^3.0.6",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/jwk-to-pem": "^2.0.3",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^20.17.16",
     "@types/parse-multipart": "^1.0.2",
     "@types/react": "^18",
