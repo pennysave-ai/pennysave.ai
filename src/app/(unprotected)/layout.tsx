@@ -21,7 +21,7 @@ const MOTION_PROPS = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
   transition: {
-    ease: "easeInOut",
+    ease: ["easeInOut"],
     duration: 0.2,
   },
 };
