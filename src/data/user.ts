@@ -118,3 +118,24 @@ export async function createUserWithOauth({
     },
   });
 }
+
+/**
+ * Update user profile
+ * @param {string} userId - User ID
+ * @param {Object} data - User's profile data
+ * @returns {Promise<User>} - Returns the updated user
+ */
+export async function updateUserProfile(
+  userId: string,
+  data: {
+    name: string;
+    image: string;
+  }
+) {
+  return db.user.update({
+    where: {
+      id: userId,
+    },
+    data,
+  });
+}

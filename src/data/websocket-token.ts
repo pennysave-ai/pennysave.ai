@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const WEBSOCKET_JWT_SECRET = process.env.WEBSOCKET_JWT_SECRET;
-const EXPIRATION_TIME = 60 * 60; // 1 hour in seconds
+const EXPIRATION_TIME = 15 * 60; // 15 minutes in seconds given that we have buffer time on client side 5 minutes it's 10 minutes to live
 
 export function generateWebsocketToken(
   userId: string,

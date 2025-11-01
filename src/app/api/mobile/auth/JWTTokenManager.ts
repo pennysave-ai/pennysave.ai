@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.AUTH_SECRET!;
 const ACCESS_TOKEN_EXPIRES_IN = parseInt(
   process.env.MOBILE_ACCESS_TOKEN_EXPIRES_IN || "900"
 ); // 15 minutes
+
 const REFRESH_TOKEN_EXPIRES_IN = parseInt(
   process.env.MOBILE_REFRESH_TOKEN_EXPIRES_IN || "1209600"
 ); // 14 days
