@@ -16,15 +16,15 @@ import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import { Logo, Footer } from "@/components/common";
 
-const MOTION_PROPS = {
-  initial: { opacity: 0, y: -20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-  transition: {
-    ease: ["easeInOut"],
-    duration: 0.2,
-  },
-};
+// const MOTION_PROPS = {
+//   initial: { opacity: 0, y: -20 },
+//   animate: { opacity: 1, y: 0 },
+//   exit: { opacity: 0, y: -20 },
+//   transition: {
+//     ease: "easeInOut",
+//     duration: 0.2,
+//   },
+// };
 
 const menuItems = [
   {
@@ -142,7 +142,7 @@ export default function UnprotectedRoadsLayout({
         </div>
         <NavbarMenu
           className="top-[calc(var(--navbar-height)_-_1px)] max-h-[100vh] bg-default-200/50 pt-6 shadow-medium backdrop-blur-md backdrop-saturate-150 dark:bg-default-100/50"
-          motionProps={MOTION_PROPS}
+          // motionProps={MOTION_PROPS}
         >
           {menuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
