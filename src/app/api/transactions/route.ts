@@ -106,7 +106,12 @@ export async function POST(req: NextRequest) {
       user.id
     );
     // Send WebSocket message to notify clients about the new transaction
-    await sendWebSocketMessage(
+    // Only send to the user who created the transaction
+    // for now our wss server is free and can be in hybernate mode
+    // waiting for the response can take too long and cause timeouts and 504 response for this API
+    // that's why we do not await this function
+    // we can improve this later by using a queue system like RabbitMQ or similar
+    sendWebSocketMessage(
       {
         type: BroadcastType.TRANSACTION_CREATED,
         recipients: [user.id],
