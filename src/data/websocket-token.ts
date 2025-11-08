@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 
 const WEBSOCKET_JWT_SECRET = process.env.WEBSOCKET_JWT_SECRET;
-const EXPIRATION_TIME = 15 * 60; // 15 minutes in seconds given that we have buffer time on client side 5 minutes it's 10 minutes to live
+const EXPIRATION_TIME =
+  Number(process.env.MOBILE_ACCESS_TOKEN_EXPIRES_IN) || 900; // 15 minutes
 
 export function generateWebsocketToken(
   userId: string,
