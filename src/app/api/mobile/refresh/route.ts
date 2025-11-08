@@ -18,12 +18,19 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  const tokens = await JWTTokenManager.refreshAccessToken(refreshToken);
-  if (!tokens) {
+  try {
+    const tokens = await JWTTokenManager.refreshAccessToken(refreshToken);
+    if (!tokens) {
+      return NextResponse.json(
+        { error: "Failed to refresh access token" },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(tokens, { status: 200 });
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: "Failed to refresh access token" },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 401 }
     );
   }
-  return NextResponse.json(tokens, { status: 200 });
 }
