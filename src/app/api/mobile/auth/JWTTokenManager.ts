@@ -137,6 +137,7 @@ export class JWTTokenManager {
         expiresAt: tokens.accessExpiresAt,
         refreshExpiresAt: tokens.refreshExpiresAt,
         isActive: true,
+        pendingConfirmation: true,
       },
     });
 
@@ -191,11 +192,13 @@ export class JWTTokenManager {
         await this.checkForCompromise(payload.familyId, payload.version);
         throw new Error("Invalid or expired refresh token");
       }
+
       // Check if this token version is older than the current active version
       const currentActiveToken = await db.mobileJWTToken.findFirst({
         where: {
           familyId: payload.familyId,
           isActive: true,
+          pendingConfirmation: false,
           familyInvalidated: false,
         },
         orderBy: {
@@ -222,9 +225,30 @@ export class JWTTokenManager {
         );
         throw new Error("Token compromise detected. All tokens invalidated.");
       }
+      // Check for existing pending token
+      const pendingToken = await db.mobileJWTToken.findFirst({
+        where: {
+          familyId: storedToken.familyId,
+          isActive: true,
+          pendingConfirmation: true,
+        },
+      });
+
+      let newVersion = storedToken.tokenVersion + 1;
+
+      if (pendingToken) {
+        // Reuse the same version as the pending token
+        newVersion = pendingToken.tokenVersion;
+        // Delete pending token
+        // To support only two valid tokens
+        // Delete the old pending token
+        await db.mobileJWTToken.delete({
+          where: { id: pendingToken.id },
+        });
+      }
 
       // Create new token version
-      const newVersion = storedToken.tokenVersion + 1;
+      // const newVersion = storedToken.tokenVersion + 1;
       const userData: UserData = {
         id: storedToken.user.id,
         email: storedToken.user.email ?? "",
@@ -249,12 +273,6 @@ export class JWTTokenManager {
 
       // Update database
       await db.$transaction([
-        // Deactivate old token
-        db.mobileJWTToken.update({
-          where: { id: storedToken.id },
-          data: { isActive: false },
-        }),
-
         // Create new token version
         db.mobileJWTToken.create({
           data: {
@@ -266,6 +284,7 @@ export class JWTTokenManager {
             expiresAt: newTokens.accessExpiresAt,
             refreshExpiresAt: newTokens.refreshExpiresAt,
             isActive: true,
+            pendingConfirmation: true,
           },
         }),
       ]);
@@ -291,6 +310,8 @@ export class JWTTokenManager {
           familyId: familyId,
           tokenVersion: { gt: attemptedVersion },
           familyInvalidated: false,
+          isActive: true,
+          pendingConfirmation: false,
         },
         orderBy: {
           tokenVersion: "desc",
@@ -449,6 +470,63 @@ export class JWTTokenManager {
     } catch (error) {
       console.error("Error validating refresh token:", error);
       throw new Error("Invalid refresh token");
+    }
+  }
+
+  // Confirm receipt of a refresh token and invalidate previous tokens in the family
+  static async confirmRefreshToken(refreshToken: string) {
+    const JWT_SECRET = process.env.AUTH_SECRET!;
+    try {
+      // Verify refresh token
+      const payload = jwt.verify(refreshToken, JWT_SECRET, {
+        audience: AUDIENCE,
+        issuer: "pennysave-api",
+        algorithms: ["HS256"],
+      }) as JWTPayload;
+
+      if (payload.type !== "refresh") {
+        throw new Error("Invalid token type");
+      }
+
+      const refreshTokenHash = this.hashToken(refreshToken);
+
+      // Find the token in DB
+      const token = await db.mobileJWTToken.findFirst({
+        where: {
+          familyId: payload.familyId,
+          tokenVersion: payload.version,
+          refreshTokenHash: refreshTokenHash,
+        },
+      });
+
+      if (!token) {
+        throw new Error("Refresh token not found");
+      }
+
+      // Mark this token as confirmed
+      await db.mobileJWTToken.update({
+        where: { id: token.id },
+        data: { pendingConfirmation: false },
+      });
+
+      // Invalidate previous tokens in the same family (except this one)
+      await db.mobileJWTToken.updateMany({
+        where: {
+          familyId: payload.familyId,
+          tokenVersion: { lt: payload.version },
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+          invalidatedAt: new Date(),
+          invalidatedReason: "Replaced by confirmed token",
+        },
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error confirming refresh token:", error);
+      throw new Error("Refresh token confirmation failed");
     }
   }
 }

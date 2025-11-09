@@ -58,6 +58,9 @@ model MobileJWTToken {
   // Timestamps
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Pending confirmation field to track if the token was recieved by the mobile client
+  pendingConfirmation Boolean @default(false)
   
   @@index([userId, isActive])
   @@index([familyId, tokenVersion])
