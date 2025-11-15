@@ -3,7 +3,7 @@ import { put, del } from "@vercel/blob";
 import { parse } from "parse-multipart-data";
 import sharp from "sharp";
 import { getAuthenticatedUser } from "@/auth.helper";
-import { updateUserProfile } from "@/data/user";
+import { updateUserProfile, deleteProfile } from "@/data/user";
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const user = await getAuthenticatedUser(request);
@@ -77,6 +77,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     name,
     image: imageUrl ?? "",
   });
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const user = await getAuthenticatedUser(request);
+  if (!user || !user.id) {
+    return NextResponse.json("Unauthorized", { status: 401 });
+  }
+  await deleteProfile(user.id);
 
   return NextResponse.json({ success: true });
 }

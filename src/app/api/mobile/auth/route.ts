@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           sendMonthlyReport: user?.sendMonthlyReport ?? false, // Ensure boolean
         });
         return NextResponse.json({
-          token: tokens.accessToken,
+          accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         });
       } catch (error) {
