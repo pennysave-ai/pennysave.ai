@@ -139,3 +139,16 @@ export async function updateUserProfile(
     data,
   });
 }
+
+/**
+ * Delete user profile
+ * @param userId - User ID
+ * @returns Promise<void>
+ */
+export async function deleteProfile(userId: string) {
+  return db.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+}
