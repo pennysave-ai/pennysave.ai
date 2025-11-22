@@ -28,16 +28,19 @@ export async function GET(
     );
 
     // Get all the users who has and enabled monthly reports and have transactions in the previous month
+    // Get all the users who have enabled monthly reports and have transactions in the previous month
     const users = await db.user.findMany({
       where: {
         sendMonthlyReport: true,
-        userAccounts: {
+        accountAccess: {
           some: {
-            transactions: {
-              some: {
-                createdAt: {
-                  gte: startOfPreviousMonth,
-                  lte: endOfPreviousMonth,
+            userAccount: {
+              transactions: {
+                some: {
+                  createdAt: {
+                    gte: startOfPreviousMonth,
+                    lte: endOfPreviousMonth,
+                  },
                 },
               },
             },
