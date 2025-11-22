@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    await bulkCreateTransactions(transactionsToCreate);
+    await bulkCreateTransactions(transactionsToCreate, user.id);
     return NextResponse.json({ data: transactionsToCreate });
   } catch {
     return NextResponse.json("Error creating transactions", { status: 500 });

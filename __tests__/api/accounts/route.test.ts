@@ -55,12 +55,25 @@ describe("Accounts API", () => {
     id: "account-1",
     name: "Test Account",
     currency: {
-      id: "USD",
-      name: "US Dollar",
+      id: "currency-1",
+      name: "USD",
       symbol: "$",
+      exchangeRate: 1,
     },
     institutionName: "Test Bank",
     last4: "1234",
+    userAccess: [
+      {
+        userId: "user-1",
+        role: "owner",
+        user: {
+          id: "user-1",
+          name: "Test User",
+          image: "https://example.com/image.jpg",
+          email: "test@example.com",
+        },
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -71,21 +84,23 @@ describe("Accounts API", () => {
   describe("GET /api/accounts", () => {
     it("should return 401 if not authenticated", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
-      const response = await GET();
+      const mockReq = {} as NextRequest;
+      const response = await GET(mockReq);
       expect(response.status).toBe(401);
     });
 
     it("should return 401 if user has no id", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
-      const response = await GET();
+      const mockReq = {} as NextRequest;
+      const response = await GET(mockReq);
       expect(response.status).toBe(401);
     });
 
     it("should return accounts if authenticated", async () => {
       (getUserAccountsCount as jest.Mock).mockResolvedValueOnce(1);
       (getUserAccounts as jest.Mock).mockResolvedValueOnce([mockAccount]);
-
-      const response = await GET();
+      const mockReq = {} as NextRequest;
+      const response = await GET(mockReq);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -99,6 +114,14 @@ describe("Accounts API", () => {
             institution: {
               name: mockAccount.institutionName,
             },
+            users: [
+              {
+                id: "user-1",
+                role: "owner",
+                name: "Test User",
+                image: "https://example.com/image.jpg",
+              },
+            ],
           },
         ],
         meta: { count: 1 },

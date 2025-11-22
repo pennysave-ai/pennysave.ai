@@ -35,21 +35,19 @@ describe("Transactions Data Access", () => {
     it("should create multiple transactions", async () => {
       const mockTransactions = [
         {
-          id: "transaction-1",
           amount: 100,
           payee: "Payee 1",
           notes: "Notes 1",
           accountId: "account-1",
-          createdAt: new Date(),
+          createdAt: "2023-10-01T00:00:00.000Z",
           categoryId: "category-1",
         },
         {
-          id: "transaction-2",
           amount: 200,
           payee: "Payee 2",
           notes: "Notes 2",
           accountId: "account-2",
-          createdAt: new Date(),
+          createdAt: "2023-10-02T00:00:00.000Z",
           categoryId: "category-2",
         },
       ];
@@ -57,23 +55,41 @@ describe("Transactions Data Access", () => {
         count: mockTransactions.length,
       });
 
-      const result = await bulkCreateTransactions(mockTransactions);
+      const result = await bulkCreateTransactions(mockTransactions, "user-123");
 
       expect(result).toEqual({ count: mockTransactions.length });
       expect(db.transaction.createMany).toHaveBeenCalledWith({
-        data: mockTransactions,
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            amount: 100,
+            payee: "Payee 1",
+            notes: "Notes 1",
+            accountId: "account-1",
+            categoryId: "category-1",
+            createdBy: "user-123",
+            id: expect.any(String), // UUID is generated
+          }),
+          expect.objectContaining({
+            amount: 200,
+            payee: "Payee 2",
+            notes: "Notes 2",
+            accountId: "account-2",
+            categoryId: "category-2",
+            createdBy: "user-123",
+            id: expect.any(String), // UUID is generated
+          }),
+        ]),
       });
     });
 
     it("should handle errors gracefully", async () => {
       const mockTransactions = [
         {
-          id: "transaction-1",
           amount: 100,
           payee: "Payee 1",
           notes: "Notes 1",
           accountId: "account-1",
-          createdAt: new Date(),
+          createdAt: "2023-10-01T00:00:00.000Z",
           categoryId: "category-1",
         },
       ];
@@ -81,12 +97,9 @@ describe("Transactions Data Access", () => {
         new Error("Database error")
       );
 
-      await expect(bulkCreateTransactions(mockTransactions)).rejects.toThrow(
-        "Database error"
-      );
-      expect(db.transaction.createMany).toHaveBeenCalledWith({
-        data: mockTransactions,
-      });
+      await expect(
+        bulkCreateTransactions(mockTransactions, "user-123")
+      ).rejects.toThrow("Database error");
     });
   });
 
@@ -97,7 +110,7 @@ describe("Transactions Data Access", () => {
         amount: 100,
         payee: "Payee 1",
         notes: "Notes 1",
-        createdAt: new Date(),
+        createdAt: "2023-10-01T00:00:00.000Z",
         account: { id: "account-1", name: "Account 1" },
         category: { id: "category-1", name: "Category 1" },
       };
@@ -112,7 +125,9 @@ describe("Transactions Data Access", () => {
         where: {
           id: "transaction-1",
           account: {
-            userId: "user-123",
+            userAccess: {
+              some: { userId: "user-123" },
+            },
           },
         },
         select: {
@@ -144,7 +159,9 @@ describe("Transactions Data Access", () => {
         where: {
           id: "non-existent-id",
           account: {
-            userId: "user-123",
+            userAccess: {
+              some: { userId: "user-123" },
+            },
           },
         },
         select: {
@@ -171,27 +188,6 @@ describe("Transactions Data Access", () => {
       await expect(
         getUserTransactionById("transaction-1", "user-123")
       ).rejects.toThrow("Database error");
-      expect(db.transaction.findFirst).toHaveBeenCalledWith({
-        where: {
-          id: "transaction-1",
-          account: {
-            userId: "user-123",
-          },
-        },
-        select: {
-          id: true,
-          amount: true,
-          payee: true,
-          notes: true,
-          createdAt: true,
-          account: {
-            select: { id: true, name: true },
-          },
-          category: {
-            select: { id: true, name: true },
-          },
-        },
-      });
     });
   });
 });

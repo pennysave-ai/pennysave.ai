@@ -91,7 +91,6 @@ model User {
   accounts      Account[]
   sessions      Session[]
   category      Category[]
-  userAccounts  UserAccount[]
   budgets       Budget[]
   password      String?
   role          UserRole @default(USER)
@@ -104,6 +103,8 @@ model User {
   sendMonthlyReport Boolean? @default(false)
   gdprConsent DateTime?
   mobileTokens  MobileJWTToken[]
+  accountAccess UserAccountAccess[]
+  createdTransactions Transaction[]
 }
 
 model Transaction {
@@ -115,8 +116,11 @@ model Transaction {
   account     UserAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy   String    // User ID of who created this transaction
+  createdByUser User    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   @@unique([id])
+  @@index([createdBy])
 }
 
 model Category {
@@ -163,8 +167,8 @@ model PasswordResetToken {
 // A model to store User Accounts
 model UserAccount {
   id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // userId     String
+  // user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   institutionName String?
   stripeAccountId String?
@@ -176,7 +180,20 @@ model UserAccount {
   currencyId String
   currency   Currency  @relation(fields: [currencyId], references: [id])
   budgets    BudgetAccount[]
+  userAccess UserAccountAccess[] // Many-to-many relation
   @@unique([id])
+}
+
+// Join table for User and UserAccount (shareable accounts)
+model UserAccountAccess {
+  userId        String
+  user          User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAccountId String
+  userAccount   UserAccount   @relation(fields: [userAccountId], references: [id], onDelete: Cascade)
+  role          String?       // "owner", "viewer", "editor"
+  createdAt     DateTime      @default(now())
+  
+  @@id([userId, userAccountId])
 }
 
 // Join table for Budget and UserAccount

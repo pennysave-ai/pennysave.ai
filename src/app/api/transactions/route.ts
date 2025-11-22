@@ -9,6 +9,7 @@ import {
   updateTransaction,
   getUserTransactions,
 } from "@/data/transactions";
+import { getUsersWithAccessToAccount } from "@/data/userAccounts";
 import { getAuthenticatedUser } from "@/auth.helper";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
@@ -105,8 +106,13 @@ export async function POST(req: NextRequest) {
       user?.name || "Customer",
       user.id
     );
+    // Fetch users who have access to the account
+    const usersWithAccess = await getUsersWithAccessToAccount(
+      payload.accountId
+    );
+
     // Send WebSocket message to notify clients about the new transaction
-    // Only send to the user who created the transaction
+    // Only send to the who has access to this account
     // for now our wss server is free and can be in hybernate mode
     // waiting for the response can take too long and cause timeouts and 504 response for this API
     // that's why we do not await this function
@@ -114,7 +120,7 @@ export async function POST(req: NextRequest) {
     sendWebSocketMessage(
       {
         type: BroadcastType.TRANSACTION_CREATED,
-        recipients: [user.id],
+        recipients: usersWithAccess,
         data: {
           ...newTransaction,
         },
