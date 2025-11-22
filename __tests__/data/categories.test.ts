@@ -11,6 +11,7 @@ import {
   deleteCategories,
   updateCategory,
 } from "@/data/categories";
+import { user } from "@heroui/theme";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -63,6 +64,7 @@ describe("categories", () => {
           name: true,
           description: true,
           icon: true,
+          user: { select: { id: true, name: true, image: true } },
         },
       });
     });

@@ -17,6 +17,16 @@ export type CreateAccount = {
 export async function getStripeAccountById(stripeAccountId: string) {
   return await db.userAccount.findFirst({
     where: { stripeAccountId },
+    select: {
+      id: true,
+      stripeAccountId: true,
+      stripeLastTransactionsRefreshId: true,
+      userAccess: {
+        where: { role: "owner" },
+        select: { userId: true },
+        take: 1, // Get only the first owner
+      },
+    },
   });
 }
 
@@ -69,10 +79,11 @@ export async function upsertStripeAccounts(
       });
     } else {
       // Create a new record
-      await db.userAccount.create({
+      const accountId = uuid();
+      const createAccountTransaction = db.userAccount.create({
         data: {
+          id: accountId,
           name,
-          userId,
           institutionName,
           stripeAccountId,
           last4,
@@ -81,6 +92,18 @@ export async function upsertStripeAccounts(
           currencyId,
         },
       });
+      const createUserAccountAccessTransaction = db.userAccountAccess.create({
+        data: {
+          userId,
+          userAccountId: accountId,
+          role: "owner",
+        },
+      });
+
+      await db.$transaction([
+        createAccountTransaction,
+        createUserAccountAccessTransaction,
+      ]);
     }
   }
 }
@@ -100,7 +123,9 @@ export async function deleteStripeAccountsByInstitutionName(
   const stripeAccounts = await db.userAccount.findMany({
     where: {
       institutionName,
-      userId,
+      userAccess: {
+        some: { userId, role: "owner" },
+      },
       stripeAccountId: {
         not: null,
       },
@@ -122,33 +147,11 @@ export async function deleteStripeAccountsByInstitutionName(
         in: stripeAccounts.map((account) => account.id),
       },
       institutionName,
-      userId,
-    },
-  });
-}
-
-/**
- * Get user account Name
- * @param {String} userId - User ID
- * @param {String} name - Account Name
- * @returns {Array<{id: string, name: id}>} - Array of account Id's
- */
-export async function getUserAccountIdsByName(userId: string, name: string) {
-  const accounts = await db.userAccount.findMany({
-    where: {
-      userId,
-      name: {
-        contains: name,
-        mode: "insensitive",
+      userAccess: {
+        some: { userId, role: "owner" },
       },
     },
-    select: {
-      id: true,
-      name: true,
-      institutionName: true,
-    },
   });
-  return accounts;
 }
 
 /**
@@ -173,16 +176,24 @@ export async function createAccount(
   if (!validationResult.success) {
     throw new Error("Bad Request");
   }
-  const account = await db.userAccount.create({
+  const newAccountId = uuid();
+  const newAccountQuery = db.userAccount.create({
     data: {
-      id: uuid(),
+      id: newAccountId,
       name,
-      userId,
       currencyId,
       institutionName,
     },
   });
-  return { id: account.id };
+  const newAccountAccessQuery = db.userAccountAccess.create({
+    data: {
+      userId,
+      userAccountId: newAccountId,
+      role: "owner",
+    },
+  });
+  await db.$transaction([newAccountQuery, newAccountAccessQuery]);
+  return { id: newAccountId };
 }
 
 /**
@@ -195,9 +206,11 @@ export async function createAccount(
 export async function deleteAccounts(accountIds: string[], userId: string) {
   const stripeAccounts = await db.userAccount.findMany({
     where: {
-      userId,
       id: {
         in: accountIds,
+      },
+      userAccess: {
+        some: { userId, role: "owner" },
       },
     },
     select: {
@@ -218,7 +231,9 @@ export async function deleteAccounts(accountIds: string[], userId: string) {
       id: {
         in: accountIds,
       },
-      userId,
+      userAccess: {
+        some: { userId, role: "owner" },
+      },
     },
   });
   return accounts;
@@ -242,7 +257,12 @@ export async function updateAccount(
   institutionName?: string
 ) {
   const accounts = await db.userAccount.update({
-    where: { id, userId },
+    where: {
+      id,
+      userAccess: {
+        some: { userId, role: "owner" },
+      },
+    },
     data: {
       name,
       currencyId,
@@ -285,11 +305,20 @@ export async function getUserAccounts(userId: string) {
       currency: {
         select: { id: true, name: true, symbol: true, exchangeRate: true },
       },
+      userAccess: {
+        select: {
+          role: true,
+          userId: true,
+          user: { select: { name: true, image: true } },
+        },
+      },
       institutionName: true,
       last4: true,
     },
     where: {
-      userId,
+      userAccess: {
+        some: { userId },
+      },
     },
   });
   return accounts;
@@ -301,5 +330,9 @@ export async function getUserAccounts(userId: string) {
  * @returns {Promise} - Promise object represents the user accounts number
  */
 export async function getUserAccountsCount(userId: string) {
-  return await db.userAccount.count({ where: { userId } });
+  return await db.userAccount.count({
+    where: {
+      userAccess: { some: { userId } },
+    },
+  });
 }

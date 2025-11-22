@@ -31,6 +31,12 @@ export type Transaction = {
       id: string;
       exchangeRate: number;
     };
+    userAccess?: Array<{
+      userId: string;
+      user: {
+        email: string | null;
+      };
+    }>;
   };
   category: {
     id: string;
@@ -54,9 +60,8 @@ export async function getPrevMonthSummaries(
     category?: {
       name: string;
     } | null;
-    payee?: string;
-    notes?: string;
-    email: string;
+    payee: string | null;
+    notes: string | null;
     account: {
       name: string;
       currency: {
@@ -65,12 +70,16 @@ export async function getPrevMonthSummaries(
         name: string;
         exchangeRate: number;
       };
-      user: {
-        email: string;
-      };
+      userAccess: Array<{
+        userId: string;
+        user: {
+          email: string | null;
+        };
+      }>;
     };
     amount: number;
   };
+
   const transactionsData = await db.transaction.findMany({
     select: {
       amount: true,
@@ -80,13 +89,17 @@ export async function getPrevMonthSummaries(
       account: {
         select: {
           name: true,
-          userId: true,
+          userAccess: {
+            select: {
+              userId: true,
+              user: {
+                select: { email: true },
+              },
+            },
+          },
           institutionName: true,
           currency: {
             select: { name: true, id: true, exchangeRate: true, symbol: true },
-          },
-          user: {
-            select: { email: true },
           },
           balance: true,
         },
@@ -97,9 +110,7 @@ export async function getPrevMonthSummaries(
     },
     where: {
       account: {
-        userId: {
-          in: usersIds,
-        },
+        userAccess: { some: { userId: { in: usersIds } } },
       },
       createdAt: {
         gte: startDate,
@@ -109,22 +120,32 @@ export async function getPrevMonthSummaries(
     orderBy: { createdAt: "desc" },
   });
 
-  // Group transactions by account user ID
-  const groupedTransactionsByUserId = transactionsData.reduce(
-    (acc, transaction) => {
-      const userId = transaction.account.userId;
-      if (acc.has(userId)) {
-        acc.set(userId, [...acc.get(userId), transaction]);
-      } else {
-        acc.set(userId, [transaction]);
+  // Flatten transactions by user access
+  // Each transaction should appear for each user who has access to the account
+  const transactionsByUser = new Map<string, Transaction[]>();
+
+  for (const transaction of transactionsData) {
+    for (const access of transaction.account.userAccess) {
+      // Only include users in the requested usersIds
+      if (usersIds.includes(access.userId)) {
+        if (!transactionsByUser.has(access.userId)) {
+          transactionsByUser.set(access.userId, []);
+        }
+        transactionsByUser.get(access.userId)!.push(transaction);
       }
-      return acc;
-    },
-    new Map()
-  );
-  // Iterate over each user id to determine the base currency
+    }
+  }
+
+  // Iterate over each user to generate summaries
   const usersData = [];
-  for (const [userId, userTransactions] of groupedTransactionsByUserId) {
+
+  for (const [userId, userTransactions] of transactionsByUser) {
+    // Get user email from first transaction
+    const userEmail =
+      userTransactions[0]?.account.userAccess.find(
+        (access) => access.userId === userId
+      )?.user.email || "";
+
     const transactionsByCurrency: Record<
       string,
       {
@@ -134,7 +155,6 @@ export async function getPrevMonthSummaries(
         exchangeRate: number;
         symbol: string;
         currency: string;
-        email: string;
       }
     > = userTransactions.reduce(
       (
@@ -147,51 +167,46 @@ export async function getPrevMonthSummaries(
             exchangeRate: number;
             symbol: string;
             currency: string;
-            email: string;
           }
         >,
         transaction: Transaction
       ) => {
-        if (transaction.account.currency.id in acc) {
-          acc[transaction.account.currency.id] = acc[
-            transaction.account.currency.id
-          ] = {
-            ...acc[transaction.account.currency.id],
-            count: acc[transaction.account.currency.id].count + 1,
+        const currencyId = transaction.account.currency.id;
+
+        if (currencyId in acc) {
+          acc[currencyId] = {
+            ...acc[currencyId],
+            count: acc[currencyId].count + 1,
             expenses:
               transaction.amount < 0
-                ? acc[transaction.account.currency.id].expenses +
-                  transaction.amount
-                : acc[transaction.account.currency.id].expenses,
+                ? acc[currencyId].expenses + transaction.amount
+                : acc[currencyId].expenses,
             income:
               transaction.amount > 0
-                ? acc[transaction.account.currency.id].income +
-                  transaction.amount
-                : acc[transaction.account.currency.id].income,
-            symbol: transaction.account.currency.symbol,
-            currency: transaction.account.currency.name,
-            email: transaction.account.user.email,
+                ? acc[currencyId].income + transaction.amount
+                : acc[currencyId].income,
           };
         } else {
-          acc[transaction.account.currency.id] = {
+          acc[currencyId] = {
             count: 1,
             expenses: transaction.amount < 0 ? transaction.amount : 0,
             income: transaction.amount > 0 ? transaction.amount : 0,
             exchangeRate: transaction.account.currency.exchangeRate,
             symbol: transaction.account.currency.symbol,
             currency: transaction.account.currency.name,
-            email: transaction.account.user.email,
           };
         }
         return acc;
       },
       {}
     );
-    // sort by count
+
+    // Sort by count to find the most used currency
     const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
       (a, b) => b[1].count - a[1].count
     );
-    // Convert income and expenses to base currency and find a total for income and expences
+
+    // Convert income and expenses to base currency
     const sum = Object.entries(transactionsByCurrency).reduce(
       (acc, [currency, { income, expenses, exchangeRate }]) => {
         if (currency === targetCurrency[0]) {
@@ -216,6 +231,7 @@ export async function getPrevMonthSummaries(
         expenses: 0,
       }
     );
+
     const transactions = userTransactions.map((transaction: Transaction) => ({
       amount: formatCurrency(
         convertAmountFromMilliunits(transaction.amount),
@@ -226,9 +242,10 @@ export async function getPrevMonthSummaries(
       notes: transaction.notes,
       account: transaction.account.name,
     }));
+
     usersData.push({
       userId,
-      email: targetCurrency[1].email,
+      email: userEmail,
       currencySymbol: targetCurrency[1].symbol,
       currencyName: targetCurrency[1].currency,
       income: convertAmountFromMilliunits(sum.income),
@@ -238,6 +255,7 @@ export async function getPrevMonthSummaries(
       transactions,
     });
   }
+
   return usersData;
 }
 
@@ -251,7 +269,7 @@ export async function createTransaction(
   payload: CreateTransaction,
   email: string,
   userName: string,
-  userId?: string
+  userId: string
 ): Promise<Transaction> {
   try {
     const { amount, payee, notes, accountId, categoryId, createdAt } = payload;
@@ -296,6 +314,7 @@ export async function createTransaction(
         accountId,
         categoryId,
         createdAt,
+        createdBy: userId,
       },
       select: {
         id: true,
@@ -346,7 +365,7 @@ export async function createTransaction(
  */
 export async function getUserTransactionsCount(userId: string) {
   return await db.transaction.count({
-    where: { account: { userId } },
+    where: { account: { userAccess: { some: { userId } } } },
   });
 }
 
@@ -367,7 +386,7 @@ export async function getUserTransactionsCountByAccount(
   return await db.transaction.count({
     where: {
       account: {
-        userId,
+        userAccess: { some: { userId } },
       },
       createdAt: {
         gte: startDate,
@@ -397,7 +416,7 @@ export async function deleteTransactions(
         in: transactionIds,
       },
       account: {
-        userId,
+        userAccess: { some: { userId } },
       },
     },
   });
@@ -434,7 +453,7 @@ export async function updateTransaction(
     where: {
       id,
       account: {
-        userId,
+        userAccess: { some: { userId } },
       },
     },
     data,
@@ -507,6 +526,13 @@ export async function getUserTransactions(
       payee: true,
       notes: true,
       createdAt: true,
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
       account: {
         select: {
           id: true,
@@ -524,7 +550,7 @@ export async function getUserTransactions(
     },
     where: {
       account: {
-        userId,
+        userAccess: { some: { userId } },
         ...(accountId ? { id: accountId } : {}),
       },
       createdAt: {
@@ -572,7 +598,7 @@ export async function getUserTransactions(
 }
 
 /**
- * Get user transaction buy transaction ID and user ID
+ * Get user transaction by transaction ID and user ID
  * @param {String} id - Transaction ID
  * @param {String} userId - User ID
  * @returns {Promise} - Promise object represents the transaction data
@@ -582,7 +608,7 @@ export async function getUserTransactionById(id: string, userId: string) {
     where: {
       id,
       account: {
-        userId,
+        userAccess: { some: { userId } },
       },
     },
     select: {
@@ -607,10 +633,20 @@ export async function getUserTransactionById(id: string, userId: string) {
  * @returns {Promise} - Promise object represents the created transactions
  */
 export async function bulkCreateTransactions(
-  transactions: CreateTransaction[]
+  transactions: CreateTransaction[],
+  userId: string
 ) {
   return await db.transaction.createMany({
-    data: transactions,
+    data: transactions.map((transaction) => ({
+      id: uuid(),
+      amount: transaction.amount,
+      payee: transaction.payee || "",
+      notes: transaction.notes,
+      accountId: transaction.accountId,
+      categoryId: transaction.categoryId,
+      createdAt: transaction.createdAt,
+      createdBy: userId,
+    })),
   });
 }
 
@@ -623,7 +659,7 @@ export async function getUserTransactionMonths(userId: string) {
   const transactions = await db.transaction.findMany({
     where: {
       account: {
-        userId,
+        userAccess: { some: { userId } },
       },
     },
     select: {
@@ -671,12 +707,21 @@ export async function getUserTransactionsTotalsByCategory({
 
   const transactions = await db.transaction.findMany({
     where: {
-      account: { userId, ...accountIdFilter },
+      account: { userAccess: { some: { userId } }, ...accountIdFilter },
       ...(start && end ? { createdAt: { gte: start, lte: end } } : {}),
     },
     select: {
       amount: true,
-      category: { select: { id: true, name: true, icon: true } },
+      category: {
+        select: {
+          id: true,
+          name: true,
+          icon: true,
+          user: {
+            select: { id: true, name: true, image: true },
+          },
+        },
+      },
       account: {
         select: {
           currency: {
@@ -715,18 +760,24 @@ export async function getUserTransactionsTotalsByCategory({
 
   const totals: Record<
     string,
-    { name: string; icon: string | null; amount: number }
+    {
+      name: string;
+      icon: string | null;
+      amount: number;
+      user?: { id: string; name: string; image: string | null };
+    }
   > = {};
   let totalExpenses = 0;
   let totalIncome = 0;
-
   // Aggregate amounts by category calculate persentaces and totals
   for (const transaction of convertedTransactions) {
     const categoryId = transaction.category?.id || "uncategorized";
     const categoryName = transaction.category?.name || "Uncategorized";
     const categoryIcon = transaction.category?.icon || null;
+    const user = transaction.category?.user;
     if (!totals[categoryId]) {
       totals[categoryId] = {
+        user: user ? { ...user, name: user.name || "" } : undefined,
         name: categoryName,
         icon: categoryIcon,
         amount: 0,
@@ -740,19 +791,22 @@ export async function getUserTransactionsTotalsByCategory({
     }
   }
 
-  const result = Object.entries(totals).map(([id, { name, icon, amount }]) => ({
-    id,
-    name,
-    icon,
-    amount,
-    percentage:
-      amount < 0
-        ? totalExpenses
-          ? (Number(amount) / Number(totalExpenses)) * 100
-          : 0
-        : totalIncome
-          ? (Number(amount) / Number(totalIncome)) * 100
-          : 0,
-  }));
+  const result = Object.entries(totals).map(
+    ([id, { name, icon, amount, user }]) => ({
+      id,
+      name,
+      icon,
+      amount,
+      user,
+      percentage:
+        amount < 0
+          ? totalExpenses
+            ? (Number(amount) / Number(totalExpenses)) * 100
+            : 0
+          : totalIncome
+            ? (Number(amount) / Number(totalIncome)) * 100
+            : 0,
+    })
+  );
   return result;
 }

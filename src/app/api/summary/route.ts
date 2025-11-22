@@ -56,28 +56,30 @@ const fetchFinancialData = async (
 ) => {
   try {
     const query = `
-        SELECT
-        c."name" AS "currencyName",
-        c."exchangeRate" AS "exchangeRate",
-        c."id" AS "currencyId",
-        c."symbol" AS "currencySymbol",
-        SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END) AS "income",
-        SUM(CASE WHEN t.amount < 0 THEN t.amount ELSE 0 END) AS "expences"
-        FROM
-        "Transaction" t
-        INNER JOIN
-          "UserAccount" ua ON t."accountId" = ua.id
-        INNER JOIN
-          "Currency" c ON ua."currencyId" = c.id
-        WHERE
-          t."createdAt" BETWEEN $1 AND $2
-          AND ua."userId" = $3
-          ${accountId ? `AND "accountId" = $4` : ""}
-        GROUP BY
-          c."name",
-          c."exchangeRate",
-          c."id",
-          c."symbol"`;
+  SELECT
+    c."name" AS "currencyName",
+    c."exchangeRate" AS "exchangeRate",
+    c."id" AS "currencyId",
+    c."symbol" AS "currencySymbol",
+    SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END) AS "income",
+    SUM(CASE WHEN t.amount < 0 THEN t.amount ELSE 0 END) AS "expences"
+  FROM
+    "Transaction" t
+  INNER JOIN
+    "UserAccount" ua ON t."accountId" = ua.id
+  INNER JOIN
+    "UserAccountAccess" uaa ON ua.id = uaa."userAccountId"
+  INNER JOIN
+    "Currency" c ON ua."currencyId" = c.id
+  WHERE
+    t."createdAt" BETWEEN $1 AND $2
+    AND uaa."userId" = $3
+    ${accountId ? `AND t."accountId" = $4` : ""}
+  GROUP BY
+    c."name",
+    c."exchangeRate",
+    c."id",
+    c."symbol"`;
     const params = accountId
       ? [startDate, endDate, userId, accountId]
       : [startDate, endDate, userId];
@@ -150,33 +152,35 @@ const fetchSpendingByCategory = async (
   try {
     // Collect all transactions for the user within the date range and currencies for the account
     const query = `
-        SELECT
-          "Transaction"."categoryId",
-          "Category"."name" AS "categoryName",
-          COALESCE(SUM(-"Transaction"."amount"), 0) AS "amount",
-          "Currency"."id" AS "currencyId",
-          "Currency"."exchangeRate" AS "exchangeRate"
-        FROM
-          "Transaction"
-        LEFT JOIN
-          "Category" ON "Transaction"."categoryId" = "Category"."id"
-        INNER JOIN
-          "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
-        INNER JOIN
-          "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
-        WHERE
-          "Transaction"."createdAt" BETWEEN $1 AND $2
-          AND "Transaction"."amount" < 0
-          AND "UserAccount"."userId" = $3
-          ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
-        GROUP BY
-          "Transaction"."categoryId",
-          "Category"."name",
-          "Currency"."id",
-          "Currency"."exchangeRate"
-        ORDER BY
-          "amount" DESC;
-      `;
+  SELECT
+    "Transaction"."categoryId",
+    "Category"."name" AS "categoryName",
+    COALESCE(SUM(-"Transaction"."amount"), 0) AS "amount",
+    "Currency"."id" AS "currencyId",
+    "Currency"."exchangeRate" AS "exchangeRate"
+  FROM
+    "Transaction"
+  LEFT JOIN
+    "Category" ON "Transaction"."categoryId" = "Category"."id"
+  INNER JOIN
+    "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
+  INNER JOIN
+    "UserAccountAccess" ON "UserAccount"."id" = "UserAccountAccess"."userAccountId"
+  INNER JOIN
+    "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
+  WHERE
+    "Transaction"."createdAt" BETWEEN $1 AND $2
+    AND "Transaction"."amount" < 0
+    AND "UserAccountAccess"."userId" = $3
+    ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
+  GROUP BY
+    "Transaction"."categoryId",
+    "Category"."name",
+    "Currency"."id",
+    "Currency"."exchangeRate"
+  ORDER BY
+    "amount" DESC;
+`;
     const params = accountId
       ? [startDate, endDate, userId, accountId]
       : [startDate, endDate, userId];
@@ -244,29 +248,31 @@ const dailyData = async (
 ) => {
   try {
     const query = `
-        SELECT
-          "Transaction"."createdAt" AS "date",
-          COALESCE(SUM(CASE WHEN "Transaction"."amount" > 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "income",
-          COALESCE(SUM(CASE WHEN "Transaction"."amount" < 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "expences",
-          "Currency"."id" AS "currencyId",
-          "Currency"."exchangeRate" AS "exchangeRate"
-        FROM
-          "Transaction"
-        INNER JOIN
-          "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
-        INNER JOIN
-          "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
-        WHERE
-          "Transaction"."createdAt" BETWEEN $1 AND $2
-          AND "UserAccount"."userId" = $3
-          ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
-        GROUP BY
-          "date",
-          "Currency"."id",
-          "Currency"."exchangeRate"
-        ORDER BY
-          "date" ASC;
-      `;
+  SELECT
+    "Transaction"."createdAt" AS "date",
+    COALESCE(SUM(CASE WHEN "Transaction"."amount" > 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "income",
+    COALESCE(SUM(CASE WHEN "Transaction"."amount" < 0 THEN "Transaction"."amount" ELSE 0 END)::FLOAT, 0) AS "expences",
+    "Currency"."id" AS "currencyId",
+    "Currency"."exchangeRate" AS "exchangeRate"
+  FROM
+    "Transaction"
+  INNER JOIN
+    "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
+  INNER JOIN
+    "UserAccountAccess" ON "UserAccount"."id" = "UserAccountAccess"."userAccountId"
+  INNER JOIN
+    "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
+  WHERE
+    "Transaction"."createdAt" BETWEEN $1 AND $2
+    AND "UserAccountAccess"."userId" = $3
+    ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
+  GROUP BY
+    "date",
+    "Currency"."id",
+    "Currency"."exchangeRate"
+  ORDER BY
+    "date" ASC;
+`;
     const params = accountId
       ? [startDate, endDate, userId, accountId]
       : [startDate, endDate, userId];
@@ -337,35 +343,37 @@ const dailyExpences = async (
 ): Promise<Map<string, { [key: string]: string | number }>> => {
   try {
     const query = `
-        SELECT
-          "Transaction"."createdAt" AS "date",
-          "Category"."name" AS "categoryName",
-          "Category"."id" as "categoryId",
-          COALESCE(SUM(-"Transaction"."amount"), 0) AS "amount",
-          "Currency"."id" AS "currencyId",
-          "Currency"."exchangeRate" AS "exchangeRate"
-        FROM
-          "Transaction"
-        LEFT JOIN
-          "Category" ON "Transaction"."categoryId" = "Category"."id"
-        INNER JOIN
-          "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
-        INNER JOIN
-          "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
-        WHERE
-          "Transaction"."createdAt" BETWEEN $1 AND $2
-          AND "Transaction"."amount" < 0
-          AND "UserAccount"."userId" = $3
-          ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
-        GROUP BY
-          "date",
-          "Category"."name",
-          "Category"."id",
-          "Currency"."id",
-          "Currency"."exchangeRate"
-        ORDER BY
-          "date" ASC;
-      `;
+  SELECT
+    "Transaction"."createdAt" AS "date",
+    "Category"."name" AS "categoryName",
+    "Category"."id" as "categoryId",
+    COALESCE(SUM(-"Transaction"."amount"), 0) AS "amount",
+    "Currency"."id" AS "currencyId",
+    "Currency"."exchangeRate" AS "exchangeRate"
+  FROM
+    "Transaction"
+  LEFT JOIN
+    "Category" ON "Transaction"."categoryId" = "Category"."id"
+  INNER JOIN
+    "UserAccount" ON "Transaction"."accountId" = "UserAccount"."id"
+  INNER JOIN
+    "UserAccountAccess" ON "UserAccount"."id" = "UserAccountAccess"."userAccountId"
+  INNER JOIN
+    "Currency" ON "UserAccount"."currencyId" = "Currency"."id"
+  WHERE
+    "Transaction"."createdAt" BETWEEN $1 AND $2
+    AND "Transaction"."amount" < 0
+    AND "UserAccountAccess"."userId" = $3
+    ${accountId ? `AND "Transaction"."accountId" = $4` : ""}
+  GROUP BY
+    "date",
+    "Category"."name",
+    "Category"."id",
+    "Currency"."id",
+    "Currency"."exchangeRate"
+  ORDER BY
+    "date" ASC;
+`;
     const params = accountId
       ? [startDate, endDate, userId, accountId]
       : [startDate, endDate, userId];

@@ -263,7 +263,10 @@ export async function POST(req: NextRequest) {
         accountId: account.id,
         createdAt: convertUnixTimestampToISO(transaction.transacted_at),
       }));
-      await bulkCreateTransactions(newTransactionsPayload);
+      await bulkCreateTransactions(
+        newTransactionsPayload,
+        account.userAccess![0].userId
+      );
       await updateLastTransactionRefreshId(account.id, lastRefreshId!);
     }
   }

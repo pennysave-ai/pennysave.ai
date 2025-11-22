@@ -12,6 +12,7 @@ import {
   updateTransaction,
   getUserTransactions,
 } from "@/data/transactions";
+import { getUsersWithAccessToAccount } from "@/data/userAccounts";
 
 // Mock next/server
 jest.mock("next/server", () => ({
@@ -30,6 +31,7 @@ jest.mock("@/auth", () => ({
 }));
 jest.mock("@/schemas");
 jest.mock("@/data/transactions");
+jest.mock("@/data/userAccounts");
 
 jest.mock("@/lib/websocket", () => ({
   sendWebSocketMessage: jest.fn(),
@@ -157,6 +159,12 @@ describe("Transactions API", () => {
         createdAt: expect.any(Date),
         categoryId: "category-1",
       });
+      (getUsersWithAccessToAccount as jest.Mock).mockResolvedValue([
+        {
+          id: "user-123",
+          email: "user@example.com",
+        },
+      ]);
 
       const mockReq = {
         json: jest.fn().mockResolvedValue({

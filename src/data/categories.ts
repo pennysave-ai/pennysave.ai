@@ -15,6 +15,7 @@ export async function getUserCategories(userId?: string) {
       name: true,
       description: true,
       icon: true,
+      user: { select: { id: true, name: true, image: true } },
     },
   });
 }

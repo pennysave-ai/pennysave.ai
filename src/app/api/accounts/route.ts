@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
         symbol: account.currency.symbol,
         exchangeRate: account.currency.exchangeRate,
       },
+      users: account.userAccess.map(({ userId, role, user }) => ({
+        id: userId,
+        role,
+        name: user?.name,
+        image: user?.image,
+      })),
       last4: account.last4,
       institution: {
         name: account.institutionName,

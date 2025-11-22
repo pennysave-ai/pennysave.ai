@@ -8,9 +8,9 @@ import {
   deleteAccounts,
   getUserAccounts,
   getUserAccountsCount,
-  getUserAccountIdsByName,
   updateAccount,
 } from "@/data/accounts";
+import { user } from "@heroui/theme";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -23,6 +23,17 @@ jest.mock("@/db", () => ({
       update: jest.fn(),
       createMany: jest.fn(),
     },
+    userAccountAccess: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(async (queries) => {
+      // Execute each query in the transaction array
+      const results = [];
+      for (const query of queries) {
+        results.push(await query);
+      }
+      return results;
+    }),
   },
 }));
 
@@ -62,6 +73,7 @@ describe("accounts", () => {
       (db.userAccount.create as jest.Mock).mockResolvedValue({
         id: "mocked-uuid",
       });
+      (db.userAccountAccess.create as jest.Mock).mockResolvedValue({});
 
       const result = await createAccount(
         mockAccountData.name,
@@ -75,9 +87,15 @@ describe("accounts", () => {
         data: {
           id: "mocked-uuid",
           name: mockAccountData.name,
-          userId: mockAccountData.userId,
           currencyId: mockAccountData.currencyId,
           institutionName: mockAccountData.institutionName,
+        },
+      });
+      expect(db.userAccountAccess.create).toHaveBeenCalledWith({
+        data: {
+          userId: mockAccountData.userId,
+          userAccountId: "mocked-uuid",
+          role: "owner",
         },
       });
     });
@@ -123,7 +141,9 @@ describe("accounts", () => {
           id: {
             in: mockDeleteData.accountIds,
           },
-          userId: mockDeleteData.userId,
+          userAccess: {
+            some: { role: "owner", userId: mockDeleteData.userId },
+          },
         },
       });
     });
@@ -154,11 +174,25 @@ describe("accounts", () => {
           currency: {
             select: { id: true, name: true, symbol: true, exchangeRate: true },
           },
+          userAccess: {
+            select: {
+              role: true,
+              userId: true,
+              user: {
+                select: {
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
           institutionName: true,
           last4: true,
         },
         where: {
-          userId: mockUserId,
+          userAccess: {
+            some: { userId: mockUserId },
+          },
         },
       });
     });
@@ -175,37 +209,7 @@ describe("accounts", () => {
 
       expect(result).toEqual(mockCount);
       expect(db.userAccount.count).toHaveBeenCalledWith({
-        where: { userId: mockUserId },
-      });
-    });
-  });
-
-  describe("getUserAccountIdsByName", () => {
-    const mockUserId = "user-123";
-    const mockName = "Test Account";
-    const mockAccounts = [
-      { id: "account-1", name: "Test Account", institutionName: "Test Bank" },
-    ];
-
-    it("should return user account ids by name", async () => {
-      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccounts);
-
-      const result = await getUserAccountIdsByName(mockUserId, mockName);
-
-      expect(result).toEqual(mockAccounts);
-      expect(db.userAccount.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: mockUserId,
-          name: {
-            contains: mockName,
-            mode: "insensitive",
-          },
-        },
-        select: {
-          id: true,
-          name: true,
-          institutionName: true,
-        },
+        where: { userAccess: { some: { userId: mockUserId } } },
       });
     });
   });
@@ -232,7 +236,12 @@ describe("accounts", () => {
 
       expect(result).toEqual(mockAccountData);
       expect(db.userAccount.update).toHaveBeenCalledWith({
-        where: { id: mockAccountData.id, userId: mockAccountData.userId },
+        where: {
+          id: mockAccountData.id,
+          userAccess: {
+            some: { userId: mockAccountData.userId, role: "owner" },
+          },
+        },
         data: {
           name: mockAccountData.name,
           currencyId: mockAccountData.currencyId,
