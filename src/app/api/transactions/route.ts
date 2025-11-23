@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
     );
     return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
   } catch (e) {
+    console.error(e);
     return NextResponse.json(`Error while fetching transactions ${e}`, {
       status: 500,
     });
