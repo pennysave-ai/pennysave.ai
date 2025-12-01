@@ -334,7 +334,13 @@ export async function getUserAccounts(userId: string) {
     
     // If user is a viewer, only include account if owner has active subscription
     const owner = account.userAccess.find((access) => access.role === "owner");
-    return owner?.user?.hasActiveStripeSubscription === true;
+    
+    // If no owner found (edge case), exclude the account for safety
+    if (!owner) {
+      return false;
+    }
+    
+    return owner.user?.hasActiveStripeSubscription === true;
   });
 }
 

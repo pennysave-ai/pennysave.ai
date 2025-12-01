@@ -395,6 +395,37 @@ describe("accounts", () => {
       // Viewer should only see the first account (owner has active subscription)
       expect(result).toEqual([mockMixedAccounts[0]]);
     });
+
+    it("should exclude account for viewer when no owner is found", async () => {
+      const viewerUserId = "viewer-123";
+      const mockAccountWithoutOwner = [
+        {
+          id: "account-1",
+          name: "Account without owner",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccountWithoutOwner);
+
+      const result = await getUserAccounts(viewerUserId);
+
+      // Viewer should not see accounts without an owner for safety
+      expect(result).toEqual([]);
+    });
   });
 
   describe("getUserAccountsCount", () => {
