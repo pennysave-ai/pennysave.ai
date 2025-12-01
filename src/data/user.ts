@@ -152,3 +152,39 @@ export async function deleteProfile(userId: string) {
     },
   });
 }
+
+/** Update apple subscription
+ * @param {Object} data - User subscription details
+ * @param {string} data.userId - User ID
+ * @param {boolean} data.isActive - Subscription status
+ * @param {Date | null} data.expiresAt - Expiration date
+ * @param {Date | null} data.gracePeriodExpiresAt - Grace period expiration date
+ * @param {string} data.status - Subscription status ("active", "past_due", "grace_period", "canceled")
+ * @param {String} data.country - Country code
+ * @returns Promise<User>
+ */
+export async function updateAppleSubscription({
+  userId,
+  expiresAt,
+  gracePeriodExpiresAt,
+  status,
+  country,
+}: {
+  userId: string;
+  expiresAt: Date | null;
+  gracePeriodExpiresAt?: Date | null;
+  status?: string;
+  country: string;
+}) {
+  return db.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      appleSubscriptionExpiresAt: expiresAt,
+      appleSubscriptionGracePeriodExpiresAt: gracePeriodExpiresAt,
+      appleSubscriptionStatus: status || "active",
+      appleSubscriptionCountry: country,
+    },
+  });
+}

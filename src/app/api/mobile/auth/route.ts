@@ -144,7 +144,11 @@ export async function POST(req: NextRequest) {
           name: user.name ?? "", // Ensure name is always a string
           hasActiveStripeSubscription:
             user.hasActiveStripeSubscription ?? false, // Ensure boolean
-          sendMonthlyReport: user?.sendMonthlyReport ?? false, // Ensure boolean
+          sendMonthlyReport: user?.sendMonthlyReport ?? false,
+          subscription: {
+            status: "inactive",
+            expiresAt: undefined,
+          },
         });
         return NextResponse.json({
           accessToken: tokens.accessToken,
@@ -166,6 +170,10 @@ export async function POST(req: NextRequest) {
       hasActiveStripeSubscription:
         existingUser.hasActiveStripeSubscription ?? false,
       sendMonthlyReport: existingUser?.sendMonthlyReport ?? false,
+      subscription: {
+        status: "inactive",
+        expiresAt: undefined,
+      },
     });
 
     const { accessToken, refreshToken } = tokens;

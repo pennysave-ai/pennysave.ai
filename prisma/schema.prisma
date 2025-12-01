@@ -99,6 +99,10 @@ model User {
   stripeSubscriptionCancelAtDate DateTime?
   stripePriceId String?
   hasActiveStripeSubscription Boolean? @default(false)
+  appleSubscriptionExpiresAt DateTime?
+  appleSubscriptionCountry String?
+  appleSubscriptionGracePeriodExpiresAt DateTime?
+  appleSubscriptionStatus String?   @default("inactive") // "active", "past_due", "grace_period", "canceled", "grace_period_expired","active_until_expiration", "trial"
   report Report[]
   sendMonthlyReport Boolean? @default(false)
   gdprConsent DateTime?

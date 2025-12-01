@@ -18,6 +18,19 @@ interface UserData {
   name: string;
   image?: string | null;
   role: string;
+  subscription: {
+    status:
+      | "active"
+      | "inactive"
+      | "trial"
+      | "past_due"
+      | "grace_period"
+      | "canceled"
+      | "grace_period_expired"
+      | "active_until_expiration";
+    expiresAt?: Date | null;
+    gracePeriodExpiresAt?: Date | null;
+  };
   hasActiveStripeSubscription: boolean;
   stripePriceId?: string | null;
   stripeSubscriptionEndDate?: Date | null;
@@ -44,7 +57,11 @@ interface JWTPayload {
   version: number;
   type: "access" | "refresh";
   jti: string;
-  activeSubscription: boolean;
+  subscription: {
+    isActive: boolean;
+    isTrial: boolean;
+    isRenewing: boolean;
+  };
   priceId?: string | null;
   expires?: string;
   cancelAt?: string;
@@ -82,6 +99,11 @@ export class JWTTokenManager {
       jti: crypto.randomBytes(16).toString("hex"),
 
       // Subscription data
+      subscription: {
+        status: user.subscription.status,
+        expiresAt: user.subscription.expiresAt,
+        gracePeriodExpiresAt: user.subscription.gracePeriodExpiresAt,
+      },
       activeSubscription: user.hasActiveStripeSubscription,
       priceId: user.stripePriceId,
       expires: user.stripeSubscriptionEndDate?.toISOString(),
@@ -178,6 +200,9 @@ export class JWTTokenManager {
               image: true,
               role: true,
               hasActiveStripeSubscription: true,
+              appleSubscriptionStatus: true,
+              appleSubscriptionExpiresAt: true,
+              appleSubscriptionGracePeriodExpiresAt: true,
               stripePriceId: true,
               stripeSubscriptionEndDate: true,
               stripeSubscriptionCancelAtDate: true,
@@ -255,6 +280,15 @@ export class JWTTokenManager {
         name: storedToken.user.name ?? "",
         image: storedToken.user.image,
         role: storedToken.user.role,
+        subscription: {
+          status:
+            (storedToken.user
+              .appleSubscriptionStatus as UserData["subscription"]["status"]) ||
+            "inactive",
+          expiresAt: storedToken.user.appleSubscriptionExpiresAt,
+          gracePeriodExpiresAt:
+            storedToken.user.appleSubscriptionGracePeriodExpiresAt,
+        },
         hasActiveStripeSubscription:
           storedToken.user.hasActiveStripeSubscription ?? false,
         stripePriceId: storedToken.user.stripePriceId,
