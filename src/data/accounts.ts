@@ -350,9 +350,8 @@ export async function getUserAccounts(userId: string) {
  * @returns {Promise} - Promise object represents the user accounts number
  */
 export async function getUserAccountsCount(userId: string) {
-  return await db.userAccount.count({
-    where: {
-      userAccess: { some: { userId } },
-    },
-  });
+  // Use getUserAccounts to get filtered accounts and return the count
+  // This ensures the count matches the filtering logic (e.g., for viewers)
+  const accounts = await getUserAccounts(userId);
+  return accounts.length;
 }

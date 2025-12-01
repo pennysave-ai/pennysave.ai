@@ -432,15 +432,117 @@ describe("accounts", () => {
     const mockUserId = "user-123";
     const mockCount = 5;
 
-    it("should return user accounts number", async () => {
-      (db.userAccount.count as jest.Mock).mockResolvedValue(mockCount);
+    it("should return user accounts number for owner", async () => {
+      const mockAccounts = [
+        {
+          id: "account-1",
+          name: "Test Account 1",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: mockUserId,
+              role: "owner",
+              user: {
+                name: "Test User",
+                image: "https://example.com/image.jpg",
+                hasActiveStripeSubscription: true,
+              },
+            },
+          ],
+        },
+        {
+          id: "account-2",
+          name: "Test Account 2",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "5678",
+          userAccess: [
+            {
+              userId: mockUserId,
+              role: "owner",
+              user: {
+                name: "Test User",
+                image: "https://example.com/image.jpg",
+                hasActiveStripeSubscription: true,
+              },
+            },
+          ],
+        },
+      ];
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccounts);
 
       const result = await getUserAccountsCount(mockUserId);
 
-      expect(result).toEqual(mockCount);
-      expect(db.userAccount.count).toHaveBeenCalledWith({
-        where: { userAccess: { some: { userId: mockUserId } } },
-      });
+      expect(result).toEqual(2);
+    });
+
+    it("should return filtered count for viewer", async () => {
+      const viewerUserId = "viewer-123";
+      const mockMixedAccounts = [
+        {
+          id: "account-1",
+          name: "Account with subscription",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "owner-123",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: "https://example.com/owner.jpg",
+                hasActiveStripeSubscription: true,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+        {
+          id: "account-2",
+          name: "Account without subscription",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "5678",
+          userAccess: [
+            {
+              userId: "owner-456",
+              role: "owner",
+              user: {
+                name: "Another Owner",
+                image: "https://example.com/owner2.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockMixedAccounts);
+
+      const result = await getUserAccountsCount(viewerUserId);
+
+      // Viewer should only count 1 account (the one with owner having active subscription)
+      expect(result).toEqual(1);
     });
   });
 
