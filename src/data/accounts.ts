@@ -309,7 +309,7 @@ export async function getUserAccounts(userId: string) {
         select: {
           role: true,
           userId: true,
-          user: { select: { name: true, image: true } },
+          user: { select: { name: true, image: true, hasActiveStripeSubscription: true } },
         },
       },
       institutionName: true,
@@ -321,7 +321,21 @@ export async function getUserAccounts(userId: string) {
       },
     },
   });
-  return accounts;
+
+  // Filter accounts for viewers: only show accounts where owner has active subscription
+  return accounts.filter((account) => {
+    // Find the current user's role for this specific account
+    const currentUserAccess = account.userAccess.find((access) => access.userId === userId);
+    
+    // If user is not a viewer, include the account
+    if (currentUserAccess?.role !== "viewer") {
+      return true;
+    }
+    
+    // If user is a viewer, only include account if owner has active subscription
+    const owner = account.userAccess.find((access) => access.role === "owner");
+    return owner?.user?.hasActiveStripeSubscription === true;
+  });
 }
 
 /**

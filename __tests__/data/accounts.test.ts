@@ -155,13 +155,24 @@ describe("accounts", () => {
       {
         id: "account-1",
         name: "Test Account",
-        currency: { id: "USD", name: "US Dollar", symbol: "$" },
+        currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
         institutionName: "Test Bank",
         last4: "1234",
+        userAccess: [
+          {
+            userId: "user-123",
+            role: "owner",
+            user: {
+              name: "Test User",
+              image: "https://example.com/image.jpg",
+              hasActiveStripeSubscription: true,
+            },
+          },
+        ],
       },
     ];
 
-    it("should return user accounts", async () => {
+    it("should return user accounts for owner", async () => {
       (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccounts);
 
       const result = await getUserAccounts(mockUserId);
@@ -182,6 +193,7 @@ describe("accounts", () => {
                 select: {
                   name: true,
                   image: true,
+                  hasActiveStripeSubscription: true,
                 },
               },
             },
@@ -195,6 +207,193 @@ describe("accounts", () => {
           },
         },
       });
+    });
+
+    it("should filter accounts for viewer when owner has no active subscription", async () => {
+      const viewerUserId = "viewer-123";
+      const mockAccountsWithoutSubscription = [
+        {
+          id: "account-1",
+          name: "Test Account",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "owner-123",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: "https://example.com/owner.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccountsWithoutSubscription);
+
+      const result = await getUserAccounts(viewerUserId);
+
+      // Viewer should not see accounts where owner has no active subscription
+      expect(result).toEqual([]);
+    });
+
+    it("should return accounts for viewer when owner has active subscription", async () => {
+      const viewerUserId = "viewer-123";
+      const mockAccountsWithSubscription = [
+        {
+          id: "account-1",
+          name: "Test Account",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "owner-123",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: "https://example.com/owner.jpg",
+                hasActiveStripeSubscription: true,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccountsWithSubscription);
+
+      const result = await getUserAccounts(viewerUserId);
+
+      // Viewer should see accounts where owner has active subscription
+      expect(result).toEqual(mockAccountsWithSubscription);
+    });
+
+    it("should return all accounts for editor regardless of owner subscription", async () => {
+      const editorUserId = "editor-123";
+      const mockAccountsForEditor = [
+        {
+          id: "account-1",
+          name: "Test Account",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "owner-123",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: "https://example.com/owner.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+            {
+              userId: editorUserId,
+              role: "editor",
+              user: {
+                name: "Editor User",
+                image: "https://example.com/editor.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccountsForEditor);
+
+      const result = await getUserAccounts(editorUserId);
+
+      // Editor should see all accounts regardless of owner's subscription status
+      expect(result).toEqual(mockAccountsForEditor);
+    });
+
+    it("should handle mixed accounts for viewer correctly", async () => {
+      const viewerUserId = "viewer-123";
+      const mockMixedAccounts = [
+        {
+          id: "account-1",
+          name: "Account with subscription",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "owner-123",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: "https://example.com/owner.jpg",
+                hasActiveStripeSubscription: true,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+        {
+          id: "account-2",
+          name: "Account without subscription",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          last4: "5678",
+          userAccess: [
+            {
+              userId: "owner-456",
+              role: "owner",
+              user: {
+                name: "Another Owner",
+                image: "https://example.com/owner2.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+            {
+              userId: viewerUserId,
+              role: "viewer",
+              user: {
+                name: "Viewer User",
+                image: "https://example.com/viewer.jpg",
+                hasActiveStripeSubscription: false,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockMixedAccounts);
+
+      const result = await getUserAccounts(viewerUserId);
+
+      // Viewer should only see the first account (owner has active subscription)
+      expect(result).toEqual([mockMixedAccounts[0]]);
     });
   });
 
