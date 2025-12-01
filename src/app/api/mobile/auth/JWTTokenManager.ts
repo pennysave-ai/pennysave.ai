@@ -29,6 +29,7 @@ interface UserData {
       | "grace_period_expired"
       | "active_until_expiration";
     expiresAt?: Date | null;
+    gracePeriodExpiresAt?: Date | null;
   };
   hasActiveStripeSubscription: boolean;
   stripePriceId?: string | null;
@@ -101,6 +102,7 @@ export class JWTTokenManager {
       subscription: {
         status: user.subscription.status,
         expiresAt: user.subscription.expiresAt,
+        gracePeriodExpiresAt: user.subscription.gracePeriodExpiresAt,
       },
       activeSubscription: user.hasActiveStripeSubscription,
       priceId: user.stripePriceId,
@@ -200,6 +202,7 @@ export class JWTTokenManager {
               hasActiveStripeSubscription: true,
               appleSubscriptionStatus: true,
               appleSubscriptionExpiresAt: true,
+              appleSubscriptionGracePeriodExpiresAt: true,
               stripePriceId: true,
               stripeSubscriptionEndDate: true,
               stripeSubscriptionCancelAtDate: true,
@@ -283,6 +286,8 @@ export class JWTTokenManager {
               .appleSubscriptionStatus as UserData["subscription"]["status"]) ||
             "inactive",
           expiresAt: storedToken.user.appleSubscriptionExpiresAt,
+          gracePeriodExpiresAt:
+            storedToken.user.appleSubscriptionGracePeriodExpiresAt,
         },
         hasActiveStripeSubscription:
           storedToken.user.hasActiveStripeSubscription ?? false,

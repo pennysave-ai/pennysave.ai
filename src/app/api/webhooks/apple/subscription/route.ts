@@ -15,8 +15,26 @@ enum NotificationType {
   DID_CHANGE_RENEWAL_PREF = "DID_CHANGE_RENEWAL_PREF",
 }
 
+// Interface for decoded JWT payload
+interface DecodedJWT {
+  notificationType?: string;
+  subtype?: string;
+  data?: {
+    signedTransactionInfo?: string;
+    signedRenewalInfo?: string;
+  };
+  appAccountToken?: string;
+  expiresDate?: string;
+  offerType?: number;
+  storefront?: string;
+  gracePeriodExpiresDate?: string;
+  isInBillingRetryPeriod?: boolean;
+  autoRenewStatus?: number;
+  [key: string]: unknown;
+}
+
 // Decode JWT without verification
-function decodeJWT(token: string): any {
+function decodeJWT(token: string): DecodedJWT | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) {
@@ -87,14 +105,10 @@ export async function POST(req: Request) {
     const isInBillingRetry = renewalInfo?.isInBillingRetryPeriod === true;
     const country = transactionInfo?.storefront || "US";
 
-    console.log("📝 Processing notification:", {
-      notificationType,
-      subtype,
-      userId,
-      expiresDate,
-      gracePeriodExpiresDate,
-      isInBillingRetry,
-    });
+    if (!userId) {
+      console.error("❌ No userId (appAccountToken) in transaction info");
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    }
 
     // Handle different notification types
     switch (notificationType) {
