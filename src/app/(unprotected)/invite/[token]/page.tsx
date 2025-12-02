@@ -1,9 +1,9 @@
 export default async function InvitePage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
-  const { token } = params;
+  const { token } = await params;
   return (
     <html lang="en">
       <head>
