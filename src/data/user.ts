@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/db";
 import bcrypt from "bcryptjs";
 
@@ -187,4 +185,54 @@ export async function updateAppleSubscription({
       appleSubscriptionCountry: country,
     },
   });
+}
+
+/** Update user device token
+ * @param {string} userId - User ID
+ * @param {string | null} deviceToken - Device token
+ * @returns Promise<User>
+ */
+export async function updateUserDeviceToken(
+  userId: string,
+  deviceToken: string | null
+) {
+  return db.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      deviceToken,
+    },
+  });
+}
+
+/**
+ * Get device token by user ID
+ * @param {string} userId - User ID
+ * @returns {Promise<string | null>} - Device token or null
+ */
+export async function getDeviceTokenByUserId(userId: string) {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      deviceToken: true,
+    },
+  });
+  return user?.deviceToken || null;
+}
+
+/** Determine if user has active Apple subscription
+ * @param {String} status - Apple subscription status
+ * @returns {Boolean} - True if user has active subscription, false otherwise
+ */
+export function hasActiveAppleSubscription(status: string): boolean {
+  return [
+    "active",
+    "active_until_expiration",
+    "trial",
+    "grace_period",
+    "past_due",
+  ].includes(status);
 }

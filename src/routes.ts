@@ -15,8 +15,10 @@ export const publicRoutes = [
   "/api/webhooks/monthly-reports/create",
   "/api/webhooks/monthly-reports/send",
   "/api/webhooks/monthly-reports/process-user",
+  "/api/webhooks/apple/subscription",
   "/api/mobile/auth",
   "/api/mobile/refresh",
+  "/.well-known/apple-app-site-association",
 ];
 
 /**

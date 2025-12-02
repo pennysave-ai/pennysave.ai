@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "M39MX7B326.ai.pennysave.app",
+        "paths": [
+          "/invite/*"
+        ]
+      }
+    ]
+  }
+}

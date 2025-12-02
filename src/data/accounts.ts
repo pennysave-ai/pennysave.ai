@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { v4 as uuid } from "uuid";
 import { accountSchema } from "@/schemas";
 import { stripe } from "@/data/stripe";
+import { hasActiveAppleSubscription } from "@/data/user";
 
 export type CreateAccount = {
   name: string;
@@ -309,7 +310,9 @@ export async function getUserAccounts(userId: string) {
         select: {
           role: true,
           userId: true,
-          user: { select: { name: true, image: true } },
+          user: {
+            select: { name: true, image: true, appleSubscriptionStatus: true },
+          },
         },
       },
       institutionName: true,
@@ -321,7 +324,31 @@ export async function getUserAccounts(userId: string) {
       },
     },
   });
-  return accounts;
+
+  // Filter accounts where:
+  // 1. User is the owner (always include, regardless of subscription)
+  // 2. User is NOT the owner, but the owner has an active subscription
+  const filteredAccounts = accounts.filter((account) => {
+    const userAccess = account.userAccess.find(
+      (access) => access.userId === userId
+    );
+
+    // If user is the owner, always include
+    if (userAccess?.role === "owner") return true;
+
+    // If user is not the owner, check if owner has active subscription
+    const ownerAccess = account.userAccess.find(
+      (access) => access.role === "owner"
+    );
+
+    if (!ownerAccess) return false;
+
+    const ownerSubscriptionStatus =
+      ownerAccess.user.appleSubscriptionStatus || "inactive";
+
+    return hasActiveAppleSubscription(ownerSubscriptionStatus);
+  });
+  return filteredAccounts;
 }
 
 /**
@@ -330,9 +357,77 @@ export async function getUserAccounts(userId: string) {
  * @returns {Promise} - Promise object represents the user accounts number
  */
 export async function getUserAccountsCount(userId: string) {
-  return await db.userAccount.count({
+  // Get all accounts with access details
+  const accounts = await db.userAccount.findMany({
     where: {
-      userAccess: { some: { userId } },
+      userAccess: {
+        some: { userId },
+      },
+    },
+    select: {
+      id: true,
+      userAccess: {
+        select: {
+          role: true,
+          userId: true,
+          user: {
+            select: { appleSubscriptionStatus: true },
+          },
+        },
+      },
     },
   });
+
+  // Filter accounts where user is owner OR owner has active subscription
+  const filteredAccounts = accounts.filter((account) => {
+    const userAccess = account.userAccess.find(
+      (access) => access.userId === userId
+    );
+
+    // If user is the owner, always include
+    if (userAccess?.role === "owner") return true;
+
+    // If user is not owner, check if owner has active subscription
+    const ownerAccess = account.userAccess.find(
+      (access) => access.role === "owner"
+    );
+
+    if (!ownerAccess) return false;
+
+    const ownerSubscriptionStatus =
+      ownerAccess.user.appleSubscriptionStatus || "inactive";
+
+    return hasActiveAppleSubscription(ownerSubscriptionStatus);
+  });
+
+  return filteredAccounts.length;
+}
+
+/** Get UserIDs with whom the current user shared his accounts
+ * @param {String} userId - User ID
+ * @returns {Promise<String[]>} - List of User IDs
+ */
+export async function getSharedAccountUserIds(
+  userId: string
+): Promise<string[]> {
+  const result = await db.userAccountAccess.findMany({
+    where: {
+      userAccount: {
+        userAccess: {
+          some: {
+            userId,
+            role: "owner",
+          },
+        },
+      },
+      userId: {
+        not: userId,
+      },
+    },
+    select: {
+      userId: true,
+    },
+    distinct: ["userId"],
+  });
+  return result.map((item) => item.userId);
 }
