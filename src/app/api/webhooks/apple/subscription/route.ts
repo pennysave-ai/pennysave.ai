@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { updateAppleSubscription } from "@/data/user";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
+import { getSharedAccountUserIds } from "@/data/accounts";
+// import { APNService, APNNotificationType } from "@/lib/apn";
+
 // Apple notification types
 enum NotificationType {
   SUBSCRIBED = "SUBSCRIBED",
@@ -46,6 +49,17 @@ function decodeJWT(token: string): DecodedJWT | null {
     console.error("Error decoding JWT:", error);
     return null;
   }
+}
+
+async function notifySharedUsers(ownerUserId: string) {
+  const sharedUserIds = await getSharedAccountUserIds(ownerUserId);
+  await sendWebSocketMessage(
+    {
+      type: BroadcastType.OWNERS_APPLE_SUBSCRIPTION_ENDED,
+      recipients: sharedUserIds,
+    },
+    ownerUserId
+  );
 }
 
 export async function POST(req: Request) {
@@ -109,7 +123,6 @@ export async function POST(req: Request) {
       console.error("❌ No userId (appAccountToken) in transaction info");
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
-
     // Handle different notification types
     switch (notificationType) {
       case NotificationType.SUBSCRIBED:
@@ -189,6 +202,13 @@ export async function POST(req: Request) {
           status: "grace_period_expired",
           country,
         });
+
+        // Sent Websocket notification to users
+        // Since Silent APNs are not working when app is closed in iOS
+        // it does not make sense to send silent APNs
+        // so we have pulled logic on app side to refresh accounts every 5 minutes if needed
+        // se we send websocket message just in case if application is life and can receive it
+        await notifySharedUsers(userId);
         break;
 
       case NotificationType.EXPIRED:
@@ -207,6 +227,8 @@ export async function POST(req: Request) {
           status,
           country,
         });
+        // Notify shared account users
+        await notifySharedUsers(userId);
         break;
 
       case NotificationType.REFUND:
@@ -220,6 +242,8 @@ export async function POST(req: Request) {
           status: "canceled",
           country,
         });
+        // Notify shared account users
+        await notifySharedUsers(userId);
         break;
 
       case NotificationType.DID_CHANGE_RENEWAL_STATUS:
@@ -234,7 +258,7 @@ export async function POST(req: Request) {
           await updateAppleSubscription({
             userId,
             expiresAt: expiresDate,
-            status: "active_until_expiration", // But marked as cancelled (won't renew)
+            status: "active_until_expiration",
             country,
           });
         } else {
@@ -264,7 +288,7 @@ export async function POST(req: Request) {
         console.log("⚠️ Unhandled notification type:", notificationType);
     }
 
-    // Notify user via WebSocket
+    // Notify owner that subscription was updated
     await sendWebSocketMessage(
       {
         type: BroadcastType.APPLE_SUBSCRIPTION_UPDATED,

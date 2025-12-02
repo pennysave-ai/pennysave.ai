@@ -11,6 +11,7 @@ import {
 import { createTransactionSchema } from "@/schemas";
 import { checkBudgetExceedance } from "@/data/budgets";
 import { sendBudgetExceedNotification } from "@/lib/mail";
+import { hasActiveAppleSubscription } from "@/data/user";
 
 export type Transaction = {
   id: string;
@@ -542,6 +543,15 @@ export async function getUserTransactions(
           currency: {
             select: { symbol: true, name: true, id: true, exchangeRate: true },
           },
+          userAccess: {
+            select: {
+              userId: true,
+              role: true,
+              user: {
+                select: { appleSubscriptionStatus: true },
+              },
+            },
+          },
         },
       },
       category: {
@@ -587,14 +597,24 @@ export async function getUserTransactions(
     take: pageSize,
   });
 
-  // Map institutionName to institution: { name }
-  return transactions.map((transaction) => ({
-    ...transaction,
-    account: {
-      ...transaction.account,
-      institution: { name: transaction.account.institutionName },
-    },
-  }));
+  // Filter by subscription status
+  const filteredTransactions = filterTransactionsBySubscription(
+    transactions,
+    userId
+  );
+
+  // Map institutionName to institution: { name } and exclude userAccess
+  return filteredTransactions.map((transaction) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { userAccess, ...accountWithoutUserAccess } = transaction.account;
+    return {
+      ...transaction,
+      account: {
+        ...accountWithoutUserAccess,
+        institution: { name: transaction.account.institutionName },
+      },
+    };
+  });
 }
 
 /**
@@ -809,4 +829,46 @@ export async function getUserTransactionsTotalsByCategory({
     })
   );
   return result;
+}
+
+/**
+ * Filter transactions based on account ownership and subscription status
+ * Only include transactions where:
+ * 1. User is the owner (always include)
+ * 2. User is NOT the owner, but the owner has an active subscription
+ * @param {Transaction[]} transactions - Array of transactions
+ * @param {string} userId - Current user ID
+ * @returns {Promise<Transaction[]>} - Filtered transactions
+ */
+export function filterTransactionsBySubscription<
+  T extends {
+    account: {
+      userAccess: Array<{
+        userId: string;
+        role: string | null;
+        user: { appleSubscriptionStatus: string };
+      }>;
+    };
+  },
+>(transactions: T[], userId: string): T[] {
+  return transactions.filter((transaction) => {
+    const userAccess = transaction.account.userAccess.find(
+      (access) => access.userId === userId
+    );
+
+    // If user is the owner, always include
+    if (userAccess?.role === "owner") return true;
+
+    // If user is not the owner, check if owner has active subscription
+    const ownerAccess = transaction.account.userAccess.find(
+      (access) => access.role === "owner"
+    );
+
+    if (!ownerAccess) return false;
+
+    const ownerSubscriptionStatus =
+      ownerAccess.user.appleSubscriptionStatus || "inactive";
+
+    return hasActiveAppleSubscription(ownerSubscriptionStatus);
+  });
 }

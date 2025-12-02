@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") 
 }
 
 // A model to store the 3rd party account details for authentication
@@ -102,13 +102,15 @@ model User {
   appleSubscriptionExpiresAt DateTime?
   appleSubscriptionCountry String?
   appleSubscriptionGracePeriodExpiresAt DateTime?
-  appleSubscriptionStatus String?   @default("inactive") // "active", "past_due", "grace_period", "canceled", "grace_period_expired","active_until_expiration", "trial"
+  appleSubscriptionStatus String   @default("inactive") // "active", "past_due", "grace_period", "canceled", "grace_period_expired","active_until_expiration", "trial"
   report Report[]
   sendMonthlyReport Boolean? @default(false)
   gdprConsent DateTime?
   mobileTokens  MobileJWTToken[]
   accountAccess UserAccountAccess[]
   createdTransactions Transaction[]
+  deviceToken String? @unique
+  createdInvites AccountInvite[]
 }
 
 model Transaction {
@@ -171,8 +173,6 @@ model PasswordResetToken {
 // A model to store User Accounts
 model UserAccount {
   id         String   @id @default(uuid())
-  // userId     String
-  // user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   institutionName String?
   stripeAccountId String?
@@ -185,6 +185,7 @@ model UserAccount {
   currency   Currency  @relation(fields: [currencyId], references: [id])
   budgets    BudgetAccount[]
   userAccess UserAccountAccess[] // Many-to-many relation
+  invites    AccountInvite[]
   @@unique([id])
 }
 
@@ -194,10 +195,26 @@ model UserAccountAccess {
   user          User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   userAccountId String
   userAccount   UserAccount   @relation(fields: [userAccountId], references: [id], onDelete: Cascade)
-  role          String?       // "owner", "viewer", "editor"
+  role          String?       // "owner", "collaborator", "editor"
   createdAt     DateTime      @default(now())
   
   @@id([userId, userAccountId])
+}
+
+// Table to store shared account invites
+model AccountInvite {
+  id          String      @id @default(uuid())
+  token       String      @unique
+  accountId   String
+  account     UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime    @default(now())
+  
+  @@index([token])
+  @@index([accountId])
 }
 
 // Join table for Budget and UserAccount

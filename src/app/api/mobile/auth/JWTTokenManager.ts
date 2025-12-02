@@ -21,13 +21,13 @@ interface UserData {
   subscription: {
     status:
       | "active"
-      | "inactive"
       | "trial"
+      | "active_until_expiration"
       | "past_due"
       | "grace_period"
+      | "inactive"
       | "canceled"
-      | "grace_period_expired"
-      | "active_until_expiration";
+      | "grace_period_expired";
     expiresAt?: Date | null;
     gracePeriodExpiresAt?: Date | null;
   };

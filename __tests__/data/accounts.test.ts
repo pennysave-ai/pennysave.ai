@@ -155,9 +155,26 @@ describe("accounts", () => {
       {
         id: "account-1",
         name: "Test Account",
-        currency: { id: "USD", name: "US Dollar", symbol: "$" },
+        currency: {
+          id: "USD",
+          name: "US Dollar",
+          symbol: "$",
+          exchangeRate: 1, // Add exchangeRate
+        },
         institutionName: "Test Bank",
         last4: "1234",
+        userAccess: [
+          // Add userAccess array
+          {
+            userId: "user-123",
+            role: "owner",
+            user: {
+              name: "Test User",
+              image: null,
+              appleSubscriptionStatus: "active",
+            },
+          },
+        ],
       },
     ];
 
@@ -182,6 +199,7 @@ describe("accounts", () => {
                 select: {
                   name: true,
                   image: true,
+                  appleSubscriptionStatus: true,
                 },
               },
             },
@@ -196,20 +214,169 @@ describe("accounts", () => {
         },
       });
     });
+
+    it("should filter out shared accounts with inactive owner subscriptions", async () => {
+      const accountsWithMixedOwners = [
+        {
+          id: "account-1",
+          name: "Owned Account",
+          currency: {
+            id: "USD",
+            name: "US Dollar",
+            symbol: "$",
+            exchangeRate: 1,
+          },
+          institutionName: "Test Bank",
+          last4: "1234",
+          userAccess: [
+            {
+              userId: "user-123",
+              role: "owner",
+              user: {
+                name: "Test User",
+                image: null,
+                appleSubscriptionStatus: "inactive",
+              },
+            },
+          ],
+        },
+        {
+          id: "account-2",
+          name: "Shared Account - Active Owner",
+          currency: {
+            id: "USD",
+            name: "US Dollar",
+            symbol: "$",
+            exchangeRate: 1,
+          },
+          institutionName: "Test Bank",
+          last4: "5678",
+          userAccess: [
+            {
+              userId: "owner-456",
+              role: "owner",
+              user: {
+                name: "Owner User",
+                image: null,
+                appleSubscriptionStatus: "active",
+              },
+            },
+            {
+              userId: "user-123",
+              role: "viewer",
+              user: {
+                name: "Test User",
+                image: null,
+                appleSubscriptionStatus: null,
+              },
+            },
+          ],
+        },
+        {
+          id: "account-3",
+          name: "Shared Account - Inactive Owner",
+          currency: {
+            id: "USD",
+            name: "US Dollar",
+            symbol: "$",
+            exchangeRate: 1,
+          },
+          institutionName: "Test Bank",
+          last4: "9012",
+          userAccess: [
+            {
+              userId: "owner-789",
+              role: "owner",
+              user: {
+                name: "Inactive Owner",
+                image: null,
+                appleSubscriptionStatus: "inactive",
+              },
+            },
+            {
+              userId: "user-123",
+              role: "viewer",
+              user: {
+                name: "Test User",
+                image: null,
+                appleSubscriptionStatus: null,
+              },
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(
+        accountsWithMixedOwners
+      );
+
+      const result = await getUserAccounts(mockUserId);
+
+      // Should return:
+      // - account-1 (user is owner, even with inactive subscription)
+      // - account-2 (shared, owner has active subscription)
+      // Should NOT return:
+      // - account-3 (shared, owner has inactive subscription)
+      expect(result).toHaveLength(2);
+      expect(result.map((a) => a.id)).toEqual(["account-1", "account-2"]);
+    });
   });
 
   describe("getUserAccountsCount", () => {
     const mockUserId = "user-123";
-    const mockCount = 5;
+
+    const mockAccounts = [
+      {
+        id: "account-1",
+        userAccess: [
+          {
+            userId: "user-123",
+            role: "owner",
+            user: {
+              appleSubscriptionStatus: "active",
+            },
+          },
+        ],
+      },
+      {
+        id: "account-2",
+        userAccess: [
+          {
+            userId: "user-123",
+            role: "owner",
+            user: {
+              appleSubscriptionStatus: "active",
+            },
+          },
+        ],
+      },
+    ];
 
     it("should return user accounts number", async () => {
-      (db.userAccount.count as jest.Mock).mockResolvedValue(mockCount);
+      // Mock findMany instead of count since the function now filters accounts
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccounts);
 
       const result = await getUserAccountsCount(mockUserId);
 
-      expect(result).toEqual(mockCount);
-      expect(db.userAccount.count).toHaveBeenCalledWith({
-        where: { userAccess: { some: { userId: mockUserId } } },
+      expect(result).toEqual(2);
+      expect(db.userAccount.findMany).toHaveBeenCalledWith({
+        where: {
+          userAccess: {
+            some: { userId: mockUserId },
+          },
+        },
+        select: {
+          id: true,
+          userAccess: {
+            select: {
+              role: true,
+              userId: true,
+              user: {
+                select: { appleSubscriptionStatus: true },
+              },
+            },
+          },
+        },
       });
     });
   });
