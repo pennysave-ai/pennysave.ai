@@ -19,7 +19,6 @@ export const publicRoutes = [
   "/api/mobile/auth",
   "/api/mobile/refresh",
   "/.well-known/apple-app-site-association",
-  "/ivite/[token]",
 ];
 
 /**

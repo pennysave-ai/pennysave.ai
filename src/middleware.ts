@@ -24,13 +24,16 @@ export default auth((req) => {
   // This is used to get current path in server side rendered pages
   response.headers.set("x-current-path", nextUrl.pathname);
 
+  // Check if path starts with /invite/ (dynamic invite routes)
+  const isInviteRoute = nextUrl.pathname.startsWith("/invite/");
+
   // Allow ALL API routes to pass through (auth handled in individual routes)
   if (nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
-  // Allow API routes to be accessed without authentication
-  if (isApiAuthRoute) {
+  // Allow API routes and Invite routes to be accessed without authentication
+  if (isApiAuthRoute || isInviteRoute) {
     return response;
   }
   if (isAuthRoute) {
