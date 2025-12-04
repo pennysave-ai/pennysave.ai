@@ -8,6 +8,7 @@ import {
   userHasAccessToAccount,
   createUserAccountAccess,
 } from "@/data/userAccounts";
+import { client } from "@/lib/redis";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
 
     // Mark invite as used
     await markAccountInviteAsUsed(invite.token);
+    // Clear cached invite
+    await client.del(`invite:active:${invite.accountId}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

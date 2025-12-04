@@ -310,3 +310,20 @@ export const getStartDateForFrequency = (
       throw new Error("Invalid budget frequency");
   }
 };
+
+/**
+ * Get clientIp and ipPrefix from headers
+ * @param headersList
+ * @returns {{clientIp: string, ipPrefix: string}}
+ */
+export const getClientIpAndPrefix = (
+  headersList: Headers
+): { clientIp: string; ipPrefix: string } => {
+  const clientIp =
+    headersList.get("x-forwarded-for")?.split(",")[0].trim() ||
+    headersList.get("x-real-ip") ||
+    headersList.get("cf-connecting-ip") || // Cloudflare
+    "unknown";
+  const ipPrefix = clientIp.split(".").slice(0, 3).join(".");
+  return { clientIp, ipPrefix };
+};
