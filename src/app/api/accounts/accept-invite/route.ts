@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     const invite = await getAccountInviteByToken(token);
 
     if (!invite || invite.expiresAt < new Date() || invite.usedAt) {
+      console.log("Invalid or expired invite for token:", token);
       return NextResponse.json(
         { error: "Invalid or expired invite" },
         { status: 400 }
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (existingAccess) {
+      console.log("User already has access for token:", token);
       return NextResponse.json(
         { error: "Already have access" },
         { status: 400 }
