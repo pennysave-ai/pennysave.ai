@@ -2,6 +2,9 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Forcefully disable reactStrictMode on development
+  // to prevent UseEffect running twice which closing websocket connection
+  reactStrictMode: process.env.NODE_ENV !== "development",
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", "redis"],
   },
