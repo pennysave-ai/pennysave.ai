@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { token } = await req.json();
-
+    console.log("Accepting invite with token:", token);
     if (!token || typeof token !== "string") {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
