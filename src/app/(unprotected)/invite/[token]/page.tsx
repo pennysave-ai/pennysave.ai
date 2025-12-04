@@ -24,12 +24,9 @@ async function trackInviteVisit(token: string) {
       score,
       value: JSON.stringify(visitorInfo),
     });
-    // Expire old invites
-    await client.zremrangebyscore(
-      "invites:pending",
-      0,
-      Date.now() - 24 * 60 * 60 * 1000 // 24 hours ago
-    );
+    // Expire old invites (use uppercase method name)
+    const threshold = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
+    await client.zRemRangeByScore("invites:pending", 0, threshold);
   } catch (error) {
     console.error("❌ Error tracking invite visit:", error);
   }
