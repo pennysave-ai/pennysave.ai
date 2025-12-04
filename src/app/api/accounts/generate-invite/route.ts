@@ -7,8 +7,8 @@ import { client } from "@/lib/redis";
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(req);
-
+    // const user = await getAuthenticatedUser(req);
+    const user = await req.json();
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
