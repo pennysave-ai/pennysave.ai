@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import jwkToPem from "jwk-to-pem";
 import { getUserByEmail, createUserWithOauth } from "@/data/user";
 import { createOauthAccount } from "@/data/oauthAccounts";
-import { JWTTokenManager } from "./JWTTokenManager";
+import { JWTTokenManager, type SubscriptionStatus } from "./JWTTokenManager";
 
 // Helper to verify Apple identity token
 async function verifyAppleToken(identityToken: string) {
@@ -171,8 +171,8 @@ export async function POST(req: NextRequest) {
         existingUser.hasActiveStripeSubscription ?? false,
       sendMonthlyReport: existingUser?.sendMonthlyReport ?? false,
       subscription: {
-        status: "inactive",
-        expiresAt: undefined,
+        status: existingUser.appleSubscriptionStatus as SubscriptionStatus,
+        expiresAt: existingUser.appleSubscriptionExpiresAt,
       },
     });
 
