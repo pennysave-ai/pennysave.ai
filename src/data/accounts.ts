@@ -311,7 +311,12 @@ export async function getUserAccounts(userId: string) {
           role: true,
           userId: true,
           user: {
-            select: { name: true, image: true, appleSubscriptionStatus: true },
+            select: {
+              name: true,
+              image: true,
+              appleSubscriptionStatus: true,
+              email: true,
+            },
           },
         },
       },
