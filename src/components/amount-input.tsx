@@ -3,6 +3,7 @@ import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
 import CurrencyInput from "react-currency-input-field";
 import { cn } from "@heroui/theme";
+import { ReactElement } from "react";
 
 interface AmountInputProps {
   value: string;
@@ -21,7 +22,7 @@ export default function AmountInput({
   isInvalid,
   errorMessage,
   prefix,
-}: AmountInputProps): JSX.Element {
+}: AmountInputProps): ReactElement {
   const parsedValue = parseFloat(value);
   const isIncome = parsedValue > 0;
   const isExpence = parsedValue < 0;
