@@ -120,6 +120,7 @@ describe("Accounts API", () => {
                 role: "owner",
                 name: "Test User",
                 image: "https://example.com/image.jpg",
+                email: "test@example.com",
               },
             ],
           },
