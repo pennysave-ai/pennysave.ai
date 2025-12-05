@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
         role,
         name: user?.name,
         image: user?.image,
+        email: user?.email,
       })),
       last4: account.last4,
       institution: {
