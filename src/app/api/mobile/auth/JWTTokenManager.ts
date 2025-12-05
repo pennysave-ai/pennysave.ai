@@ -12,6 +12,16 @@ const REFRESH_TOKEN_EXPIRES_IN = parseInt(
   process.env.MOBILE_REFRESH_TOKEN_EXPIRES_IN || "1209600"
 ); // 14 days
 export const AUDIENCE = "mobile-app";
+export enum SubscriptionStatus {
+  Active = "active",
+  Trial = "trial",
+  ActiveUntilExpiration = "active_until_expiration",
+  PastDue = "past_due",
+  GracePeriod = "grace_period",
+  Inactive = "inactive",
+  Canceled = "canceled",
+  GracePeriodExpired = "grace_period_expired",
+}
 interface UserData {
   id: string;
   email: string;
