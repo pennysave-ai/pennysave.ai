@@ -1,6 +1,6 @@
-import type { SVGProps } from "react";
+import type { SVGProps, ReactElement } from "react";
 
-export const ArrowUp = (props: SVGProps<SVGSVGElement>): JSX.Element => (
+export const ArrowUp = (props: SVGProps<SVGSVGElement>): ReactElement => (
   <svg
     aria-hidden="true"
     fill="none"

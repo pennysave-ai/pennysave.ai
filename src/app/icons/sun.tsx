@@ -1,6 +1,6 @@
-import { SVGProps } from "react";
+import { SVGProps, ReactElement } from "react";
 
-export function Sun(props: SVGProps<SVGSVGElement>): JSX.Element {
+export function Sun(props: SVGProps<SVGSVGElement>): ReactElement {
   return (
     <svg
       aria-hidden="true"

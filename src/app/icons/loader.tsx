@@ -1,6 +1,6 @@
-import { SVGProps } from "react";
+import { SVGProps, ReactElement } from "react";
 
-export function Loader(props: SVGProps<SVGSVGElement>): JSX.Element {
+export function Loader(props: SVGProps<SVGSVGElement>): ReactElement {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" {...props}>
       <rect

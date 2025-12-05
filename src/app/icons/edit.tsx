@@ -1,6 +1,6 @@
-import type { SVGProps } from "react";
+import type { SVGProps, ReactElement } from "react";
 
-export const Edit = (props: SVGProps<SVGSVGElement>): JSX.Element => (
+export const Edit = (props: SVGProps<SVGSVGElement>): ReactElement => (
   <svg
     aria-hidden="true"
     fill="none"
