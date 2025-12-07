@@ -436,3 +436,18 @@ export async function getSharedAccountUserIds(
   });
   return result.map((item) => item.userId);
 }
+
+/**
+ * Remove user from account
+ * @param {String} accountId - Account ID
+ * @param {String} userId - User ID
+ * @returns {Promise} - Promise object represents the removal operation
+ */
+export async function removeUserFromAccount(accountId: string, userId: string) {
+  return await db.userAccountAccess.deleteMany({
+    where: {
+      userAccountId: accountId,
+      userId,
+    },
+  });
+}
