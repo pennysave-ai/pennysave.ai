@@ -350,9 +350,26 @@ export async function getUserAccounts(userId: string) {
 
     const ownerSubscriptionStatus =
       ownerAccess.user.appleSubscriptionStatus || "inactive";
-
     return hasActiveAppleSubscription(ownerSubscriptionStatus);
   });
+  // If owner does not have subscription, filter userAccess to only include self in userAccess array
+  filteredAccounts.forEach((account: { userAccess: any[] }) => {
+    const userAccess = account.userAccess.find(
+      (access) => access.userId === userId
+    );
+    const ownerAccess = account.userAccess.find(
+      (access) => access.role === "owner"
+    );
+    const ownerSubscriptionStatus =
+      ownerAccess?.user.appleSubscriptionStatus || "inactive";
+    if (
+      userAccess?.role === "owner" &&
+      !hasActiveAppleSubscription(ownerSubscriptionStatus)
+    ) {
+      account.userAccess = [userAccess!];
+    }
+  });
+
   return filteredAccounts;
 }
 
