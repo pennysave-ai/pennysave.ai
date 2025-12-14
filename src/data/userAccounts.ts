@@ -5,7 +5,9 @@ import { db } from "@/db";
  * @param {String} accountId - Account ID
  * @returns {Promise<String[]>} - Array of user IDs
  */
-export async function getUsersWithAccessToAccount(accountId: string) {
+export async function getUsersWithAccessToAccount(
+  accountId: string
+): Promise<string[]> {
   const userAccesses = await db.userAccountAccess.findMany({
     where: { userAccountId: accountId },
     select: { userId: true },
