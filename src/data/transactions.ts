@@ -342,6 +342,14 @@ export async function createTransaction(
         category: {
           select: { id: true, name: true, icon: true },
         },
+        createdByUser: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            email: true,
+          },
+        },
       },
     });
 
