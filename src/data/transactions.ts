@@ -347,7 +347,6 @@ export async function createTransaction(
             id: true,
             name: true,
             image: true,
-            email: true,
           },
         },
       },
@@ -444,7 +443,7 @@ export async function updateTransaction(
   email: string,
   userName: string,
   data: Omit<UpdateTransaction, "id">
-) {
+): Promise<Transaction> {
   const { categoryId, amount, accountId } = data;
   if (!!categoryId && amount < 0 && userId) {
     const budgetExceedance = await checkBudgetExceedance(
@@ -458,7 +457,7 @@ export async function updateTransaction(
       sendBudgetExceedNotification(email, budget, userName);
     }
   }
-  return await db.transaction.update({
+  const transaction = await db.transaction.update({
     where: {
       id,
       account: {
@@ -466,7 +465,49 @@ export async function updateTransaction(
       },
     },
     data,
+    select: {
+      id: true,
+      amount: true,
+      payee: true,
+      notes: true,
+      createdAt: true,
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
+      account: {
+        select: {
+          id: true,
+          name: true,
+          last4: true,
+          institutionName: true,
+          currency: {
+            select: {
+              symbol: true,
+              name: true,
+              id: true,
+              exchangeRate: true,
+            },
+          },
+        },
+      },
+      category: {
+        select: { id: true, name: true, icon: true },
+      },
+    },
   });
+
+  // Map institutionName to institution: { name }
+  return {
+    ...transaction,
+    account: {
+      ...transaction.account,
+      institution: { name: transaction.account.institutionName },
+    },
+  };
 }
 
 /**
@@ -683,11 +724,15 @@ export async function bulkCreateTransactions(
  * @param {String} userId - User ID
  * @returns {Promise} - Promise Array of transaction months
  */
-export async function getUserTransactionMonths(userId: string) {
+export async function getUserTransactionMonths(
+  userId: string,
+  accountId: string
+) {
   const transactions = await db.transaction.findMany({
     where: {
       account: {
         userAccess: { some: { userId } },
+        ...(accountId === "all" ? {} : { id: accountId }),
       },
     },
     select: {
