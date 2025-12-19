@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json("Unautorized", { status: 401 });
     }
     const { imageBase64, categories, account } = await req.json();
-    console.log("Account", account);
+
     if (!imageBase64) {
       return NextResponse.json({ error: "Image required" }, { status: 400 });
     }
