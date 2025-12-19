@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       },
       user.id
     );
-    return NextResponse.json({ data: newTransaction });
+    return NextResponse.json({ ...newTransaction });
   } catch {
     return NextResponse.json("Error while creating a new transaction", {
       status: 500,
@@ -193,7 +193,7 @@ export async function PATCH(req: NextRequest) {
       }
     );
 
-    return NextResponse.json({ data: transaction });
+    return NextResponse.json({ ...transaction });
   } catch {
     return NextResponse.json("Error while updating transaction", {
       status: 500,

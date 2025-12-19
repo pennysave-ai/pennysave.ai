@@ -182,15 +182,13 @@ describe("Transactions API", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({
-        data: {
-          id: "transaction-1",
-          amount: 100,
-          payee: "Payee 1",
-          notes: "Notes 1",
-          accountId: "account-1",
-          createdAt: expect.any(Date),
-          categoryId: "category-1",
-        },
+        id: "transaction-1",
+        amount: 100,
+        payee: "Payee 1",
+        notes: "Notes 1",
+        accountId: "account-1",
+        createdAt: expect.any(Date),
+        categoryId: "category-1",
       });
     });
 
@@ -323,15 +321,13 @@ describe("Transactions API", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({
-        data: {
-          id: "transaction-1",
-          amount: 100,
-          payee: "Payee 1",
-          notes: "Notes 1",
-          accountId: "account-1",
-          createdAt: expect.any(Date),
-          categoryId: "category-1",
-        },
+        id: "transaction-1",
+        amount: 100,
+        payee: "Payee 1",
+        notes: "Notes 1",
+        accountId: "account-1",
+        createdAt: expect.any(Date),
+        categoryId: "category-1",
       });
     });
 

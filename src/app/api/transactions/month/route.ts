@@ -9,8 +9,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    const transactionMonths = await getUserTransactionMonths(user.id);
-    // add current month
+    const { searchParams } = new URL(req.url);
+    const accountId = searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "Account ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const transactionMonths = await getUserTransactionMonths(
+      user.id,
+      accountId
+    );
     const currentMonth = format(new Date(), "yyyy-MM");
     if (!transactionMonths.includes(currentMonth)) {
       transactionMonths.push(currentMonth);

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
                   type: "text",
                   text: `Parse this receipt and return ONLY this JSON structure (no markdown, no code blocks):
 {
-  "payee": "merchant name",
+  "payee": string,
   "total": number,
   "datetime": "YYYY-MM-DD HH:MM:SS",
   "potential_category": "${availableCategories.join('" | "')}",
@@ -170,7 +170,6 @@ export async function POST(req: NextRequest) {
             id: account?.id || "",
             name: account?.name || "",
             last4: null,
-            institutionName: "",
             currency: {
               symbol: account?.currency?.symbol || "",
               name: account?.currency?.name || "",
@@ -189,7 +188,6 @@ export async function POST(req: NextRequest) {
           createdByUser: {
             id: user.id!,
             name: user.name || "",
-            email: user.email || "",
             image: user.image || null,
           },
         },
