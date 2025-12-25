@@ -92,6 +92,7 @@ model User {
   sessions      Session[]
   category      Category[]
   budgets       Budget[]
+  feedbacks    Feedback[]
   password      String?
   role          UserRole @default(USER)
   stripeCustomerId String?
@@ -271,4 +272,25 @@ model Report {
   sentAt        DateTime?
   
   @@index([userId, createdAt])
+}
+
+// Model to store user feedback
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String   @db.Text
+  
+  // Device info as separate columns
+  deviceModel      String?  @db.VarChar(50)
+  deviceOsVersion  String?  @db.VarChar(10)
+  deviceAppVersion String?  @db.VarChar(10)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
 }

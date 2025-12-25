@@ -219,3 +219,24 @@ export const getTotalSchema = z.object({
   accountId: z.string().uuid().optional(),
   currencyId: z.string().uuid().optional(),
 });
+
+export const feedbackSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(5000, "Message cannot exceed 5000 characters")
+    .transform((val) => {
+      // Remove potentially harmful characters
+      return val
+        .replace(/[<>]/g, "") // Remove HTML brackets
+        .replace(/[\x00-\x1F\x7F]/g, ""); // Remove control characters
+    }),
+  deviceInfo: z
+    .object({
+      model: z.string().max(50).optional(),
+      osVersion: z.string().max(10).optional(),
+      appVersion: z.string().max(10).optional(),
+    })
+    .optional(),
+});
