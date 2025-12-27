@@ -221,7 +221,13 @@ export async function POST(req: NextRequest) {
         },
       },
       user.id
-    );
+    ).catch((error) => {
+      // Silently catch the error - don't let it bubble up
+      console.error(
+        "WebSocket notification failed (non-critical):",
+        error.message
+      );
+    });
     return NextResponse.json({ success: true, data: newTransaction });
   } catch (error) {
     console.error("OCR Error:", error);
