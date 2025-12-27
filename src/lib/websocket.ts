@@ -35,6 +35,18 @@ export async function sendWebSocketMessage(
     console.log("WebSocket message sent:", message, userId);
   } catch (error) {
     console.error("Error sending WebSocket message:", error);
-    throw new Error("Failed to send WebSocket message");
+    if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        console.error("WebSocket timeout: Request took longer than 5 seconds");
+      } else if (error.message.includes("ETIMEDOUT")) {
+        console.error("WebSocket timeout: Network connection timeout");
+      } else if (error.message.includes("ECONNRESET")) {
+        console.error("WebSocket error: Connection reset by server");
+      } else {
+        console.error("WebSocket error:", error.message);
+      }
+    }
+    throw error;
+    // throw new Error("Failed to send WebSocket message");
   }
 }
