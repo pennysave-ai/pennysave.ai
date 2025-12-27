@@ -15,6 +15,12 @@ export async function sendWebSocketMessage(
 ) {
   const token = generateWebsocketToken(userId, "websocket-service");
   try {
+    console.log("Sending WebSocket message:", message, userId);
+    console.log("Using token:", token);
+    console.log(
+      "WebSocket URL:",
+      `https://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}/api/broadcast`
+    );
     await fetch(
       `https://${process.env.NEXT_PUBLIC_WEBSOCKET_URL}/api/broadcast`,
       {
