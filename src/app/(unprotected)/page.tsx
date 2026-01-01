@@ -4,7 +4,6 @@ import { Suspense, lazy } from "react";
 import { Image } from "@heroui/image";
 import dashboardLight_1800 from "@/app/public/dashboard_light_1800.webp";
 import dashboardLight_900 from "@/app/public/dashboard_light_900.webp";
-import hero from "@/app/public/hero.svg";
 
 const Features = lazy(() => import("@/components/features"));
 const HowTo = lazy(() => import("@/components/how-to"));
@@ -47,7 +46,7 @@ export default async function HomePage() {
             width={1152}
             height={790}
             className="w-full max-w-[1152px] !h-auto object-contain"
-            srcSet={`${dashboardLight_900.src} 1280w, ${hero.src} 1400w`}
+            srcSet={`${dashboardLight_900.src} 1280w, ${dashboardLight_1800.src} 1400w`}
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1400px"
           />
           <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
