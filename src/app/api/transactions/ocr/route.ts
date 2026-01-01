@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
 
     // If Amount or Category id is missing, we will not create the transaction
     if (!amount || !payload?.categoryId) {
+      console.log("OCR Incomplete data, not creating transaction:", payload);
       return NextResponse.json({
         success: true,
         data: {
@@ -228,6 +229,7 @@ export async function POST(req: NextRequest) {
         error.message
       );
     });
+    console.log("OCR Transaction created:", newTransaction);
     return NextResponse.json({ success: true, data: newTransaction });
   } catch (error) {
     console.error("OCR Error:", error);
