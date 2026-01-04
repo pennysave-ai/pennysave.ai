@@ -18,13 +18,11 @@ import { Icon } from "@iconify/react";
 import { cn } from "@heroui/theme";
 
 import { useGetAccounts } from "@/features/accounts/hooks";
-import {
-  CreateTransaction,
-  useBulkCreateTransactions,
-} from "@/features/transactions/hooks";
+import { useBulkCreateTransactions } from "@/features/transactions/hooks";
 import { convertAmountToMilliunits } from "@/lib/utils";
 import HeaderDropdown from "./header-dropdown";
 import RowSteps from "./row-steps";
+import { NewTransaction } from "@/types";
 
 type CSVData = { [key: string]: string }[];
 
@@ -62,7 +60,7 @@ export default function UploadTransactions({
   const { data: accountsData } = useGetAccounts();
   const createTransactions = useBulkCreateTransactions();
   const [selectedAccount, setSelectedAccount] = useState("");
-  const [mappedData, setMappedData] = useState<CreateTransaction[]>([]);
+  const [mappedData, setMappedData] = useState<NewTransaction[]>([]);
   const body = data.slice(0, 20);
 
   const onChange = useCallback(
@@ -160,7 +158,7 @@ export default function UploadTransactions({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (
-    mappedData: CreateTransaction[],
+    mappedData: NewTransaction[],
     selectedAccount: string
   ) => {
     const dataWithAccount = [];
@@ -180,7 +178,7 @@ export default function UploadTransactions({
   };
 
   const uploadData = useCallback(
-    async (mappedData: CreateTransaction[], selectedAccount: string) => {
+    async (mappedData: NewTransaction[], selectedAccount: string) => {
       try {
         await handleUpload(mappedData, selectedAccount);
         setCurrentStep(3);
