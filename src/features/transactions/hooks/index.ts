@@ -6,6 +6,7 @@ import {
   type Query,
   type QueryClient,
 } from "@tanstack/react-query";
+import { NewTransaction } from "@/types";
 
 const onSuccess = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
@@ -15,19 +16,10 @@ const onSuccess = (queryClient: QueryClient) => {
   });
 };
 
-export type CreateTransaction = {
-  amount: number;
-  payee?: string;
-  notes?: string;
-  accountId: string;
-  categoryId?: string | null;
-  createdAt: string;
-};
-
 export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: async (transaction: CreateTransaction) => {
+    mutationFn: async (transaction: NewTransaction) => {
       const response = await fetch("/api/transactions", {
         method: "POST",
         body: JSON.stringify(transaction),
@@ -48,7 +40,7 @@ export const useCreateTransaction = () => {
 export const useBulkCreateTransactions = () => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: async (transactions: CreateTransaction[]) => {
+    mutationFn: async (transactions: NewTransaction[]) => {
       const response = await fetch("/api/transactions/bulk-create", {
         method: "POST",
         body: JSON.stringify(transactions),

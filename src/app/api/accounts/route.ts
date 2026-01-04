@@ -16,29 +16,8 @@ export async function GET(req: NextRequest) {
   }
   try {
     const data = await getUserAccounts(user.id);
-    const accounts = data.map((account) => ({
-      id: account.id,
-      name: account.name,
-      currency: {
-        id: account.currency.id,
-        name: account.currency.name,
-        symbol: account.currency.symbol,
-        exchangeRate: account.currency.exchangeRate,
-      },
-      users: account.userAccess.map(({ userId, role, user }) => ({
-        id: userId,
-        role,
-        name: user?.name,
-        image: user?.image,
-        email: user?.email ?? null,
-      })),
-      last4: account.last4,
-      institution: {
-        name: account.institutionName,
-      },
-    }));
     const count = await getUserAccountsCount(user.id);
-    return NextResponse.json({ data: accounts, meta: { count } });
+    return NextResponse.json({ data, meta: { count } });
   } catch {
     return NextResponse.json("Error while fetching accounts", { status: 500 });
   }
@@ -60,7 +39,7 @@ export async function POST(req: NextRequest) {
       body.currencyId,
       body.institutionName
     );
-    return NextResponse.json({ data: newAccount });
+    return NextResponse.json(newAccount);
   } catch {
     return NextResponse.json("Error while creating account", { status: 500 });
   }
@@ -111,7 +90,7 @@ export async function PATCH(req: NextRequest) {
       user.id,
       institutionName
     );
-    return NextResponse.json({ data: account });
+    return NextResponse.json(account);
   } catch {
     return NextResponse.json("Error while updating account", { status: 500 });
   }

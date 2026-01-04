@@ -4,46 +4,34 @@ import { format, endOfDay } from "date-fns";
 import { db } from "@/db";
 import { formatCurrency } from "@/lib/utils";
 import { convertAmountFromMilliunits, convertCurrency } from "@/lib/utils";
-import {
-  CreateTransaction,
-  UpdateTransaction,
-} from "@/features/transactions/hooks";
+import { UpdateTransaction } from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
 import { checkBudgetExceedance } from "@/data/budgets";
 import { sendBudgetExceedNotification } from "@/lib/mail";
 import { hasActiveAppleSubscription } from "@/data/user";
+import { Transaction, NewTransaction } from "@/types";
+import { accountSelect } from "@/data/accounts";
+import { categorySelect } from "@/data/categories";
 
-export type Transaction = {
-  id: string;
-  amount: number;
-  payee: string | null;
-  notes: string | null;
-  createdAt: Date;
+export const transactionSelect = {
+  id: true,
+  amount: true,
+  payee: true,
+  notes: true,
+  createdAt: true,
   account: {
-    id: string;
-    name: string;
-    last4: string | null;
-    institution: {
-      name: string | null;
-    };
-    currency: {
-      symbol: string;
-      name: string;
-      id: string;
-      exchangeRate: number;
-    };
-    userAccess?: Array<{
-      userId: string;
-      user: {
-        email: string | null;
-      };
-    }>;
-  };
+    select: accountSelect,
+  },
   category: {
-    id: string;
-    name: string;
-    icon: string | null;
-  } | null;
+    select: categorySelect,
+  },
+  createdByUser: {
+    select: {
+      id: true,
+      name: true,
+      image: true,
+    },
+  },
 };
 
 /**
@@ -56,59 +44,9 @@ export async function getPrevMonthSummaries(
   usersIds: string[],
   startDate: string,
   endDate: string
-) {
-  type Transaction = {
-    category?: {
-      name: string;
-    } | null;
-    payee: string | null;
-    notes: string | null;
-    account: {
-      name: string;
-      currency: {
-        id: string;
-        symbol: string;
-        name: string;
-        exchangeRate: number;
-      };
-      userAccess: Array<{
-        userId: string;
-        user: {
-          email: string | null;
-        };
-      }>;
-    };
-    amount: number;
-  };
-
+): Promise<any[]> {
   const transactionsData = await db.transaction.findMany({
-    select: {
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      account: {
-        select: {
-          name: true,
-          userAccess: {
-            select: {
-              userId: true,
-              user: {
-                select: { email: true },
-              },
-            },
-          },
-          institutionName: true,
-          currency: {
-            select: { name: true, id: true, exchangeRate: true, symbol: true },
-          },
-          balance: true,
-        },
-      },
-      category: {
-        select: { name: true },
-      },
-    },
+    select: transactionSelect,
     where: {
       account: {
         userAccess: { some: { userId: { in: usersIds } } },
@@ -132,7 +70,20 @@ export async function getPrevMonthSummaries(
         if (!transactionsByUser.has(access.userId)) {
           transactionsByUser.set(access.userId, []);
         }
-        transactionsByUser.get(access.userId)!.push(transaction);
+        transactionsByUser.get(access.userId)!.push({
+          ...transaction,
+          payee: transaction.payee || "",
+          account: {
+            ...transaction.account,
+            institution: { name: transaction.account.institutionName || "" },
+            users: transaction.account.userAccess.map((ua) => ({
+              id: ua.userId,
+              name: ua.user.name,
+              email: ua.user.email,
+              image: ua.user.image,
+            })),
+          },
+        });
       }
     }
   }
@@ -143,9 +94,9 @@ export async function getPrevMonthSummaries(
   for (const [userId, userTransactions] of transactionsByUser) {
     // Get user email from first transaction
     const userEmail =
-      userTransactions[0]?.account.userAccess.find(
-        (access) => access.userId === userId
-      )?.user.email || "";
+      userTransactions[0]?.account.users.find(
+        (user: { id: string }) => user.id === userId
+      )?.email || "";
 
     const transactionsByCurrency: Record<
       string,
@@ -267,7 +218,7 @@ export async function getPrevMonthSummaries(
  * @throws {Error} - If the transaction creation fails
  */
 export async function createTransaction(
-  payload: CreateTransaction,
+  payload: NewTransaction,
   email: string,
   userName: string,
   userId: string
@@ -317,48 +268,23 @@ export async function createTransaction(
         createdAt,
         createdBy: userId,
       },
-      select: {
-        id: true,
-        amount: true,
-        payee: true,
-        notes: true,
-        createdAt: true,
-        account: {
-          select: {
-            id: true,
-            name: true,
-            last4: true,
-            institutionName: true,
-            currency: {
-              select: {
-                symbol: true,
-                name: true,
-                id: true,
-                exchangeRate: true,
-              },
-            },
-          },
-        },
-        category: {
-          select: { id: true, name: true, icon: true },
-        },
-        createdByUser: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-      },
+      select: transactionSelect,
     });
 
     // Map institutionName to institution: { name }
+    const { userAccess, ...accountWithoutUserAccess } = transaction.account;
     return {
       ...transaction,
       account: {
-        ...transaction.account,
-        institution: { name: transaction.account.institutionName },
+        ...accountWithoutUserAccess,
+        institution: { name: transaction.account.institutionName || "" },
+        users: userAccess.map((access) => ({
+          id: access.userId,
+          name: access.user.name,
+          image: access.user.image,
+        })),
       },
+      payee: transaction.payee || "",
     };
   } catch (error) {
     console.error("Error creating transaction:", error);
@@ -465,48 +391,23 @@ export async function updateTransaction(
       },
     },
     data,
-    select: {
-      id: true,
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      createdByUser: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
-      account: {
-        select: {
-          id: true,
-          name: true,
-          last4: true,
-          institutionName: true,
-          currency: {
-            select: {
-              symbol: true,
-              name: true,
-              id: true,
-              exchangeRate: true,
-            },
-          },
-        },
-      },
-      category: {
-        select: { id: true, name: true, icon: true },
-      },
-    },
+    select: transactionSelect,
   });
 
   // Map institutionName to institution: { name }
+  const { userAccess, ...accountWithoutUserAccess } = transaction.account;
   return {
     ...transaction,
     account: {
-      ...transaction.account,
-      institution: { name: transaction.account.institutionName },
+      ...accountWithoutUserAccess,
+      institution: { name: transaction.account.institutionName || "" },
+      users: userAccess.map((access) => ({
+        id: access.userId,
+        name: access.user.name,
+        image: access.user.image,
+      })),
     },
+    payee: transaction.payee || "",
   };
 }
 
@@ -568,43 +469,26 @@ export async function getUserTransactions(
       sortOrder as unknown as NestedSortObject
     );
   };
+
   const dbSortBy = getGetNestedSortBy(sortBy, sortOrder);
   const transactions = await db.transaction.findMany({
     select: {
-      id: true,
-      amount: true,
-      payee: true,
-      notes: true,
-      createdAt: true,
-      createdByUser: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
+      ...transactionSelect,
       account: {
         select: {
-          id: true,
-          name: true,
-          last4: true,
-          institutionName: true,
-          currency: {
-            select: { symbol: true, name: true, id: true, exchangeRate: true },
-          },
+          ...accountSelect,
           userAccess: {
             select: {
-              userId: true,
-              role: true,
+              ...accountSelect.userAccess.select,
               user: {
-                select: { appleSubscriptionStatus: true },
+                select: {
+                  ...accountSelect.userAccess.select.user.select,
+                  appleSubscriptionStatus: true,
+                },
               },
             },
           },
         },
-      },
-      category: {
-        select: { id: true, name: true, icon: true },
       },
     },
     where: {
@@ -658,9 +542,15 @@ export async function getUserTransactions(
     const { userAccess, ...accountWithoutUserAccess } = transaction.account;
     return {
       ...transaction,
+      payee: transaction.payee || "",
       account: {
         ...accountWithoutUserAccess,
-        institution: { name: transaction.account.institutionName },
+        institution: { name: transaction.account.institutionName || "" },
+        users: userAccess.map((access) => ({
+          id: access.userId,
+          name: access.user.name,
+          image: access.user.image,
+        })),
       },
     };
   });
@@ -702,7 +592,7 @@ export async function getUserTransactionById(id: string, userId: string) {
  * @returns {Promise} - Promise object represents the created transactions
  */
 export async function bulkCreateTransactions(
-  transactions: CreateTransaction[],
+  transactions: NewTransaction[],
   userId: string
 ) {
   return await db.transaction.createMany({
@@ -785,14 +675,18 @@ export async function getUserTransactionsTotalsByCategory({
     },
     select: {
       amount: true,
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
       category: {
         select: {
           id: true,
           name: true,
           icon: true,
-          user: {
-            select: { id: true, name: true, image: true },
-          },
         },
       },
       account: {
@@ -845,9 +739,9 @@ export async function getUserTransactionsTotalsByCategory({
   // Aggregate amounts by category calculate persentaces and totals
   for (const transaction of convertedTransactions) {
     const categoryId = transaction.category?.id || "uncategorized";
-    const categoryName = transaction.category?.name || "Uncategorized";
+    const categoryName = transaction.category?.name || "";
     const categoryIcon = transaction.category?.icon || null;
-    const user = transaction.category?.user;
+    const user = transaction.createdByUser;
     if (!totals[categoryId]) {
       totals[categoryId] = {
         user: user ? { ...user, name: user.name || "" } : undefined,

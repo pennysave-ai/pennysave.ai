@@ -61,31 +61,13 @@ export async function GET(req: NextRequest) {
         ? parseInt(validationResult.data?.pageSize, 10)
         : 10
     );
-
-    // Convert nulls to empty strings
-    const sanitizedTransactions = transactions.map((transaction) => ({
-      ...transaction,
-      payee: transaction.payee ?? "",
-      notes: transaction.notes ?? "",
-      account: {
-        id: transaction.account.id,
-        name: transaction.account.name,
-        currency: {
-          ...transaction.account.currency,
-        },
-        last4: transaction.account.last4,
-        institution: {
-          name: transaction.account.institution.name,
-        },
-      },
-    }));
     const count = await getUserTransactionsCountByAccount(
       user.id!,
       startDate,
       endOfDay(endDate),
       validationResult.data?.globalFilter?.trim()
     );
-    return NextResponse.json({ data: sanitizedTransactions, meta: { count } });
+    return NextResponse.json({ data: transactions, meta: { count } });
   } catch (e) {
     console.error(e);
     return NextResponse.json(`Error while fetching transactions ${e}`, {
@@ -128,7 +110,7 @@ export async function POST(req: NextRequest) {
       },
       user.id
     );
-    return NextResponse.json({ ...newTransaction });
+    return NextResponse.json(newTransaction);
   } catch {
     return NextResponse.json("Error while creating a new transaction", {
       status: 500,

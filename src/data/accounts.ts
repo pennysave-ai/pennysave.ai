@@ -3,11 +3,35 @@ import { v4 as uuid } from "uuid";
 import { accountSchema } from "@/schemas";
 import { stripe } from "@/data/stripe";
 import { hasActiveAppleSubscription } from "@/data/user";
+import { Account } from "@/types";
 
+// TODO : Move to types
 export type CreateAccount = {
   name: string;
   currencyId: string;
   institutionName: string;
+};
+
+export const accountSelect = {
+  id: true,
+  name: true,
+  institutionName: true,
+  currency: {
+    select: { id: true, name: true, symbol: true, exchangeRate: true },
+  },
+  userAccess: {
+    select: {
+      role: true,
+      userId: true,
+      user: {
+        select: {
+          name: true,
+          image: true,
+          email: true,
+        },
+      },
+    },
+  },
 };
 
 /**
@@ -161,7 +185,7 @@ export async function deleteStripeAccountsByInstitutionName(
  * @param {String} userId - User ID
  * @param {String} currencyId - Currency ID
  * @param {String} institutionName - Institution Name
- * @returns {Promise} - Promise object represents the account data
+ * @returns {Promise<Account>} - Promise object represents the account data
  * @throws {Error} - If the account creation fails
  */
 export async function createAccount(
@@ -169,7 +193,7 @@ export async function createAccount(
   userId: string,
   currencyId: string,
   institutionName?: string
-) {
+): Promise<Account> {
   const validationResult = accountSchema.safeParse({
     name,
     currencyId,
@@ -177,24 +201,38 @@ export async function createAccount(
   if (!validationResult.success) {
     throw new Error("Bad Request");
   }
-  const newAccountId = uuid();
-  const newAccountQuery = db.userAccount.create({
+
+  // Create account and userAccess in one operation with nested create
+  const account = await db.userAccount.create({
     data: {
-      id: newAccountId,
+      id: uuid(),
       name,
       currencyId,
       institutionName,
+      userAccess: {
+        create: {
+          userId,
+          role: "owner",
+        },
+      },
     },
+    select: accountSelect,
   });
-  const newAccountAccessQuery = db.userAccountAccess.create({
-    data: {
-      userId,
-      userAccountId: newAccountId,
-      role: "owner",
+  return {
+    id: account.id,
+    name: account.name,
+    currency: account.currency,
+    users: account.userAccess.map((access) => ({
+      id: access.userId,
+      role: access.role as "owner" | "member",
+      name: access.user.name,
+      image: access.user.image,
+      email: access.user.email,
+    })),
+    institution: {
+      name: account.institutionName || "",
     },
-  });
-  await db.$transaction([newAccountQuery, newAccountAccessQuery]);
-  return { id: newAccountId };
+  };
 }
 
 /**
@@ -247,7 +285,7 @@ export async function deleteAccounts(accountIds: string[], userId: string) {
  * @param {String} currencyId - Currency ID
  * @param {String} userId - User ID
  * @param {String} institutionName - Institution Name
- * @returns {Promise} - Promise object represents the updated account
+ * @returns {Promise<Account>} - Promise object represents the updated account
  * @throws {Error} - If the account update fails
  */
 export async function updateAccount(
@@ -256,8 +294,8 @@ export async function updateAccount(
   currencyId: string,
   userId: string,
   institutionName?: string
-) {
-  const accounts = await db.userAccount.update({
+): Promise<Account> {
+  const account = await db.userAccount.update({
     where: {
       id,
       userAccess: {
@@ -269,8 +307,23 @@ export async function updateAccount(
       currencyId,
       institutionName,
     },
+    select: accountSelect,
   });
-  return accounts;
+  return {
+    id: account.id,
+    name: account.name,
+    currency: account.currency,
+    users: account.userAccess.map((access) => ({
+      id: access.userId,
+      role: access.role as "owner" | "member",
+      name: access.user.name,
+      image: access.user.image,
+      email: access.user.email,
+    })),
+    institution: {
+      name: account.institutionName || "",
+    },
+  };
 }
 
 /**
@@ -294,34 +347,26 @@ export async function updateLastTransactionRefreshId(
 /**
  * Get user accounts
  * @param {String} userId - User ID
- * @returns {Promise} - Promise object represents the user accounts
+ * @returns {Promise<Account[]>} - Promise object represents the user accounts
  * @throws {Error} - If the account retrieval fails
  */
 // TODO add pagination here
-export async function getUserAccounts(userId: string) {
+export async function getUserAccounts(userId: string): Promise<Account[]> {
   const accounts = await db.userAccount.findMany({
     select: {
-      id: true,
-      name: true,
-      currency: {
-        select: { id: true, name: true, symbol: true, exchangeRate: true },
-      },
+      ...accountSelect,
       userAccess: {
+        ...accountSelect.userAccess,
         select: {
-          role: true,
-          userId: true,
+          ...accountSelect.userAccess.select,
           user: {
             select: {
-              name: true,
-              image: true,
+              ...accountSelect.userAccess.select.user.select,
               appleSubscriptionStatus: true,
-              email: true,
             },
           },
         },
       },
-      institutionName: true,
-      last4: true,
     },
     where: {
       userAccess: {
@@ -370,7 +415,26 @@ export async function getUserAccounts(userId: string) {
     }
   });
 
-  return filteredAccounts;
+  return filteredAccounts.map((account) => ({
+    id: account.id,
+    name: account.name,
+    currency: {
+      id: account.currency.id,
+      name: account.currency.name,
+      symbol: account.currency.symbol,
+      exchangeRate: account.currency.exchangeRate,
+    },
+    users: account.userAccess.map((access) => ({
+      id: access.userId,
+      role: access.role as "owner" | "member", // ✅ Type cast
+      name: access.user.name,
+      image: access.user.image,
+      email: access.user.email,
+    })),
+    institution: {
+      name: account.institutionName || "",
+    },
+  }));
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   updateCategory,
 } from "@/data/categories";
 import { categorySchema } from "@/schemas";
+import { Category } from "@/types";
 
 // Mock dependencies
 jest.mock("next/server", () => ({
@@ -118,11 +119,12 @@ describe("Categories API", () => {
     });
 
     it("should create category successfully", async () => {
-      const mockNewCategory = {
+      const mockNewCategory: Category = {
         id: "category-123",
         name: "Test Category",
         description: "Test Description",
         icon: "🍕",
+        owner: { id: mockUser.id, name: "User", image: null },
       };
       (createCategory as jest.Mock).mockResolvedValueOnce(mockNewCategory);
 
@@ -137,7 +139,7 @@ describe("Categories API", () => {
       const response = await POST(mockReq as unknown as NextRequest);
       const data = await response.json();
       expect(response.status).toBe(200);
-      expect(data).toEqual({ data: mockNewCategory });
+      expect(data).toEqual(mockNewCategory);
       expect(createCategory).toHaveBeenCalledWith(
         "Test Category",
         mockUser.id,
@@ -285,11 +287,12 @@ describe("Categories API", () => {
     });
 
     it("should update category successfully", async () => {
-      const mockUpdatedCategory = {
+      const mockUpdatedCategory: Category = {
         id: "category-1",
         name: "Updated Category",
         description: "Updated Description",
         icon: "🍕",
+        owner: { id: mockUser.id, name: "User", image: null },
       };
       (categorySchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
@@ -309,7 +312,7 @@ describe("Categories API", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ data: mockUpdatedCategory });
+      expect(data).toEqual(mockUpdatedCategory);
       expect(updateCategory).toHaveBeenCalledWith(
         "category-1",
         mockUser.id,

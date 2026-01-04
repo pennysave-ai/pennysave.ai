@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       body.description,
       body.icon
     );
-    return NextResponse.json({ data: newCategory });
+    return NextResponse.json(newCategory);
   } catch (error) {
     console.error("Error while creating category:", error);
     return NextResponse.json("Error while creating categories", {
@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest) {
       body.description,
       body.icon
     );
-    return NextResponse.json({ data: category });
+    return NextResponse.json(category);
   } catch {
     return NextResponse.json("Error while updating categories", {
       status: 500,

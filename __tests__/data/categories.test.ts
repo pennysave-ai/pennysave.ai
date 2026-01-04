@@ -7,11 +7,11 @@ import {
   getUserCategories,
   getCategoriesCount,
   createCategory,
-  getUserCategoriesByName,
   deleteCategories,
   updateCategory,
+  categorySelect,
 } from "@/data/categories";
-import { user } from "@heroui/theme";
+import { Category } from "@/types";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -43,11 +43,13 @@ describe("categories", () => {
 
   describe("getUserCategories", () => {
     const mockUserId = "user-123";
-    const mockCategories = [
+    const mockCategories: Category[] = [
       {
         id: "category-1",
         name: "Test Category",
         description: "Test Description",
+        icon: "🍕",
+        owner: { id: mockUserId, name: "User", image: null },
       },
     ];
 
@@ -59,13 +61,7 @@ describe("categories", () => {
       expect(result).toEqual(mockCategories);
       expect(db.category.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          icon: true,
-          user: { select: { id: true, name: true, image: true } },
-        },
+        select: categorySelect,
       });
     });
   });
@@ -91,31 +87,62 @@ describe("categories", () => {
       name: "Test Category",
       userId: "user-123",
       description: "Test Description",
+      icon: "🍕",
     };
 
     it("should create a category successfully", async () => {
       (categorySchema.safeParse as jest.Mock).mockReturnValue({
         success: true,
       });
-      (db.category.create as jest.Mock).mockResolvedValue({
+
+      const mockDbResponse = {
         id: "mocked-uuid",
-      });
+        name: mockCategoryData.name,
+        description: mockCategoryData.description,
+        icon: mockCategoryData.icon,
+        owner: {
+          id: mockCategoryData.userId,
+          name: "Test User",
+          image: null,
+          email: "test@example.com",
+        },
+      };
+
+      const expectedResult: Category = {
+        id: "mocked-uuid",
+        name: mockCategoryData.name,
+        description: mockCategoryData.description,
+        icon: mockCategoryData.icon,
+        owner: {
+          id: mockCategoryData.userId,
+          name: "Test User",
+          image: null,
+          email: "test@example.com",
+        },
+      };
+
+      (db.category.create as jest.Mock).mockResolvedValue(mockDbResponse);
 
       const result = await createCategory(
         mockCategoryData.name,
         mockCategoryData.userId,
-        mockCategoryData.description
+        mockCategoryData.description,
+        mockCategoryData.icon
       );
 
-      expect(result).toEqual({ id: "mocked-uuid" });
-      expect(db.category.create).toHaveBeenCalledWith({
-        data: {
-          id: "mocked-uuid",
-          name: mockCategoryData.name,
-          userId: mockCategoryData.userId,
-          description: mockCategoryData.description,
-        },
-      });
+      expect(result).toEqual(expectedResult);
+
+      expect(db.category.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            id: "mocked-uuid",
+            name: mockCategoryData.name,
+            userId: mockCategoryData.userId,
+            description: mockCategoryData.description,
+            icon: mockCategoryData.icon,
+          },
+        })
+      );
     });
 
     it("should throw error if validation fails", async () => {
@@ -132,35 +159,6 @@ describe("categories", () => {
       ).rejects.toThrow("Bad Request");
 
       expect(db.category.create).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("getUserCategoriesByName", () => {
-    const mockUserId = "user-123";
-    const mockName = "Test Category";
-    const mockCategories = [
-      { id: "category-1", name: "Test Category", last4: "2123" },
-    ];
-
-    it("should return user categories by name", async () => {
-      (db.category.findMany as jest.Mock).mockResolvedValue(mockCategories);
-
-      const result = await getUserCategoriesByName(mockUserId, mockName);
-
-      expect(result).toEqual(mockCategories);
-      expect(db.category.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: mockUserId,
-          name: {
-            contains: mockName,
-            mode: "insensitive",
-          },
-        },
-        select: {
-          id: true,
-          name: true,
-        },
-      });
     });
   });
 
@@ -192,32 +190,65 @@ describe("categories", () => {
   });
 
   describe("updateCategory", () => {
-    const mockCategoryData = {
-      id: "category-1",
-      userId: "user-123",
-      name: "Updated Category",
-      last4: "2123",
-      description: "Updated Description",
-    };
-
     it("should update category successfully", async () => {
-      (db.category.update as jest.Mock).mockResolvedValue(mockCategoryData);
+      const mockCategoryData = {
+        id: "category-1",
+        userId: "user-123",
+        name: "Updated Category",
+        description: "Updated Description",
+        icon: "updated-icon",
+      };
+
+      const mockDbResponse = {
+        id: mockCategoryData.id,
+        name: mockCategoryData.name,
+        description: mockCategoryData.description,
+        icon: mockCategoryData.icon,
+        owner: {
+          id: mockCategoryData.userId,
+          name: "Test User",
+          image: null,
+          email: "test@example.com",
+        },
+      };
+
+      const expectedResult: Category = {
+        id: mockCategoryData.id,
+        name: mockCategoryData.name,
+        description: mockCategoryData.description,
+        icon: mockCategoryData.icon,
+        owner: {
+          id: mockCategoryData.userId,
+          name: "Test User",
+          image: null,
+          email: "test@example.com",
+        },
+      };
+
+      (db.category.update as jest.Mock).mockResolvedValue(mockDbResponse);
 
       const result = await updateCategory(
         mockCategoryData.id,
         mockCategoryData.userId,
         mockCategoryData.name,
-        mockCategoryData.description
+        mockCategoryData.description,
+        mockCategoryData.icon
       );
 
-      expect(result).toEqual(mockCategoryData);
-      expect(db.category.update).toHaveBeenCalledWith({
-        where: { id: mockCategoryData.id, userId: mockCategoryData.userId },
-        data: {
-          name: mockCategoryData.name,
-          description: mockCategoryData.description,
-        },
-      });
+      expect(result).toEqual(expectedResult);
+      expect(db.category.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: mockCategoryData.id,
+            userId: mockCategoryData.userId,
+          },
+          data: {
+            name: mockCategoryData.name,
+            description: mockCategoryData.description,
+            icon: mockCategoryData.icon,
+          },
+        })
+      );
     });
   });
 });
