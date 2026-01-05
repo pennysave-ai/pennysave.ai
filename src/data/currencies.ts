@@ -1,49 +1,12 @@
 import { db } from "@/db";
-import { type Currency } from "@prisma/client";
 import { BASE_CURRENCY } from "@/constants";
-
-/**
- * Gets the list of currencies by Name
- * @param {String} currencyName - Currency Name
- * @param {String} currencySymbol - Currency Symbol
- * @returns {Array<{symbol: string, name: string, exchangeRate: number}>} - Array of currencies
- */
-export async function getCurrencyByNameOrSymbol(
-  currencyName: string,
-  currencySymbol: string
-) {
-  const currencies = await db.currency.findMany({
-    select: {
-      id: true,
-      symbol: true,
-      name: true,
-      exchangeRate: true,
-    },
-    where: {
-      OR: [
-        {
-          name: {
-            contains: currencyName,
-            mode: "insensitive",
-          },
-        },
-        {
-          symbol: {
-            contains: currencySymbol,
-            mode: "insensitive",
-          },
-        },
-      ],
-    },
-  });
-  return currencies;
-}
+import { Currency } from "@/types";
 
 /**
  * Get All Currencies
- * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ * @returns {Promise<Currency[]>} - Array of currencies
  */
-export async function getAllCurrencies() {
+export async function getAllCurrencies(): Promise<Currency[]> {
   const currencies = await db.currency.findMany({
     select: {
       id: true,
@@ -58,7 +21,7 @@ export async function getAllCurrencies() {
 /**
  * Get currency by id
  * @param {string} currencyId - Currency Id
- * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ * @returns {Promise<Currency | null>} - Array of currencies
  */
 export async function getCurrencyById(currencyId: string) {
   const currency = await db.currency.findUnique({
@@ -80,7 +43,7 @@ export async function getCurrencyById(currencyId: string) {
 /**
  * Get currency by name
  * @param {string} currencyName - Currency Name
- * @returns {Array<{symbol: string, name: string, id: string}>} - Array of currencies
+ * @returns {Promise<Currency | null>} - Array of currencies
  */
 export async function getCurrencyByName(currencyName: string) {
   return await db.currency.findFirst({

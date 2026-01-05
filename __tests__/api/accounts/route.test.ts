@@ -4,6 +4,7 @@
 import { GET, POST, DELETE, PATCH } from "@/app/api/accounts/route";
 import { getAuthenticatedUser } from "@/auth.helper";
 import { type NextRequest } from "next/server";
+import { Account } from "@/types";
 
 // Mock next/server
 jest.mock("next/server", () => ({
@@ -51,7 +52,7 @@ import {
 
 describe("Accounts API", () => {
   const mockUser = { id: "user-id" };
-  const mockAccount = {
+  const mockAccount: Account = {
     id: "account-1",
     name: "Test Account",
     currency: {
@@ -60,18 +61,16 @@ describe("Accounts API", () => {
       symbol: "$",
       exchangeRate: 1,
     },
-    institutionName: "Test Bank",
-    last4: "1234",
-    userAccess: [
+    institution: {
+      name: "Test Bank",
+    },
+    users: [
       {
-        userId: "user-1",
         role: "owner",
-        user: {
-          id: "user-1",
-          name: "Test User",
-          image: "https://example.com/image.jpg",
-          email: "test@example.com",
-        },
+        id: "user-1",
+        name: "Test User",
+        image: "https://example.com/image.jpg",
+        email: "test@example.com",
       },
     ],
   };
@@ -110,9 +109,8 @@ describe("Accounts API", () => {
             id: mockAccount.id,
             name: mockAccount.name,
             currency: mockAccount.currency,
-            last4: mockAccount.last4,
             institution: {
-              name: mockAccount.institutionName,
+              name: mockAccount.institution.name,
             },
             users: [
               {
@@ -160,11 +158,27 @@ describe("Accounts API", () => {
     });
 
     it("should create account successfully", async () => {
-      const mockNewAccount = {
+      const mockNewAccount: Account = {
         id: "account-123",
         name: "Test Account",
-        currencyId: "USD",
-        institutionName: "Test Bank",
+        currency: {
+          id: "USD",
+          name: "USD",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        institution: {
+          name: "Test Bank",
+        },
+        users: [
+          {
+            id: mockUser.id,
+            name: "Test User",
+            email: "",
+            role: "owner",
+            image: null,
+          },
+        ],
       };
       (createAccount as jest.Mock).mockResolvedValueOnce(mockNewAccount);
 
@@ -180,7 +194,7 @@ describe("Accounts API", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ data: mockNewAccount });
+      expect(data).toEqual(mockNewAccount);
       expect(createAccount).toHaveBeenCalledWith(
         "Test Account",
         mockUser.id,
@@ -306,11 +320,27 @@ describe("Accounts API", () => {
     });
 
     it("should update account successfully", async () => {
-      const mockUpdatedAccount = {
+      const mockUpdatedAccount: Account = {
         id: "account-1",
         name: "Updated Account",
-        currencyId: "USD",
-        institutionName: "Updated Bank",
+        currency: {
+          id: "USD",
+          name: "USD",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        institution: {
+          name: "Updated Bank",
+        },
+        users: [
+          {
+            id: mockUser.id,
+            name: "Test User",
+            email: "",
+            role: "owner",
+            image: null,
+          },
+        ],
       };
 
       (updateAccount as jest.Mock).mockResolvedValueOnce([mockUpdatedAccount]);
@@ -327,7 +357,7 @@ describe("Accounts API", () => {
       const response = await PATCH(mockReq as unknown as NextRequest);
       const data = await response.json();
       expect(response.status).toBe(200);
-      expect(data).toEqual({ data: [mockUpdatedAccount] });
+      expect(data).toEqual([mockUpdatedAccount]);
       expect(updateAccount).toHaveBeenCalledWith(
         "account-1",
         "Updated Account",

@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { addToast } from "@heroui/toast";
 
+// TODO : Move to types
 export type CreateCategory = {
   name: string;
   description?: string;

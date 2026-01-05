@@ -1,6 +1,26 @@
 /**
  * @jest-environment node
  */
+
+jest.mock("@/data/stripe", () => ({
+  STRIPE: {
+    getInstance: jest.fn(() => ({
+      // Mock Stripe methods if needed
+      customers: {
+        create: jest.fn(),
+        retrieve: jest.fn(),
+      },
+      subscriptions: {
+        create: jest.fn(),
+        retrieve: jest.fn(),
+      },
+    })),
+  },
+}));
+
+process.env.STRIPE_SECRET_KEY = "sk_test_mock_key";
+process.env.RESEND_API_KEY = "test-api-key";
+
 import { GET, POST, DELETE, PATCH } from "@/app/api/transactions/route";
 import { NextRequest } from "next/server";
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";

@@ -9,8 +9,9 @@ import {
   getUserAccounts,
   getUserAccountsCount,
   updateAccount,
+  accountSelect,
 } from "@/data/accounts";
-import { user } from "@heroui/theme";
+import { Account } from "@/types";
 
 // Mock dependencies
 jest.mock("@/db", () => ({
@@ -70,10 +71,57 @@ describe("accounts", () => {
 
     it("should create an account successfully", async () => {
       (accountSchema.safeParse as jest.Mock).mockReturnValue({ success: true });
-      (db.userAccount.create as jest.Mock).mockResolvedValue({
+
+      // ✅ Mock the complete Prisma response with nested userAccess
+      const mockDbResponse = {
         id: "mocked-uuid",
-      });
-      (db.userAccountAccess.create as jest.Mock).mockResolvedValue({});
+        name: mockAccountData.name,
+        last4: null,
+        institutionName: mockAccountData.institutionName,
+        currency: {
+          id: "USD",
+          name: "US Dollar",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        userAccess: [
+          {
+            userId: mockAccountData.userId,
+            role: "owner",
+            user: {
+              name: "Test User",
+              email: "test@example.com",
+              image: null,
+            },
+          },
+        ],
+      };
+
+      // ✅ Expected transformed result
+      const expectedResult: Account = {
+        id: "mocked-uuid",
+        name: mockAccountData.name,
+        currency: {
+          id: "USD",
+          name: "US Dollar",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        users: [
+          {
+            id: mockAccountData.userId,
+            role: "owner",
+            name: "Test User",
+            email: "test@example.com",
+            image: null,
+          },
+        ],
+        institution: {
+          name: mockAccountData.institutionName,
+        },
+      };
+
+      (db.userAccount.create as jest.Mock).mockResolvedValue(mockDbResponse);
 
       const result = await createAccount(
         mockAccountData.name,
@@ -82,22 +130,24 @@ describe("accounts", () => {
         mockAccountData.institutionName
       );
 
-      expect(result).toEqual({ id: "mocked-uuid" });
-      expect(db.userAccount.create).toHaveBeenCalledWith({
-        data: {
-          id: "mocked-uuid",
-          name: mockAccountData.name,
-          currencyId: mockAccountData.currencyId,
-          institutionName: mockAccountData.institutionName,
-        },
-      });
-      expect(db.userAccountAccess.create).toHaveBeenCalledWith({
-        data: {
-          userId: mockAccountData.userId,
-          userAccountId: "mocked-uuid",
-          role: "owner",
-        },
-      });
+      expect(result).toEqual(expectedResult);
+
+      expect(db.userAccount.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            id: "mocked-uuid",
+            name: mockAccountData.name,
+            currencyId: mockAccountData.currencyId,
+            institutionName: mockAccountData.institutionName,
+            userAccess: {
+              create: {
+                userId: mockAccountData.userId,
+                role: "owner",
+              },
+            },
+          }),
+        })
+      );
     });
 
     it("should throw error if validation fails", async () => {
@@ -151,64 +201,71 @@ describe("accounts", () => {
 
   describe("getUserAccounts", () => {
     const mockUserId = "user-123";
-    const mockAccounts = [
-      {
-        id: "account-1",
-        name: "Test Account",
-        currency: {
-          id: "USD",
-          name: "US Dollar",
-          symbol: "$",
-          exchangeRate: 1, // Add exchangeRate
-        },
-        institutionName: "Test Bank",
-        last4: "1234",
-        userAccess: [
-          // Add userAccess array
-          {
-            userId: "user-123",
-            role: "owner",
-            user: {
-              name: "Test User",
-              image: null,
-              appleSubscriptionStatus: "active",
-              email: "test@example.com",
-            },
-          },
-        ],
-      },
-    ];
 
     it("should return user accounts", async () => {
-      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockAccounts);
+      const mockDbResponse = [
+        {
+          id: "account-1",
+          name: "Test Account",
+          last4: null,
+          institutionName: "Test Bank",
+          currency: {
+            id: "USD",
+            name: "US Dollar",
+            symbol: "$",
+            exchangeRate: 1,
+          },
+          userAccess: [
+            {
+              userId: "user-123",
+              role: "owner",
+              user: {
+                name: "Test User",
+                image: null,
+                email: "test@example.com",
+                appleSubscriptionStatus: "active",
+              },
+            },
+          ],
+        },
+      ];
+
+      const expectedResult: Account[] = [
+        {
+          id: "account-1",
+          name: "Test Account",
+          currency: {
+            id: "USD",
+            name: "US Dollar",
+            symbol: "$",
+            exchangeRate: 1,
+          },
+          institution: {
+            name: "Test Bank",
+          },
+          users: [
+            {
+              id: "user-123",
+              role: "owner",
+              name: "Test User",
+              image: null,
+              email: "test@example.com",
+            },
+          ],
+        },
+      ];
+
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue(mockDbResponse);
 
       const result = await getUserAccounts(mockUserId);
 
-      expect(result).toEqual(mockAccounts);
+      expect(result).toEqual(expectedResult);
       expect(db.userAccount.findMany).toHaveBeenCalledWith({
-        select: {
+        select: expect.objectContaining({
           id: true,
           name: true,
-          currency: {
-            select: { id: true, name: true, symbol: true, exchangeRate: true },
-          },
-          userAccess: {
-            select: {
-              role: true,
-              userId: true,
-              user: {
-                select: {
-                  name: true,
-                  image: true,
-                  appleSubscriptionStatus: true,
-                  email: true,
-                },
-              },
-            },
-          },
           institutionName: true,
-          last4: true,
-        },
+        }),
         where: {
           userAccess: {
             some: { userId: mockUserId },
@@ -229,13 +286,13 @@ describe("accounts", () => {
             exchangeRate: 1,
           },
           institutionName: "Test Bank",
-          last4: "1234",
           userAccess: [
             {
               userId: "user-123",
               role: "owner",
               user: {
                 name: "Test User",
+                email: "test@example.com",
                 image: null,
                 appleSubscriptionStatus: "inactive",
               },
@@ -252,13 +309,13 @@ describe("accounts", () => {
             exchangeRate: 1,
           },
           institutionName: "Test Bank",
-          last4: "5678",
           userAccess: [
             {
               userId: "owner-456",
               role: "owner",
               user: {
                 name: "Owner User",
+                email: "owner@example.com",
                 image: null,
                 appleSubscriptionStatus: "active",
               },
@@ -268,6 +325,7 @@ describe("accounts", () => {
               role: "viewer",
               user: {
                 name: "Test User",
+                email: "test@example.com",
                 image: null,
                 appleSubscriptionStatus: null,
               },
@@ -284,13 +342,13 @@ describe("accounts", () => {
             exchangeRate: 1,
           },
           institutionName: "Test Bank",
-          last4: "9012",
           userAccess: [
             {
               userId: "owner-789",
               role: "owner",
               user: {
                 name: "Inactive Owner",
+                email: "inactive@example.com",
                 image: null,
                 appleSubscriptionStatus: "inactive",
               },
@@ -300,6 +358,7 @@ describe("accounts", () => {
               role: "viewer",
               user: {
                 name: "Test User",
+                email: "test@example.com",
                 image: null,
                 appleSubscriptionStatus: null,
               },
@@ -384,39 +443,102 @@ describe("accounts", () => {
   });
 
   describe("updateAccount", () => {
-    const mockAccountData = {
+    const mockAccountData: Account = {
       id: "account-1",
       name: "Updated Account",
-      currencyId: "USD",
-      userId: "user-123",
-      institutionName: "Updated Bank",
+      currency: {
+        id: "USD",
+        name: "US Dollar",
+        symbol: "$",
+        exchangeRate: 1,
+      },
+      users: [
+        {
+          id: "user-123",
+          name: "Test User",
+          email: "test@test.com",
+          image: null,
+        },
+      ],
+      institution: {
+        name: "Updated Bank",
+      },
     };
 
     it("should update account successfully", async () => {
-      (db.userAccount.update as jest.Mock).mockResolvedValue(mockAccountData);
+      const mockDbResponse = {
+        id: mockAccountData.id,
+        name: mockAccountData.name,
+        last4: null,
+        institutionName: mockAccountData.institution.name,
+        currency: {
+          id: "USD",
+          name: "US Dollar",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        userAccess: [
+          {
+            userId: "user-123",
+            role: "owner",
+            user: {
+              name: "Test User",
+              email: "test@test.com",
+              image: null,
+            },
+          },
+        ],
+      };
+
+      const expectedResult: Account = {
+        id: mockAccountData.id,
+        name: mockAccountData.name,
+        currency: {
+          id: "USD",
+          name: "US Dollar",
+          symbol: "$",
+          exchangeRate: 1,
+        },
+        users: [
+          {
+            id: "user-123",
+            role: "owner",
+            name: "Test User",
+            email: "test@test.com",
+            image: null,
+          },
+        ],
+        institution: {
+          name: mockAccountData.institution.name,
+        },
+      };
+
+      (db.userAccount.update as jest.Mock).mockResolvedValue(mockDbResponse);
 
       const result = await updateAccount(
         mockAccountData.id,
         mockAccountData.name,
-        mockAccountData.currencyId,
-        mockAccountData.userId,
-        mockAccountData.institutionName
+        mockAccountData.currency.id,
+        mockAccountData.users[0].id,
+        mockAccountData.institution.name
       );
 
-      expect(result).toEqual(mockAccountData);
-      expect(db.userAccount.update).toHaveBeenCalledWith({
-        where: {
-          id: mockAccountData.id,
-          userAccess: {
-            some: { userId: mockAccountData.userId, role: "owner" },
+      expect(result).toEqual(expectedResult);
+      expect(db.userAccount.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: mockAccountData.id,
+            userAccess: {
+              some: { userId: mockAccountData.users[0].id, role: "owner" },
+            },
           },
-        },
-        data: {
-          name: mockAccountData.name,
-          currencyId: mockAccountData.currencyId,
-          institutionName: mockAccountData.institutionName,
-        },
-      });
+          data: {
+            name: mockAccountData.name,
+            currencyId: mockAccountData.currency.id,
+            institutionName: mockAccountData.institution.name,
+          },
+        })
+      );
     });
   });
 });

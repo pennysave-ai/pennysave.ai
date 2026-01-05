@@ -14,21 +14,19 @@ export async function DELETE(req: NextRequest) {
     if (!accountIds.includes(accountId)) {
       return NextResponse.json("Forbidden", { status: 403 });
     }
-    const { userAccess } = userAccounts.find(
-      (account) => account.id === accountId
-    )!;
+    const { users } = userAccounts.find((account) => account.id === accountId)!;
     // Check if the user is account owner
-    const owner = userAccess.find(({ role }) => role === "owner");
-    if (owner?.userId !== user.id) {
+    const owner = users.find(({ role }) => role === "owner");
+    if (owner?.id !== user.id) {
       return NextResponse.json("Forbidden", { status: 403 });
     }
     // Check if the user to be removed exists in the account
-    const userIds = userAccess.map(({ userId }) => userId);
+    const userIds = users.map(({ id }) => id);
     if (!userIds.includes(userId)) {
       return NextResponse.json("User not found in account", { status: 404 });
     }
     // Prevent removing the owner
-    if (owner?.userId === userId) {
+    if (owner?.id === userId) {
       return NextResponse.json("Cannot remove account owner", { status: 400 });
     }
     // Proceed to remove the user from the account

@@ -12,7 +12,7 @@
     "populate_currency:db:dev": "dotenv -e .env.local -- ts-node --project tsconfig.json populate_currency_db.ts",
     "populate_currency:db:prod": "dotenv -e .env.prod -- ts-node --project tsconfig.json populate_currency_db.ts",
     "next:start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src --max-warnings=0",
     "test": "jest",
     "test:watch": "jest --watch",
     "coverage": "jest --coverage",
@@ -99,7 +99,6 @@
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "resend": "^4.0.1",
-    "sharp": "^0.34.4",
     "slick-carousel": "^1.8.1",
     "stripe": "^17.5.0",
     "usehooks-ts": "^3.1.0",
@@ -131,14 +130,18 @@
     "cssnano": "^7.0.7",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.7",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.5.6",
     "prisma": "^6.19.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.16",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.51.0"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.9"

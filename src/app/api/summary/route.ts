@@ -10,7 +10,6 @@ import {
 import { db } from "@/db";
 import { auth } from "@/auth";
 import { convertCurrency, parseUTCDate, parseUTCEndOfDay } from "@/lib/utils";
-import { type Currency } from "@prisma/client";
 import { getTargetCurrency } from "@/data/currencies";
 import { DEFAULT_DATA_PERIOD } from "@/constants";
 import {
@@ -18,6 +17,7 @@ import {
   fillMissingDates,
   fillMissingDatesForExpenceCategories,
 } from "@/lib/utils";
+import { Currency } from "@/types";
 
 type FinancialDataResponse = {
   income: number;

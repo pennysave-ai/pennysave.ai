@@ -1,31 +1,35 @@
 import { v4 as uuid } from "uuid";
 import { db } from "@/db";
 import { categorySchema } from "@/schemas";
+import { Category } from "@/types";
+
+// Return the same fields for GET/POST/PUT requests
+export const categorySelect = {
+  id: true,
+  name: true,
+  description: true,
+  icon: true,
+  owner: { select: { id: true, name: true, image: true } },
+};
 
 /**
  * Get the list of user categories
  * @param userId - User ID
- * @returns {Promise<{id: string, name: string, description: string}[]>}
+ * @returns {Promise<Category[]>}
  */
-export async function getUserCategories(userId?: string) {
+export async function getUserCategories(userId?: string): Promise<Category[]> {
   return db.category.findMany({
     where: { userId },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      icon: true,
-      user: { select: { id: true, name: true, image: true } },
-    },
+    select: categorySelect,
   });
 }
 
-/*
+/**
  * Get categories number
  * @param userId - User ID
  * @returns {Promise<number>}
  */
-export async function getCategoriesCount(userId: string) {
+export async function getCategoriesCount(userId: string): Promise<number> {
   return await db.category.count({ where: { userId } });
 }
 
@@ -34,7 +38,7 @@ export async function getCategoriesCount(userId: string) {
  * @param {String} name - Category name
  * @param {String} userId - User ID
  * @param {String} description - Category description
- * @returns {Promise} - Promise object represents the category data
+ * @returns {Promise<Category>} - Promise object represents the category data
  * @throws {Error} - If the category creation fails
  */
 export async function createCategory(
@@ -42,14 +46,14 @@ export async function createCategory(
   userId: string,
   description?: string,
   icon?: string
-) {
+): Promise<Category> {
   const validationResult = categorySchema.safeParse({
     name,
   });
   if (!validationResult.success) {
     throw new Error("Bad Request");
   }
-  const category = await db.category.create({
+  return await db.category.create({
     data: {
       id: uuid(),
       name,
@@ -57,33 +61,9 @@ export async function createCategory(
       description,
       icon,
     },
+    select: categorySelect,
   });
-  return { id: category.id };
 }
-
-/**
- * Get user categories by name
- * @param {String} userId - User ID
- * @param {String} name - Category Name
- * @returns {Array<{id:string, name: string}>} - Array of category Id's
- */
-export async function getUserCategoriesByName(userId: string, name: string) {
-  const categories = await db.category.findMany({
-    where: {
-      userId,
-      name: {
-        contains: name,
-        mode: "insensitive",
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-  return categories;
-}
-
 /**
  * Delete user categories
  * @param {String[]} ids - Array of category Id's
@@ -113,14 +93,14 @@ export async function updateCategory(
   name: string,
   description?: string,
   icon?: string
-) {
-  const category = await db.category.update({
+): Promise<Category> {
+  return await db.category.update({
     where: { id, userId },
     data: {
       name,
       description,
       icon,
     },
+    select: categorySelect,
   });
-  return category;
 }

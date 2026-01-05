@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     // Get all accounts where user is owner
     const accounts = await getUserAccounts(user.id);
     const ownedAccounts = accounts.filter((account) =>
-      account.userAccess.some(
-        (access) => access.userId === user.id && access.role === "owner"
+      account.users.some(
+        (access) => access.id === user.id && access.role === "owner"
       )
     );
 
@@ -100,8 +100,8 @@ export async function GET(req: NextRequest) {
     // Get all accounts where user is owner
     const accounts = await getUserAccounts(user.id);
     const ownedAccounts = accounts.filter((account) =>
-      account.userAccess.some(
-        (access) => access.userId === user.id && access.role === "owner"
+      account.users.some(
+        (access) => access.id === user.id && access.role === "owner"
       )
     );
 
