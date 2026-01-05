@@ -2,8 +2,12 @@
 
 import { Suspense, lazy } from "react";
 import { Image } from "@heroui/image";
-import dashboardLight_1800 from "@/app/public/dashboard_light_1800.webp";
-import dashboardLight_900 from "@/app/public/dashboard_light_900.webp";
+import dashboardMobile from "@/app/public/dashboard_mobile.avif";
+import dashboardTablet from "@/app/public/dashboard_tablet.avif";
+import dashboardDesktop from "@/app/public/dashboard_desktop.avif";
+import dashboardMobileWebp from "@/app/public/dashboard_mobile.webp";
+import dashboardTabletWebp from "@/app/public/dashboard_tablet.webp";
+import dashboardDesktopWebp from "@/app/public/dashboard_desktop.webp";
 
 const Features = lazy(() => import("@/components/features"));
 const HowTo = lazy(() => import("@/components/how-to"));
@@ -37,18 +41,32 @@ export default async function HomePage() {
         </div>
         <section
           id="home"
-          className="relative w-full flex justify-center mt-10"
+          className="relative w-full flex justify-center mt-10 px-6 xl:px-0"
         >
-          <Image
-            src={dashboardLight_1800.src}
-            alt="hero-bg"
-            loading="lazy"
-            width={1152}
-            height={790}
-            className="w-full max-w-[1152px] !h-auto object-contain"
-            srcSet={`${dashboardLight_900.src} 1280w, ${dashboardLight_1800.src} 1400w`}
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1400px"
-          />
+          <picture>
+            {/* AVIF (best compression) */}
+            <source
+              type="image/avif"
+              srcSet={`${dashboardMobile.src} 640w, ${dashboardTablet.src} 900w, ${dashboardDesktop.src} 1280w`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1280px"
+            />
+            {/* WebP fallback */}
+            <source
+              type="image/webp"
+              srcSet={`${dashboardMobileWebp.src} 640w, ${dashboardTabletWebp.src} 900w, ${dashboardDesktopWebp.src} 1280w`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1280px"
+            />
+            {/* Fallback */}
+            <Image
+              src={dashboardDesktopWebp.src}
+              alt="PennySave Dashboard - Financial Management Interface"
+              loading="eager"
+              fetchPriority="high"
+              width={1280}
+              height={877}
+              className="w-full max-w-[1152px] !h-auto object-contain"
+            />
+          </picture>
           <div className="blur-background blur-1 absolute top-[-380px] left-[-320px]" />
         </section>
         <Suspense fallback={<div>Loading Features section...</div>}>
