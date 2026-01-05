@@ -1,10 +1,4 @@
 {
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [{ "key": "Content-Encoding", "value": "gzip" }]
-    }
-  ],
   "crons": [
     {
       "path": "/api/webhooks/cron/update-exchange-rates",
