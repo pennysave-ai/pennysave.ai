@@ -51,6 +51,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     if (part.name === "file" && part.filename) {
       filePart = part;
     }
+    if (part.name === "preferredLanguage") {
+      preferredLanguage = part.data.toString().trim();
+    }
   }
 
   if (timezone && !isValidIanaTimeZone(timezone)) {
