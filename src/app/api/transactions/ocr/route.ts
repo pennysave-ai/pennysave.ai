@@ -1,3 +1,4 @@
+import { qstash } from "@/qstash";
 import { NextRequest, NextResponse } from "next/server";
 import { convertAmountToMilliunits } from "@/lib/utils";
 import { getAuthenticatedUser } from "@/auth.helper";
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       categories.map((c: { id: string; name: string; icon: string }) => [
         c.name.toLowerCase(),
         { id: c.id, icon: c.icon, name: c.name },
-      ])
+      ]),
     );
 
     const availableCategories = Array.from(categoryMap.keys());
@@ -35,18 +36,6 @@ export async function POST(req: NextRequest) {
       ? imageBase64.split(",")[1]
       : imageBase64;
 
-    // Step 1: Validate if image is a receipt (pre-check)
-    // TODO - implement a queue system for handling receipt parsing items with prices
-    // to be able to add it to redis to comapre prices later in vektor db
-    // and also to avoid long waiting times for the user
-    // add the following to the prompt
-    // "items": [
-    //     {
-    //       "name": "item name",
-    //       "quantity": 1,
-    //       "price": 0.00
-    //     }
-    // ]
     const response = await fetch(
       "https://router.huggingface.co/v1/chat/completions",
       {
@@ -61,7 +50,7 @@ export async function POST(req: NextRequest) {
             {
               role: "system",
               content:
-                "You are a precise receipt parser. Extract structured data from receipt images. Always respond with valid JSON only, no markdown, no explanations.",
+                "You are a precise receipt parser. Extract structured data from receipt images. Always respond with valid JSON only, no markdown, no explanations. Do not guess coordinates: only return coordinates if the receipt provides a full address you can confidently locate; otherwise use null.",
             },
             {
               role: "user",
@@ -75,13 +64,28 @@ export async function POST(req: NextRequest) {
                 {
                   type: "text",
                   text: `Parse this receipt and return ONLY this JSON structure (no markdown, no code blocks):
-{
-  "payee": string,
-  "total": number,
-  "datetime": "YYYY-MM-DD HH:MM:SS",
-  "potential_category": "${availableCategories.join('" | "')}",
-  "type": "receipt" | "invoice",
-}`,
+                  {
+                    "payee": string,
+                    "total": number,
+                    "adress": {
+                      "text": string,
+                      "street": string,
+                      "city": string,
+                      "postalcode": string
+                    },
+                    "datetime": "YYYY-MM-DD HH:MM:SS",
+                    "potential_category": "${availableCategories.join('" | "')}",
+                    "type": "receipt" | "invoice",
+                    "items": [
+                      {
+                        "name": string,
+                        "quantity": number,
+                        "unit_price": number,
+                        "unit": string,
+                        "price": number
+                      }
+                    ]
+                  }`,
                 },
               ],
             },
@@ -89,7 +93,7 @@ export async function POST(req: NextRequest) {
           max_tokens: 1024,
           temperature: 0,
         }),
-      }
+      },
     );
 
     const data = await response.json();
@@ -107,8 +111,44 @@ export async function POST(req: NextRequest) {
     // Remove markdown code blocks
     cleanJson = cleanJson.replace(/```json\n?/g, "").replace(/```\n?/g, "");
     let receipt = JSON.parse(cleanJson);
+    console.log("Parsed receipt JSON:", receipt);
+    console.log("Parsed user JSON:", user);
+    console.log("Parsed account JSON:", account);
 
-    // O(1) lookup using Map
+    // Refine address coordinates (more precise) ---
+    // const receiptAdress = receipt?.adress ?? receipt?.address; // tolerate either key
+    // const adressText = receiptAdress?.text ?? receiptAdress?.address_text ?? "";
+    // const lat = receiptAdress?.latitude;
+    // const lon = receiptAdress?.longitude;
+
+    // const needsBetterCoords =
+    //   !!adressText && (isLowPrecisionCoord(lat) || isLowPrecisionCoord(lon));
+
+    // if (needsBetterCoords) {
+    //   const geo = await geocodeWithNominatim(adressText);
+    //   if (geo) {
+    //     receipt.adress = {
+    //       ...(receiptAdress ?? {}),
+    //       text: adressText,
+    //       ...geo,
+    //     };
+    //   }
+    // } else if (
+    //   typeof lat === "number" &&
+    //   typeof lon === "number" &&
+    //   Number.isFinite(lat) &&
+    //   Number.isFinite(lon)
+    // ) {
+    //   // normalize to consistent precision without changing meaning
+    //   receipt.adress = {
+    //     ...(receiptAdress ?? {}),
+    //     text: adressText,
+    //     latitude: roundTo7(lat),
+    //     longitude: roundTo7(lon),
+    //   };
+    // }
+    // --- end refine address coordinates ---
+
     const category = categoryMap.get(receipt.potential_category?.toLowerCase());
 
     const milliunits =
@@ -145,6 +185,8 @@ export async function POST(req: NextRequest) {
       // No datetime in receipt, use current time
       formattedDate = new Date().toISOString();
     }
+
+    // console.log("OCR Parsed receipt data:", { receipt, amount, category });
 
     // Creating the payload for transaction creation
     const payload = {
@@ -200,35 +242,54 @@ export async function POST(req: NextRequest) {
       payload,
       user.email!,
       user?.name || "Customer",
-      user.id
-    );
-    // Fetch users who have access to the account
-    const usersWithAccess = await getUsersWithAccessToAccount(
-      payload.accountId
+      user.id,
     );
 
-    // Send WebSocket message to notify clients about the new transaction
-    // Only send to the who has access to this account
-    // for now our wss server is free and can be in hybernate mode
-    // waiting for the response can take too long and cause timeouts and 504 response for this API
-    // that's why we do not await this function
-    // we can improve this later by using a queue system like RabbitMQ or similar
-    sendWebSocketMessage(
-      {
-        type: BroadcastType.TRANSACTION_CREATED,
-        recipients: usersWithAccess,
-        data: {
-          ...newTransaction,
-        },
+    // Enqueue data further data processing
+    // Parse, save to db, notify via websocket, etc.
+    await qstash.publishJSON({
+      url: `${process.env.NEXT_PUBLIC_URL}/api/transactions/ocr/process`,
+      body: {
+        receipt,
+        user,
+        account,
+        transactionId: newTransaction.id,
       },
-      user.id
-    ).catch((error) => {
-      // Silently catch the error - don't let it bubble up
-      console.error(
-        "WebSocket notification failed (non-critical):",
-        error.message
-      );
+      retries: 3, // Retry up to 3 times if the endpoint fails
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
+      },
     });
+
+    // Fetch users who have access to the account
+    // const usersWithAccess = await getUsersWithAccessToAccount(
+    //   payload.accountId,
+    // );
+
+    // // Send WebSocket message to notify clients about the new transaction
+    // // Only send to the who has access to this account
+    // // for now our wss server is free and can be in hybernate mode
+    // // waiting for the response can take too long and cause timeouts and 504 response for this API
+    // // that's why we do not await this function
+    // // we can improve this later by using a queue system like RabbitMQ or similar
+    // sendWebSocketMessage(
+    //   {
+    //     type: BroadcastType.TRANSACTION_CREATED,
+    //     recipients: usersWithAccess,
+    //     data: {
+    //       ...newTransaction,
+    //     },
+    //   },
+    //   user.id,
+    // ).catch((error) => {
+    //   // Silently catch the error - don't let it bubble up
+    //   console.error(
+    //     "WebSocket notification failed (non-critical):",
+    //     error.message,
+    //   );
+    // });
+
     console.log("OCR Transaction created:", newTransaction);
     return NextResponse.json({ success: true, data: newTransaction });
   } catch (error) {
@@ -239,7 +300,7 @@ export async function POST(req: NextRequest) {
         details: error instanceof Error ? error.message : "Unknown error",
         fallback: null,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

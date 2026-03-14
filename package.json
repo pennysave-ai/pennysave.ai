@@ -9,8 +9,8 @@
     "redis": "redis-stack-server",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "npm run next:start",
-    "populate_currency:db:dev": "dotenv -e .env.local -- ts-node --project tsconfig.json populate_currency_db.ts",
-    "populate_currency:db:prod": "dotenv -e .env.prod -- ts-node --project tsconfig.json populate_currency_db.ts",
+    "populate_currency:db:dev": "dotenv -e .env.local -- ts-node --project tsconfig.json seeds/populate_currency_db.ts",
+    "populate_currency:db:prod": "dotenv -e .env.prod -- ts-node --project tsconfig.json seeds/populate_currency_db.ts",
     "next:start": "next start",
     "lint": "eslint src --max-warnings=0",
     "test": "jest",
@@ -19,7 +19,7 @@
     "prisma:migrate:dev": "dotenv -e .env.local -- npx prisma migrate dev --schema=prisma/schema.prisma",
     "prisma:migrate:prod": "dotenv -e .env.prod prisma migrate deploy",
     "prisma:generate:dev": "dotenv -e .env.local -- npx prisma generate --schema=prisma/schema.prisma",
-    "start:db": "docker run --rm -p 5432:5432 -v postgres-data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust postgres",
+    "start:db": "docker run --rm -p 5432:5432 -v postgres-data:/var/lib/postgresql/data -e POSTGRES_HOST_AUTH_METHOD=trust pennysave-postgres",
     "reset:db": "dotenv -e .env.local -- npx prisma migrate reset && npx prisma database push"
   },
   "dependencies": {
@@ -75,6 +75,7 @@
     "apple-signin-auth": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv-cli": "^7.4.4",
     "framer-motion": "^12.23.24",
     "google-auth-library": "^10.2.0",

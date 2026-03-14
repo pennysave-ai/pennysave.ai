@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { qstash } from "@/qstash";
-import { getPrevMonthSummaries } from "@/data/transactions";
-
+import { getPrevMonthSummaries } from "@/data/reports";
+import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 /**
  * Generate monthly reports for users
  * and save the results to the database
@@ -16,23 +16,21 @@ async function handler(req: Request): Promise<NextResponse> {
   ) {
     return NextResponse.json("Unauthorized", { status: 401 });
   }
-  const { userIds, startOfPreviousMonth, endOfPreviousMonth } =
-    await req.json();
+  const { userIds } = await req.json();
 
   try {
-    const usersData = await getPrevMonthSummaries(
-      userIds,
-      startOfPreviousMonth,
-      endOfPreviousMonth
-    );
+    const usersData = await getPrevMonthSummaries(userIds);
+
     for (const userData of usersData) {
+      console.log(
+        "Queueing report for user:",
+        JSON.stringify(userData, null, 2),
+      );
       // Queue each user data for processing
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/process-user`,
         body: {
           userData,
-          startOfPreviousMonth,
-          endOfPreviousMonth,
         },
         retries: 3, // Retry up to 3 times if the endpoint fails
         headers: {
@@ -51,5 +49,6 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 }
 export const maxDuration = 60;
-// export const POST = verifySignatureAppRouter(handler);
-export const POST = handler;
+
+const isDev = process.env.NODE_ENV !== "production";
+export const POST = isDev ? handler : verifySignatureAppRouter(handler);

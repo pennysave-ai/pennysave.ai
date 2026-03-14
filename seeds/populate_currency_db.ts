@@ -1,4 +1,4 @@
-import { db } from "./src/db";
+import { db } from "../src/db/index.ts";
 
 // Populate currencies table
 const currencies = [
@@ -9,7 +9,7 @@ const currencies = [
 const currenciesPromises = currencies.map((currency) =>
   db.currency.create({
     data: currency,
-  })
+  }),
 );
 
 const populate = async () => {

@@ -28,6 +28,10 @@ export function convertAmountToMilliunits(amount: number): number {
   return Math.round(amount * 1000);
 }
 
+export function convertPctToRatio(pct: number): number {
+  return pct / 100;
+}
+
 /**
  * Converts an amount from milliunits.
  * @param amount
@@ -75,7 +79,7 @@ export function parseUTCEndOfDay(dateStr: string): Date {
 export const parseDateTime = (dateString: string): ZonedDateTime => {
   const localTime = format(
     parseISO(dateString),
-    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
   );
   const date = new Date(localTime);
   if (isNaN(date.getTime())) {
@@ -96,7 +100,7 @@ export const parseDateTime = (dateString: string): ZonedDateTime => {
     hour,
     minute,
     second,
-    millisecond
+    millisecond,
   );
   return toZoned(dateTime, getLocalTimeZone());
 };
@@ -109,7 +113,7 @@ export const parseDateTime = (dateString: string): ZonedDateTime => {
  */
 export const calculatePercentageChange = (
   current: number,
-  previous: number
+  previous: number,
 ) => {
   if (previous === 0) {
     return previous === current ? 0 : current > 0 ? 100 : -100;
@@ -127,7 +131,7 @@ export const calculatePercentageChange = (
 export const fillMissingDatesForExpenceCategories = (
   data: Map<string, { [x: string]: string | number }>,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) => {
   if (data.size === 0) {
     return [];
@@ -139,7 +143,7 @@ export const fillMissingDatesForExpenceCategories = (
       acc[key] = 0;
       return acc;
     },
-    {}
+    {},
   );
   const transactionByDate = allDays.map((day) => {
     const found = data.get(endOfDay(day).toISOString());
@@ -167,7 +171,7 @@ export const fillMissingDatesForExpenceCategories = (
 export const fillMissingDates = (
   data: { date: string; income: number; expences: number }[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) => {
   if (data.length === 0) {
     return [];
@@ -201,7 +205,7 @@ export const fillMissingDates = (
 export function convertCurrency(
   amount: number,
   fromRate: number,
-  toRate: number
+  toRate: number,
 ): number {
   const baseAmount = Number(amount) / Number(fromRate);
   return baseAmount * Number(toRate);
@@ -214,7 +218,7 @@ export function convertCurrency(
  * @returns {CalendarDate | null}
  */
 export const convertDateStringToCalendarDate = (
-  dateString: string | null
+  dateString: string | null,
 ): CalendarDate | null => {
   try {
     if (!dateString) {
@@ -227,7 +231,7 @@ export const convertDateStringToCalendarDate = (
     return new CalendarDate(
       date.getFullYear(),
       date.getMonth() + 1,
-      date.getDate()
+      date.getDate(),
     );
   } catch {
     return null;
@@ -240,7 +244,7 @@ export const convertDateStringToCalendarDate = (
  * @returns {string | null}
  */
 export const convertCalendarDateToDateString = (
-  date: CalendarDate | null
+  date: CalendarDate | null,
 ): string | null => {
   if (!date) {
     return null;
@@ -295,7 +299,7 @@ export const convertUnixTimestampToISO = (timestamp: number): string => {
  */
 export const getStartDateForFrequency = (
   frequency: string,
-  startDate: Date = new Date()
+  startDate: Date = new Date(),
 ): Date => {
   switch (frequency) {
     case "WEEKLY":
@@ -317,7 +321,7 @@ export const getStartDateForFrequency = (
  * @returns {{clientIp: string, ipPrefix: string}}
  */
 export const getClientIpAndPrefix = (
-  headersList: Headers
+  headersList: Headers,
 ): { clientIp: string; ipPrefix: string } => {
   const clientIp =
     headersList.get("x-forwarded-for")?.split(",")[0].trim() ||
@@ -327,3 +331,67 @@ export const getClientIpAndPrefix = (
   const ipPrefix = clientIp.split(".").slice(0, 3).join(".");
   return { clientIp, ipPrefix };
 };
+
+/**
+ * Checks if a date is within a specified range (inclusive).
+ * @param {Date} d - The date to check.
+ * @param {Date} start - The start of the range.
+ * @param {Date} end - The end of the range.
+ * @returns {boolean} - True if the date is within the range, false otherwise.
+ */
+export function isWithin(d: Date, start: Date, end: Date) {
+  return d >= start && d <= end;
+}
+
+/**
+ * Return normalized payee name by trimming and replacing multiple spaces with a single space
+ */
+export function normalizePayee(payee: string | null | undefined) {
+  return (payee ?? "").trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Parses a month-year string (e.g. "January 2026") and returns a Date object representing the first day of that month in UTC.
+ * @param {string} monthYear - The month-year string to parse.
+ * @returns {Date} - A Date object representing the first day of the specified month in UTC.
+ */
+export function parseMonthYearToUtcDate(monthYear: string): Date {
+  const s = String(monthYear ?? "").trim();
+
+  // Accept "January 2026" (English) and normalize multiple spaces
+  const normalized = s.replace(/\s+/g, " ");
+  const m = /^([A-Za-z]+)\s+(\d{4})$/.exec(normalized);
+  if (!m) {
+    throw new Error(
+      `Invalid month-year string: "${s}" (expected "January 2026")`,
+    );
+  }
+
+  const monthName = m[1].toLowerCase();
+  const year = Number(m[2]);
+
+  const monthIndexByName: Record<string, number> = {
+    january: 0,
+    february: 1,
+    march: 2,
+    april: 3,
+    may: 4,
+    june: 5,
+    july: 6,
+    august: 7,
+    september: 8,
+    october: 9,
+    november: 10,
+    december: 11,
+  };
+
+  const monthIndex = monthIndexByName[monthName];
+  if (monthIndex === undefined || Number.isNaN(year)) {
+    throw new Error(
+      `Invalid month-year string: "${s}" (expected "January 2026")`,
+    );
+  }
+
+  // Month bucket at midnight UTC on the first day
+  return new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0));
+}

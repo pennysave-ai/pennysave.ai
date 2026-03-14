@@ -11,17 +11,19 @@ import { sendMonthlyReports } from "@/lib/mail";
 async function handler(req: Request): Promise<NextResponse> {
   try {
     const { reportsToSend } = await req.json();
+    // This function emails the reports to the users
     await sendMonthlyReports(reportsToSend);
     await markReportsAsSent(
-      reportsToSend.map((report: { id: string }) => report.id)
+      reportsToSend.map((report: { id: string }) => report.id),
     );
     return NextResponse.json({ message: "Monthly reports sent" });
   } catch (error) {
     console.error("Error sending monthly reports:", error);
     return NextResponse.json(
       { message: "Error sending monthly reports" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-export const POST = verifySignatureAppRouter(handler);
+const isDev = process.env.NODE_ENV !== "production";
+export const POST = isDev ? handler : verifySignatureAppRouter(handler);

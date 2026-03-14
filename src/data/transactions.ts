@@ -1,13 +1,22 @@
 import { v4 as uuid } from "uuid";
-import { format, endOfDay } from "date-fns";
-
+import {
+  format,
+  endOfDay,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { db } from "@/db";
-import { formatCurrency } from "@/lib/utils";
-import { convertAmountFromMilliunits, convertCurrency } from "@/lib/utils";
 import { UpdateTransaction } from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
 import { checkBudgetExceedance } from "@/data/budgets";
 import { sendBudgetExceedNotification } from "@/lib/mail";
+import {
+  convertCurrency,
+  convertAmountFromMilliunits,
+  isWithin,
+  normalizePayee,
+} from "@/lib/utils";
 import { hasActiveAppleSubscription } from "@/data/user";
 import { Transaction, NewTransaction } from "@/types";
 import { accountSelect } from "@/data/accounts";
@@ -34,182 +43,23 @@ export const transactionSelect = {
   },
 };
 
-/**
- * Fetch users analytics data for AI model context
- * @param usersIds {String[]} - Array of user IDs
- * @param startDate {Date} - Start date
- * @param endDate {Date} - End date
- */
-export async function getPrevMonthSummaries(
-  usersIds: string[],
-  startDate: string,
-  endDate: string
-): Promise<any[]> {
-  const transactionsData = await db.transaction.findMany({
-    select: transactionSelect,
-    where: {
-      account: {
-        userAccess: { some: { userId: { in: usersIds } } },
-      },
-      createdAt: {
-        gte: startDate,
-        lte: endDate,
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Flatten transactions by user access
-  // Each transaction should appear for each user who has access to the account
-  const transactionsByUser = new Map<string, Transaction[]>();
-
-  for (const transaction of transactionsData) {
-    for (const access of transaction.account.userAccess) {
-      // Only include users in the requested usersIds
-      if (usersIds.includes(access.userId)) {
-        if (!transactionsByUser.has(access.userId)) {
-          transactionsByUser.set(access.userId, []);
-        }
-        transactionsByUser.get(access.userId)!.push({
-          ...transaction,
-          payee: transaction.payee || "",
-          account: {
-            ...transaction.account,
-            institution: { name: transaction.account.institutionName || "" },
-            users: transaction.account.userAccess.map((ua) => ({
-              id: ua.userId,
-              name: ua.user.name,
-              email: ua.user.email,
-              image: ua.user.image,
-            })),
-          },
-        });
-      }
-    }
-  }
-
-  // Iterate over each user to generate summaries
-  const usersData = [];
-
-  for (const [userId, userTransactions] of transactionsByUser) {
-    // Get user email from first transaction
-    const userEmail =
-      userTransactions[0]?.account.users.find(
-        (user: { id: string }) => user.id === userId
-      )?.email || "";
-
-    const transactionsByCurrency: Record<
-      string,
-      {
-        count: number;
-        expenses: number;
-        income: number;
-        exchangeRate: number;
-        symbol: string;
-        currency: string;
-      }
-    > = userTransactions.reduce(
-      (
-        acc: Record<
-          string,
-          {
-            count: number;
-            expenses: number;
-            income: number;
-            exchangeRate: number;
-            symbol: string;
-            currency: string;
-          }
-        >,
-        transaction: Transaction
-      ) => {
-        const currencyId = transaction.account.currency.id;
-
-        if (currencyId in acc) {
-          acc[currencyId] = {
-            ...acc[currencyId],
-            count: acc[currencyId].count + 1,
-            expenses:
-              transaction.amount < 0
-                ? acc[currencyId].expenses + transaction.amount
-                : acc[currencyId].expenses,
-            income:
-              transaction.amount > 0
-                ? acc[currencyId].income + transaction.amount
-                : acc[currencyId].income,
-          };
-        } else {
-          acc[currencyId] = {
-            count: 1,
-            expenses: transaction.amount < 0 ? transaction.amount : 0,
-            income: transaction.amount > 0 ? transaction.amount : 0,
-            exchangeRate: transaction.account.currency.exchangeRate,
-            symbol: transaction.account.currency.symbol,
-            currency: transaction.account.currency.name,
-          };
-        }
-        return acc;
-      },
-      {}
-    );
-
-    // Sort by count to find the most used currency
-    const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
-      (a, b) => b[1].count - a[1].count
-    );
-
-    // Convert income and expenses to base currency
-    const sum = Object.entries(transactionsByCurrency).reduce(
-      (acc, [currency, { income, expenses, exchangeRate }]) => {
-        if (currency === targetCurrency[0]) {
-          acc.income += Number(income);
-          acc.expenses += Number(expenses);
-        } else {
-          acc.income += convertCurrency(
-            income,
-            exchangeRate,
-            targetCurrency[1].exchangeRate
-          );
-          acc.expenses += convertCurrency(
-            expenses,
-            exchangeRate,
-            targetCurrency[1].exchangeRate
-          );
-        }
-        return acc;
-      },
-      {
-        income: 0,
-        expenses: 0,
-      }
-    );
-
-    const transactions = userTransactions.map((transaction: Transaction) => ({
-      amount: formatCurrency(
-        convertAmountFromMilliunits(transaction.amount),
-        targetCurrency[1].currency
-      ),
-      category: transaction.category?.name || "Uncategorized",
-      payee: transaction.payee,
-      notes: transaction.notes,
-      account: transaction.account.name,
-    }));
-
-    usersData.push({
-      userId,
-      email: userEmail,
-      currencySymbol: targetCurrency[1].symbol,
-      currencyName: targetCurrency[1].currency,
-      income: convertAmountFromMilliunits(sum.income),
-      expenses: convertAmountFromMilliunits(sum.expenses),
-      netFlow: convertAmountFromMilliunits(sum.income + sum.expenses),
-      reportDate: format(startDate, "MMMM yyyy"),
-      transactions,
-    });
-  }
-
-  return usersData;
-}
+type TransactionAggregates = {
+  expenseByCategory: Array<{ category: string; spend: number; pct: number }>;
+  expenseByPayee: Array<{ payee: string; spend: number; pct: number }>;
+  largestExpenses: Array<{
+    amount: number; // positive, in target currency units
+    category: string;
+    payee: string;
+    account: string;
+  }>;
+  largestIncome: Array<{
+    amount: number; // positive, in target currency units
+    category: string;
+    payee: string;
+    account: string;
+  }>;
+  uncategorized: { count: number; spend: number };
+};
 
 /**
  * Creates a new transaction
@@ -221,7 +71,7 @@ export async function createTransaction(
   payload: NewTransaction,
   email: string,
   userName: string,
-  userId: string
+  userId: string,
 ): Promise<Transaction> {
   try {
     const { amount, payee, notes, accountId, categoryId, createdAt } = payload;
@@ -250,7 +100,7 @@ export async function createTransaction(
         userId,
         amount,
         categoryId,
-        accountId
+        accountId,
       );
       for (const budget of budgetExceedance) {
         sendBudgetExceedNotification(email, budget, userName);
@@ -315,7 +165,7 @@ export async function getUserTransactionsCountByAccount(
   userId: string,
   startDate: Date,
   endDate: Date,
-  text?: string
+  text?: string,
 ) {
   return await db.transaction.count({
     where: {
@@ -342,7 +192,7 @@ export async function getUserTransactionsCountByAccount(
  */
 export async function deleteTransactions(
   transactionIds: string[],
-  userId: string
+  userId: string,
 ) {
   return await db.transaction.deleteMany({
     where: {
@@ -368,7 +218,7 @@ export async function updateTransaction(
   userId: string,
   email: string,
   userName: string,
-  data: Omit<UpdateTransaction, "id">
+  data: Omit<UpdateTransaction, "id">,
 ): Promise<Transaction> {
   const { categoryId, amount, accountId } = data;
   if (!!categoryId && amount < 0 && userId) {
@@ -377,7 +227,7 @@ export async function updateTransaction(
       userId,
       amount,
       categoryId,
-      accountId
+      accountId,
     );
     for (const budget of budgetExceedance) {
       sendBudgetExceedNotification(email, budget, userName);
@@ -432,7 +282,7 @@ export async function getUserTransactions(
   text?: string,
   accountId?: string,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
 ): Promise<Transaction[]> {
   const sortOrder = sortDirection === "ascending" ? "asc" : "desc";
   const validSortFields = [
@@ -447,8 +297,8 @@ export async function getUserTransactions(
   if (!validSortFields.includes(sortBy)) {
     throw new Error(
       `Invalid sort field: ${sortBy}. Valid fields are: ${validSortFields.join(
-        ", "
-      )}`
+        ", ",
+      )}`,
     );
   }
   // Make nested object from sortBy string
@@ -466,7 +316,7 @@ export async function getUserTransactions(
       (acc, key) => {
         return { [key]: acc };
       },
-      sortOrder as unknown as NestedSortObject
+      sortOrder as unknown as NestedSortObject,
     );
   };
 
@@ -533,7 +383,7 @@ export async function getUserTransactions(
   // Filter by subscription status
   const filteredTransactions = filterTransactionsBySubscription(
     transactions,
-    userId
+    userId,
   );
 
   // Map institutionName to institution: { name } and exclude userAccess
@@ -593,7 +443,7 @@ export async function getUserTransactionById(id: string, userId: string) {
  */
 export async function bulkCreateTransactions(
   transactions: NewTransaction[],
-  userId: string
+  userId: string,
 ) {
   return await db.transaction.createMany({
     data: transactions.map((transaction) => ({
@@ -616,7 +466,7 @@ export async function bulkCreateTransactions(
  */
 export async function getUserTransactionMonths(
   userId: string,
-  accountId: string
+  accountId: string,
 ) {
   const transactions = await db.transaction.findMany({
     where: {
@@ -635,7 +485,7 @@ export async function getUserTransactionMonths(
 
   // Extract unique months in 'YYYY-MM' format
   const monthsSet = new Set(
-    transactions.map((t) => format(t.createdAt, "yyyy-MM"))
+    transactions.map((t) => format(t.createdAt, "yyyy-MM")),
   );
 
   return Array.from(monthsSet);
@@ -703,7 +553,7 @@ export async function getUserTransactionsTotalsByCategory({
   if (!accountId && currencyId) {
     // Find the exchange rate for the target currency
     const targetCurrency = transactions.find(
-      (t) => t.account.currency.id === currencyId
+      (t) => t.account.currency.id === currencyId,
     )?.account.currency;
     if (targetCurrency) {
       targetExchangeRate = targetCurrency.exchangeRate;
@@ -716,7 +566,7 @@ export async function getUserTransactionsTotalsByCategory({
       amount = convertCurrency(
         t.amount,
         t.account.currency.exchangeRate,
-        targetExchangeRate
+        targetExchangeRate,
       );
     }
     return {
@@ -773,7 +623,7 @@ export async function getUserTransactionsTotalsByCategory({
           : totalIncome
             ? (Number(amount) / Number(totalIncome)) * 100
             : 0,
-    })
+    }),
   );
   return result;
 }
@@ -800,7 +650,7 @@ export function filterTransactionsBySubscription<
 >(transactions: T[], userId: string): T[] {
   return transactions.filter((transaction) => {
     const userAccess = transaction.account.userAccess.find(
-      (access) => access.userId === userId
+      (access) => access.userId === userId,
     );
 
     // If user is the owner, always include
@@ -808,7 +658,7 @@ export function filterTransactionsBySubscription<
 
     // If user is not the owner, check if owner has active subscription
     const ownerAccess = transaction.account.userAccess.find(
-      (access) => access.role === "owner"
+      (access) => access.role === "owner",
     );
 
     if (!ownerAccess) return false;
@@ -818,4 +668,275 @@ export function filterTransactionsBySubscription<
 
     return hasActiveAppleSubscription(ownerSubscriptionStatus);
   });
+}
+
+/**
+ * Convert amount from transaction currency to target currency using exchange rates
+ */
+function toTargetCurrencyMilliunits({
+  amountMilliunits,
+  fromCurrencyId,
+  fromExchangeRate,
+  targetCurrencyId,
+  targetExchangeRate,
+}: {
+  amountMilliunits: number;
+  fromCurrencyId: string;
+  fromExchangeRate: number;
+  targetCurrencyId: string;
+  targetExchangeRate: number;
+}) {
+  if (fromCurrencyId === targetCurrencyId) return amountMilliunits;
+
+  // convertCurrency works on numbers; we pass milliunits consistently across the app
+  return convertCurrency(
+    amountMilliunits,
+    fromExchangeRate,
+    targetExchangeRate,
+  );
+}
+
+/**
+ * Compute transaction aggregates for a user, including:
+ * - Total spend by category and payee (for expenses)
+ * - Largest expenses with details
+ * - Largest income with details
+ * - Uncategorized transactions count and spend
+ * The function takes into account currency conversion to a target currency for accurate aggregation.
+ */
+export function computeTransactionAggregates(params: {
+  userTransactions: Transaction[];
+  targetCurrencyId: string;
+  targetExchangeRate: number;
+  topN?: number;
+}): TransactionAggregates {
+  const {
+    userTransactions,
+    targetCurrencyId,
+    targetExchangeRate,
+    topN = 5,
+  } = params;
+
+  const byCategory = new Map<string, number>(); // expense spend milliunits (positive)
+  const byPayee = new Map<string, number>(); // expense spend milliunits (positive)
+
+  const largestExpenses: Array<{
+    spendMilliunits: number; // positive
+    category: string;
+    payee: string;
+    account: string;
+  }> = [];
+
+  const largestIncome: Array<{
+    incomeMilliunits: number; // positive
+    category: string;
+    payee: string;
+    account: string;
+  }> = [];
+
+  let uncategorizedCount = 0;
+  let uncategorizedSpendMilliunits = 0;
+  let totalExpenseSpendMilliunits = 0;
+
+  for (const t of userTransactions) {
+    const fromCurrencyId = t.account.currency.id;
+    const fromRate = t.account.currency.exchangeRate;
+
+    const amtTarget = toTargetCurrencyMilliunits({
+      amountMilliunits: t.amount,
+      fromCurrencyId,
+      fromExchangeRate: fromRate,
+      targetCurrencyId,
+      targetExchangeRate,
+    });
+
+    const cat = t.category?.name || "Uncategorized";
+    const payee = normalizePayee(t.payee) || "(no payee)";
+    const accountName = t.account.name;
+
+    // Income (positive)
+    if (amtTarget > 0) {
+      largestIncome.push({
+        incomeMilliunits: amtTarget,
+        category: cat,
+        payee,
+        account: accountName,
+      });
+      continue;
+    }
+
+    // Expenses only (negative)
+    if (amtTarget >= 0) continue;
+
+    const spend = -amtTarget; // positive
+    totalExpenseSpendMilliunits += spend;
+
+    byCategory.set(cat, (byCategory.get(cat) ?? 0) + spend);
+    byPayee.set(payee, (byPayee.get(payee) ?? 0) + spend);
+
+    if (!t.category?.name) {
+      uncategorizedCount += 1;
+      uncategorizedSpendMilliunits += spend;
+    }
+
+    largestExpenses.push({
+      spendMilliunits: spend,
+      category: cat,
+      payee,
+      account: accountName,
+    });
+  }
+
+  const expenseByCategory = [...byCategory.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([category, spendMilliunits]) => ({
+      category,
+      spend: convertAmountFromMilliunits(spendMilliunits),
+      pct:
+        totalExpenseSpendMilliunits > 0
+          ? Number(
+              ((spendMilliunits / totalExpenseSpendMilliunits) * 100).toFixed(
+                1,
+              ),
+            )
+          : 0,
+    }));
+
+  const expenseByPayee = [...byPayee.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([payee, spendMilliunits]) => ({
+      payee,
+      spend: convertAmountFromMilliunits(spendMilliunits),
+      pct:
+        totalExpenseSpendMilliunits > 0
+          ? Number(
+              ((spendMilliunits / totalExpenseSpendMilliunits) * 100).toFixed(
+                1,
+              ),
+            )
+          : 0,
+    }));
+
+  const largestExpensesOut = largestExpenses
+    .sort((a, b) => b.spendMilliunits - a.spendMilliunits)
+    .slice(0, topN)
+    .map((x) => ({
+      amount: convertAmountFromMilliunits(x.spendMilliunits),
+      category: x.category,
+      payee: x.payee,
+      account: x.account,
+    }));
+
+  const largestIncomeOut = largestIncome
+    .sort((a, b) => b.incomeMilliunits - a.incomeMilliunits)
+    .slice(0, topN)
+    .map((x) => ({
+      amount: convertAmountFromMilliunits(x.incomeMilliunits),
+      category: x.category,
+      payee: x.payee,
+      account: x.account,
+    }));
+
+  return {
+    expenseByCategory,
+    expenseByPayee,
+    largestExpenses: largestExpensesOut,
+    largestIncome: largestIncomeOut,
+    uncategorized: {
+      count: uncategorizedCount,
+      spend: convertAmountFromMilliunits(uncategorizedSpendMilliunits),
+    },
+  };
+}
+
+/**
+ * Get transactions for multiple users within a date range, but also includes a
+ * history window (default: 3 months prior to `start`) to support:
+ * - previous-month comparisons
+ * - recurring-candidate detection
+ */
+export async function getTransactions({ userIds }: { userIds: string[] }) {
+  try {
+    const now = new Date();
+
+    const reportMonthDate = subMonths(now, 1);
+    const currentStart = startOfMonth(reportMonthDate); // beginning of prev month
+    const currentEnd = endOfMonth(reportMonthDate); // end of prev month
+
+    // Month before previous (for comparisons)
+    const prevMonthDate = subMonths(now, 2);
+    const prevStart = startOfMonth(prevMonthDate);
+    const prevEnd = endOfMonth(prevMonthDate);
+
+    // History window for recurring detection (3 months before report start)
+    const historyStart = subMonths(currentStart, 3);
+
+    const allTransactionsData = await db.transaction.findMany({
+      select: transactionSelect,
+      where: {
+        account: {
+          userAccess: { some: { userId: { in: userIds } } },
+        },
+        createdAt: {
+          gte: historyStart,
+          lte: currentEnd,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const currentByUser = new Map<string, Transaction[]>();
+    const prevByUser = new Map<string, Transaction[]>();
+    const historyByUser = new Map<string, Transaction[]>();
+
+    for (const transaction of allTransactionsData) {
+      const createdAt = new Date(transaction.createdAt);
+
+      for (const access of transaction.account.userAccess) {
+        if (!userIds.includes(access.userId)) continue;
+        const t: Transaction = {
+          ...transaction,
+          payee: transaction.payee || "",
+          account: {
+            ...transaction.account,
+            institution: { name: transaction.account.institutionName || "" },
+            users: transaction.account.userAccess.map((ua: any) => ({
+              id: ua.userId,
+              name: ua.user.name,
+              email: ua.user.email,
+              image: ua.user.image,
+            })),
+          },
+        };
+
+        // history bucket (everything in the query range)
+        {
+          const arr = historyByUser.get(access.userId) ?? [];
+          arr.push(t);
+          historyByUser.set(access.userId, arr);
+        }
+
+        // current month bucket
+        if (isWithin(createdAt, currentStart, currentEnd)) {
+          const arr = currentByUser.get(access.userId) ?? [];
+          arr.push(t);
+          currentByUser.set(access.userId, arr);
+        }
+
+        // previous month bucket
+        if (isWithin(createdAt, prevStart, prevEnd)) {
+          const arr = prevByUser.get(access.userId) ?? [];
+          arr.push(t);
+          prevByUser.set(access.userId, arr);
+        }
+      }
+    }
+
+    return { currentByUser, prevByUser, historyByUser };
+  } catch (e) {
+    console.error("Error fetching transactions:", e);
+    throw new Error("Failed to fetch transactions");
+  }
 }

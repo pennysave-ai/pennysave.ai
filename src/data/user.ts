@@ -125,16 +125,19 @@ export async function createUserWithOauth({
  */
 export async function updateUserProfile(
   userId: string,
-  data: {
+  updates: Partial<{
     name: string;
+    timezone: string;
+    preferredLanguage: string;
     image: string;
-  }
+    sendMonthlyReport: boolean;
+  }>,
 ) {
   return db.user.update({
     where: {
       id: userId,
     },
-    data,
+    data: updates,
   });
 }
 
@@ -194,7 +197,7 @@ export async function updateAppleSubscription({
  */
 export async function updateUserDeviceToken(
   userId: string,
-  deviceToken: string | null
+  deviceToken: string | null,
 ) {
   return db.user.update({
     where: {
@@ -235,4 +238,27 @@ export function hasActiveAppleSubscription(status: string): boolean {
     "grace_period",
     "past_due",
   ].includes(status);
+}
+
+/**
+ * Set user timezone
+ * @param {Object} params - Parameters
+ * @param {string} params.userId - User ID
+ * @param {string} params.timezone - IANA timezone ID (e.g. "Europe/Madrid", "America/New_York")
+ * @returns Promise<User>
+ */
+export async function setUserTimezone(params: {
+  userId: string;
+  timezone: string;
+}) {
+  const { userId, timezone } = params;
+
+  // very light sanity check (IANA ids are like "Area/City")
+  const tz = String(timezone || "").trim();
+  if (!tz || !tz.includes("/")) return;
+
+  await db.user.update({
+    where: { id: userId },
+    data: { timezone: tz },
+  });
 }

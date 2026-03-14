@@ -53,7 +53,7 @@ npm run prisma:migrate:prod
 #### Populate db
 
 ```bash
-npm run populate:db:dev
+npm run populate_currency:db:dev
 ```
 
 #### Run Stripe Server
@@ -82,7 +82,7 @@ When it's gonna be possible and thre will be stable cash flow we need to update 
 },
 ```
 
-# Run instance on Run Pod
+# Run instance on Run Pod no-op because we are using huggingface models
 
 The image of llama4:scout is already on Docker registry so all you need to do:
 
