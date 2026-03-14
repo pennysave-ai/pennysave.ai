@@ -14,7 +14,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   const confirmLink = `${HOST}/auth/verify-email?token=${token}`;
   const { renderToString } = await import("react-dom/server");
   const html = renderToString(
-    React.createElement(VerifyEmail, { confirmLink })
+    React.createElement(VerifyEmail, { confirmLink }),
   );
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL as string,
@@ -28,7 +28,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
   const { renderToString } = await import("react-dom/server");
   const confirmLink = `${HOST}/auth/new-password?token=${token}`;
   const html = renderToString(
-    React.createElement(ResetPassword, { confirmLink })
+    React.createElement(ResetPassword, { confirmLink }),
   );
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL as string,
@@ -39,12 +39,15 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
 };
 
 /**
- * Bulk sends monthly reports to the users
+ * Bulk sends monthly reports emails to the users
  * Resend API has a limit of 100 emails per batch
  * @param payload - Array of monthly report data
  */
 export const sendMonthlyReports = async (
-  payload: { user: { email: string | null }; data: { [x: string]: string }[] }[]
+  payload: {
+    user: { email: string | null };
+    data: { [x: string]: string }[];
+  }[],
 ) => {
   try {
     const { renderToString } = await import("react-dom/server");
@@ -52,7 +55,7 @@ export const sendMonthlyReports = async (
       const html = renderToString(
         React.createElement(MonthlyReport, {
           data,
-        })
+        }),
       );
       return {
         from: process.env.RESEND_FROM_EMAIL as string,
@@ -85,7 +88,7 @@ export const sendBudgetExceedNotification = async (
     amountSpent: number;
     currency: string;
   },
-  userName: string
+  userName: string,
 ) => {
   try {
     const { renderToString } = await import("react-dom/server");
@@ -93,7 +96,7 @@ export const sendBudgetExceedNotification = async (
       React.createElement(BudgetExceedNotifcation, {
         budget,
         userName,
-      })
+      }),
     );
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL as string,

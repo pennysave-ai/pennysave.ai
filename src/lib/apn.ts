@@ -10,6 +10,7 @@ interface APNMessage {
 
 export enum APNNotificationType {
   SUBSCRIPTION_ENDED = "SUBSCRIPTION_ENDED",
+  MONTHLY_REPORT_READY = "MONTHLY_REPORT_READY",
 }
 
 interface APNPayload {
@@ -17,13 +18,13 @@ interface APNPayload {
 }
 
 interface BatchNotification {
-  userId: string;
+  deviceToken: string;
   message: APNMessage;
   payload: APNPayload;
   silent: boolean;
 }
 
-class APNService {
+export class APNService {
   private static instance: APNService;
   private provider: apn.Provider;
 
@@ -53,14 +54,13 @@ class APNService {
    * Cannot be disabled by user, but rate limited (~2-3 per hour)
    */
   async sendSilentNotification(
-    userId: string,
-    payload?: APNPayload
+    deviceToken: string,
+    payload?: APNPayload,
   ): Promise<apn.Responses | null> {
-    const deviceToken = await this.getDeviceToken(userId);
     if (!deviceToken) return null;
 
     const notification = new apn.Notification({
-      contentAvailable: true,
+      // contentAvailable: true,
       topic: "ai.pennysave.app",
       priority: 5,
       pushType: "background",
@@ -70,13 +70,13 @@ class APNService {
     const result = await this.provider.send(notification, deviceToken);
 
     if (result.sent.length > 0) {
-      console.log(`🔕 Silent APNs sent to user ${userId}`);
+      console.log("🔕 Silent APNs sent to user");
       return result;
     }
     if (result.failed.length > 0) {
       console.error(
-        `❌ Silent APNs failed for user ${userId}:`,
-        result.failed[0].response
+        `❌ Silent APNs failed for user`,
+        result.failed[0].response,
       );
       return null;
     }
@@ -89,36 +89,34 @@ class APNService {
    * Can be disabled by user, no rate limits
    */
   async sendVisibleNotification(
-    userId: string,
+    deviceToken: string,
     message: APNMessage,
-    payload: APNPayload
+    payload: APNPayload,
   ) {
-    const deviceToken = await this.getDeviceToken(userId);
-    if (!deviceToken) return null;
-
     const notification = new apn.Notification({
       alert: {
-        title: message.title,
-        body: message.body,
-        subtitle: message.subtitle,
+        ...message,
       },
       badge: 0, // set badge for app icon if needed
       sound: "default",
       topic: "ai.pennysave.app",
       category: message.category || "DEFAULT",
-      contentAvailable: true, // Also trigger background refresh
+      contentAvailable: false, // Also trigger background refresh
       payload: payload,
+      mutableContent: 1, // Allow notification service extension to modify the notification (e.g. localize strings, add images)
+      pushType: "alert", // ← ADD THIS (required for service extension)
+      priority: 10,
     });
 
     const result = await this.provider.send(notification, deviceToken);
-
+    console.log("APN send result:", result);
     if (result.sent.length > 0) {
-      console.log(`🔔 Visible APNs sent to user ${userId}`);
+      console.log("🔔 Visible APNs sent to user");
     }
     if (result.failed.length > 0) {
       console.error(
-        `❌ Visible APNs failed for user ${userId}:`,
-        result.failed[0].response
+        "❌ Visible APNs failed for user",
+        result.failed[0].response,
       );
     }
 
@@ -142,11 +140,11 @@ class APNService {
    */
   async sendBatchNotifications(notifications: BatchNotification[]) {
     const results = await Promise.all(
-      notifications.map(({ userId, message, payload, silent }) =>
+      notifications.map(({ deviceToken, message, payload, silent }) =>
         silent
-          ? this.sendSilentNotification(userId, payload)
-          : this.sendVisibleNotification(userId, message, payload)
-      )
+          ? this.sendSilentNotification(deviceToken, payload)
+          : this.sendVisibleNotification(deviceToken, message, payload),
+      ),
     );
 
     const sent = results.filter((r) => (r?.sent?.length ?? 0) > 0).length;

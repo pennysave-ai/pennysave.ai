@@ -11,7 +11,7 @@ import { getUnsendedReports } from "@/data/reports";
 const BATCH_SIZE = 50;
 
 export async function GET(
-  req: Request
+  req: Request,
 ): Promise<NextResponse<string | object>> {
   if (
     req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
@@ -19,17 +19,28 @@ export async function GET(
     return NextResponse.json("Unautorized", { status: 401 });
   }
   try {
-    // Get Reports which are not sent yet
     const reports = await getUnsendedReports();
+    console.log("Unsended reports to send:", reports);
+    // Sent notifications in batches to avoid timeouts and rate limits
     for (let i = 0; i < reports.length; i += BATCH_SIZE) {
       const batch = reports.slice(i, i + BATCH_SIZE);
       await qstash.publishJSON({
-        url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/send`,
+        url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/send-notifications`,
         body: {
           reportsToSend: batch,
         },
       });
     }
+    // Sent emails in batches to avoid timeouts and rate limits
+    // for (let i = 0; i < reports.length; i += BATCH_SIZE) {
+    //   const batch = reports.slice(i, i + BATCH_SIZE);
+    //   await qstash.publishJSON({
+    //     url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/send-email`,
+    //     body: {
+    //       reportsToSend: batch,
+    //     },
+    //   });
+    // }
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("error", error);

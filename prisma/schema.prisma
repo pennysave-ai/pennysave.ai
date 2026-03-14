@@ -85,7 +85,10 @@ enum UserRole {
 model User {
   id            String    @id @default(uuid())
   name          String?
+  /// IANA timezone id, e.g. "Europe/Madrid", "America/New_York" used to send notifiactions at the right time, default is UTC
+  timezone      String?   @default("UTC")
   email         String?   @unique
+  preferredLanguage String? @default("EN")
   emailVerified DateTime?
   image         String?
   accounts      Account[]
@@ -112,6 +115,7 @@ model User {
   createdTransactions Transaction[]
   deviceToken String? @unique
   createdInvites AccountInvite[]
+  createdReceipts    Receipt[] @relation("ReceiptCreatedBy")
 }
 
 model Transaction {
@@ -123,6 +127,7 @@ model Transaction {
   account     UserAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  receipt     Receipt?
   createdBy   String    // User ID of who created this transaction
   createdByUser User    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
@@ -150,6 +155,7 @@ model Currency {
   userAccounts UserAccount[]
   exchangeRate Float
   budget Budget[]
+  receipts Receipt[]
   @@unique([id])
 }
 
@@ -187,6 +193,7 @@ model UserAccount {
   budgets    BudgetAccount[]
   userAccess UserAccountAccess[] // Many-to-many relation
   invites    AccountInvite[]
+  receipts Receipt[]
   @@unique([id])
 }
 
@@ -266,10 +273,17 @@ model BudgetAllocation {
 model Report {
   id            String    @id @default(uuid())
   userId        String
+  periodStart   DateTime  // month bucket, e.g. 2026-01-01T00:00:00.000Z
+  health        String?  // "green" | "yellow" | "red" - overall financial health for the period
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   data          Json      // JSON data for the report, it might be changed frequently and we don't want to change the schema, indexing and querying is not that important
   createdAt     DateTime  @default(now())
   sentAt        DateTime?
+
+  snapshot      ReportSnapshot?
+  recurringCandidates ReportRecurringCandidate[]
+  categoryBreakdowns  ReportCategoryBreakdown[]
+  comparisons   ReportComparison?
   
   @@index([userId, createdAt])
 }
@@ -293,4 +307,177 @@ model Feedback {
   
   @@index([userId])
   @@index([createdAt])
+}
+
+model Store {
+  id         String   @id @default(uuid())
+  name       String
+
+  // PostGIS point for radius searches (global store catalog).
+  // Prisma can't type this natively, so we use Unsupported + add indexes via SQL migration.
+  geom       Unsupported("geography(Point,4326)")?
+
+  street     String?
+  city       String?
+  postalCode String?
+  country    String?
+
+  receipts   Receipt[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([name])
+}
+
+model Receipt {
+  id            String   @id @default(uuid())
+
+  // Account scoping (important in your app since accounts are shareable)
+  accountId     String
+  account       UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Who uploaded/created the receipt
+  createdBy     String
+  createdByUser User @relation("ReceiptCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  storeId       String?
+  store         Store? @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  rawOCRAddress String?  @db.Text // Raw OCR address text for manual geocoding fallback
+
+  // Link to the Transaction created from this receipt
+  transactionId String? @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  purchasedAt   DateTime?
+  
+  currencyId    String
+  currency  Currency @relation(fields: [currencyId], references: [id])
+
+  items         ReceiptItem[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([accountId, createdAt])
+  @@index([storeId, purchasedAt])
+  @@index([createdBy])
+}
+
+model ReceiptItem {
+  id              String   @id @default(uuid())
+
+  receiptId       String
+  receipt         Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  rawName         String
+  canonicalItemId String?
+  canonicalItem   CanonicalItem? @relation(fields: [canonicalItemId], references: [id], onDelete: SetNull)
+
+  quantity        Float?
+  unit            String?
+  unitPrice       Int?     // milliunits
+  price           Int      // milliunits
+
+  // Normalized for fair comparisons (€/kg, €/L, €/unit)
+  normalizedQuantity  Float?
+  normalizedUnit      String? // "kg" | "l" | "unit"
+  normalizedUnitPrice Int?    // milliunits per normalizedUnit
+
+  @@index([receiptId])
+  @@index([canonicalItemId])
+}
+
+model CanonicalItem {
+  id            String   @id @default(uuid())
+  canonicalName String
+
+  // pgvector embedding; set dimension to your model (384/768/1024 etc.)
+  embedding     Unsupported("vector(384)")?
+
+  brand         String?
+  category      String?
+
+  receiptItems  ReceiptItem[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([canonicalName])
+}
+
+/// Immutable totals snapshot for the report period
+model ReportSnapshot {
+  id              String   @id @default(uuid())
+  reportId        String   @unique
+  report          Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  currencyCode    String
+  currencySymbol  String
+  incomeReceived  Int
+  expenseSpend    Int
+  netFlow         Int
+
+  // Top payees / largest transactions stored as small JSON arrays (display-only, not queried)
+  expenseByPayee    Json?  // [{ payee, amount }]
+  largestExpenses   Json?  // [{ payee, amount, date }]
+  largestIncome     Json?  // [{ payee, amount, date }]
+  uncategorized     Json?  // [{ amount, date }]
+
+  @@index([reportId])
+}
+
+/// Month-over-month comparison stored per report
+model ReportComparison {
+  id                      String  @id @default(uuid())
+  reportId                String  @unique
+  report                  Report  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  prevMonthAvailable      Boolean
+  incomeReceivedDelta     Int
+  incomeReceivedDeltaPct  Float?
+  expenseSpendDelta       Int
+  expenseSpendDeltaPct    Float?
+  netFlowDelta            Int
+  netFlowDeltaPct         Float?
+
+  topCategoryChanges      Json?   // [{ category, delta, deltaPct }]
+
+  @@index([reportId])
+}
+
+/// Category breakdown for the report period (queryable across months)
+model ReportCategoryBreakdown {
+  id          String  @id @default(uuid())
+  reportId    String
+  report      Report  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  category    String
+  spend       Int
+  pct         Float
+
+  @@index([reportId])
+  @@index([category])
+}
+
+/// Recurring charge candidates detected for the report period
+model ReportRecurringCandidate {
+  id              String   @id @default(uuid())
+  reportId        String
+  report          Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  payee           String
+  direction       String   // "expense" | "income"
+  occurrences     Int
+  months          Int
+  avgAmount       Int
+  medianAmount    Int
+  amountStdDev    Int
+  amountStdDevPct Float
+  lastSeenAt      DateTime
+  last3Amounts    Json?    // [{ at, amount }]
+  nextExpectedWindow Json? // { from, to }
+
+  @@index([reportId])
+  @@index([payee])
 }

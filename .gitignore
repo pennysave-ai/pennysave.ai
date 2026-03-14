@@ -49,3 +49,7 @@ backup_codes
 
 # Data seed scripts
 populate_db.ts
+
+# Docker files
+Dockerfile.postgres
+init.sql
