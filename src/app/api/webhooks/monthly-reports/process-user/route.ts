@@ -3,7 +3,6 @@ import { db } from "@/db";
 
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import {
-  bulkUpsertReports,
   generateMonthlyReportWithHuggingFace,
   upsertReport,
 } from "@/data/reports";
