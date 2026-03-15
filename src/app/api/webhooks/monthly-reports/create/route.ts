@@ -16,10 +16,10 @@ async function handler(req: Request): Promise<NextResponse> {
   ) {
     return NextResponse.json("Unauthorized", { status: 401 });
   }
-  const { userIds } = await req.json();
+  const { users } = await req.json();
 
   try {
-    const usersData = await getPrevMonthSummaries(userIds);
+    const usersData = await getPrevMonthSummaries(users.map((u: any) => u.id));
 
     for (const userData of usersData) {
       console.log(
@@ -30,7 +30,12 @@ async function handler(req: Request): Promise<NextResponse> {
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/process-user`,
         body: {
-          userData,
+          userData: {
+            language:
+              users.find((u: any) => u.id === userData.userId)
+                ?.prefferedLanguage || "en",
+            ...userData,
+          },
         },
         retries: 3, // Retry up to 3 times if the endpoint fails
         headers: {

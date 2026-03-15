@@ -282,6 +282,17 @@ export const markReportsAsSent = async (ids: string[]) => {
  * following strict instructions for output format and content.
  */
 export function buildLLMPrompt(factsPack: any): ChatMessage[] {
+  const language = factsPack.language ?? "en";
+
+  const languageMap: Record<string, string> = {
+    en: "English",
+    de: "German",
+    fr: "French",
+    es: "Spanish",
+  };
+
+  const languageName = languageMap[language] ?? "English";
+
   const userContent = [
     "Return ONLY a valid JSON object. No Markdown. No greeting. No sign-off. No extra text.",
     "You must follow this JSON shape (keys exactly):",
@@ -294,6 +305,7 @@ export function buildLLMPrompt(factsPack: any): ChatMessage[] {
     `}`,
     "",
     "Rules:",
+    `- Write ALL text fields (insights, income_analysis, expense_analysis, health_analysis) in ${languageName}.`,
     "- Use totalsAbs.expenseSpend for 'spending' and totalsAbs.incomeReceived for 'income'.",
     "- Use netFlow (signed) for surplus/deficit wording.",
     "- Use comparisons.expenseSpendDelta and comparisons.incomeReceivedDelta for month-over-month changes when prevMonthAvailable is true.",
