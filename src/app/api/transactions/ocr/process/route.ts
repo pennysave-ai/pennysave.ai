@@ -390,19 +390,20 @@ async function geocodeWithNominatim({
 }
 
 /**
- * Parse receipt data
+ * POST OCR recognition result and upsert related data (Store, Receipt) in db.
  * @param req
  * @returns {Promise<NextResponse>}
  */
 async function handler(req: Request): Promise<NextResponse> {
-  //   if (
-  //     req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
-  //   ) {
-  //     return NextResponse.json("Unauthorized", { status: 401 });
-  //   }
+  if (
+    req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json("Unauthorized", { status: 401 });
+  }
   const { receipt, user, account, transactionId } = await req.json();
 
   if (!transactionId) {
+    console.error("transactionId is required in OCR payload");
     return NextResponse.json(
       { status: "error", message: "transactionId is required" },
       { status: 400 },
@@ -410,6 +411,7 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   if (!user?.id) {
+    console.error("user.id is required in OCR payload");
     return NextResponse.json(
       { status: "error", message: "user.id is required" },
       { status: 400 },
@@ -417,6 +419,7 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   if (!account?.id) {
+    console.error("account.id is required in OCR payload");
     return NextResponse.json(
       { status: "error", message: "account.id is required" },
       { status: 400 },
@@ -424,7 +427,8 @@ async function handler(req: Request): Promise<NextResponse> {
   }
 
   // If Receipt.currencyId is required in schema, this must be present:
-  if (!account?.currencyId) {
+  if (!account?.currency?.id) {
+    console.error("!account?.currency?.id is required in OCR payload");
     return NextResponse.json(
       { status: "error", message: "account.currencyId is required" },
       { status: 400 },
@@ -580,7 +584,7 @@ async function handler(req: Request): Promise<NextResponse> {
       create: {
         accountId: account.id,
         createdBy: user.id,
-        currencyId: account.currencyId,
+        currencyId: account.currency?.id,
         storeId,
         transactionId,
         purchasedAt,

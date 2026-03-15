@@ -31,8 +31,7 @@ export async function GET(
         FROM "User" u
         LEFT JOIN pg_timezone_names p
           ON p.name = u.timezone
-        WHERE u."sendMonthlyReport" = true  
-          AND EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
+        WHERE EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
       )
       SELECT d.id
       FROM due d
