@@ -16,10 +16,13 @@ export async function GET(
   }
 
   try {
-    const users = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
+    const users = await db.$queryRaw<
+      { id: string; prefferedLanguage: string }[]
+    >(Prisma.sql`
       WITH due AS (
         SELECT
           u.id,
+          u.prefferedLanguage,
           -- Guard invalid IANA tz values by validating against pg_timezone_names
           COALESCE(p.name, 'UTC') AS tz,
 
@@ -53,7 +56,12 @@ export async function GET(
       const batch = users.slice(i, i + BATCH_SIZE);
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/create`,
-        body: { userIds: batch.map((u) => u.id) },
+        body: {
+          users: batch.map((u) => ({
+            id: u.id,
+            language: u.prefferedLanguage,
+          })),
+        },
         retries: 3,
         headers: {
           "Content-Type": "application/json",
