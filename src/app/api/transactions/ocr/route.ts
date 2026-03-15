@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { convertAmountToMilliunits } from "@/lib/utils";
 import { getAuthenticatedUser } from "@/auth.helper";
 import { createTransaction } from "@/data/transactions";
-import { getUsersWithAccessToAccount } from "@/data/userAccounts";
-import { sendWebSocketMessage } from "@/lib/websocket";
-import { BroadcastType } from "@/wstypes";
+// import { getUsersWithAccessToAccount } from "@/data/userAccounts";
+// import { sendWebSocketMessage } from "@/lib/websocket";
+// import { BroadcastType } from "@/wstypes";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +36,12 @@ export async function POST(req: NextRequest) {
       ? imageBase64.split(",")[1]
       : imageBase64;
 
+    // For now the fastest model from HuggingFace
+    // https://huggingface.co/inference/models?search=vl&asc_sort=firstTokenLatencyMs
+    const MODEL = "Qwen/Qwen3-VL-30B-A3B-Instruct:fireworks-ai";
+
+    const hfStart = performance.now();
+
     const response = await fetch(
       "https://router.huggingface.co/v1/chat/completions",
       {
@@ -45,7 +51,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "Qwen/Qwen2.5-VL-7B-Instruct",
+          model: MODEL,
           messages: [
             {
               role: "system",
@@ -95,6 +101,9 @@ export async function POST(req: NextRequest) {
         }),
       },
     );
+
+    const hfEnd = performance.now();
+    console.log(`[OCR] ${MODEL} duration: ${(hfEnd - hfStart).toFixed(0)}ms`);
 
     const data = await response.json();
 
@@ -222,12 +231,31 @@ export async function POST(req: NextRequest) {
             institution: {
               name: account?.institution?.name || "",
             },
+            users: [
+              {
+                id: user.id!,
+                name: user.name || "",
+                image: user.image || null,
+              },
+            ],
           },
           category: {
             id: category?.id || null,
             name: category?.name || null,
             icon: category?.icon || null,
+            owner: {
+              id: user.id!,
+              name: user.name || "",
+              image: user.image || null,
+            },
           },
+          users: [
+            {
+              id: user.id!,
+              name: user.name || "",
+              image: user.image || null,
+            },
+          ],
           createdByUser: {
             id: user.id!,
             name: user.name || "",
