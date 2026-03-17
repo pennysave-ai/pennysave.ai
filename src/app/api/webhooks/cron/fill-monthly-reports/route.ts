@@ -17,12 +17,12 @@ export async function GET(
 
   try {
     const users = await db.$queryRaw<
-      { id: string; prefferedLanguage: string }[]
+      { id: string; preferredLanguage: string }[]
     >(Prisma.sql`
       WITH due AS (
         SELECT
           u.id,
-          u.prefferedLanguage,
+          u."preferredLanguage",
           -- Guard invalid IANA tz values by validating against pg_timezone_names
           COALESCE(p.name, 'UTC') AS tz,
 
@@ -36,7 +36,7 @@ export async function GET(
           ON p.name = u.timezone
         WHERE EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
       )
-      SELECT d.id
+      SELECT d.id, d."preferredLanguage"
       FROM due d
       WHERE EXISTS (
         SELECT 1
@@ -59,7 +59,7 @@ export async function GET(
         body: {
           users: batch.map((u) => ({
             id: u.id,
-            language: u.prefferedLanguage,
+            language: u.preferredLanguage,
           })),
         },
         retries: 3,
