@@ -33,7 +33,7 @@ async function handler(req: Request): Promise<NextResponse> {
           userData: {
             language:
               users.find((u: any) => u.id === userData.userId)
-                ?.prefferedLanguage || "en",
+                ?.preferredLanguage || "en",
             ...userData,
           },
         },
