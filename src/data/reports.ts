@@ -850,7 +850,7 @@ function toISODateOnly(d: Date) {
  * Fetch users analytics data for AI model context
  */
 export async function getPrevMonthSummaries(
-  usersIds: string[],
+  users: { id: string; currencyId?: string }[],
 ): Promise<any[]> {
   // Report is always previous month; keep params for now to avoid breaking call sites,
   // but derive the report month from "now" to match getTransactions().
@@ -860,7 +860,7 @@ export async function getPrevMonthSummaries(
   const reportEnd = endOfMonth(reportMonthDate);
 
   const { currentByUser, prevByUser, historyByUser } = await getTransactions({
-    userIds: usersIds,
+    userIds: users.map((u) => u.id),
   });
 
   const usersData: any[] = [];
@@ -889,9 +889,18 @@ export async function getPrevMonthSummaries(
           };
     }
 
-    const [targetCurrency] = Object.entries(transactionsByCurrency).sort(
-      (a, b) => b[1].count - a[1].count,
-    );
+    // Use preferredCurrencyId if provided and exists in transactions,
+    // otherwise fall back to most frequent currency in transactions
+    const preferredCurrencyId = users.find((u) => u.id === userId)?.currencyId;
+    const preferredCurrency = preferredCurrencyId
+      ? transactionsByCurrency[preferredCurrencyId]
+      : undefined;
+
+    const [targetCurrency] = preferredCurrency
+      ? [[preferredCurrencyId, preferredCurrency] as const]
+      : Object.entries(transactionsByCurrency).sort(
+          (a, b) => b[1].count - a[1].count,
+        );
 
     const targetCurrencyId =
       targetCurrency?.[0] ?? currentTx[0]!.account.currency.id;
@@ -1007,8 +1016,9 @@ export async function getPrevMonthSummaries(
         end: toISODateOnly(reportEnd),
       },
       currency: {
-        symbol: currentTx[0]?.account.currency.symbol,
-        code: currentTx[0]?.account.currency.name,
+        symbol:
+          targetCurrency?.[1].symbol || currentTx[0]?.account.currency.symbol,
+        code: targetCurrency?.[1].name || currentTx[0]?.account.currency.name,
       },
       totalsAbs: {
         incomeReceived: incomeReceivedThis,
