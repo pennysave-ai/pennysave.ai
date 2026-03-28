@@ -47,10 +47,14 @@ export async function GET(
           AND t."createdAt" >= d.start_prev_month_utc
           AND t."createdAt" <  d.start_current_month_utc
         LIMIT 1
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM "Report" r
+        WHERE r."userId" = d.id
+          AND r."periodStart" = d.start_prev_month_utc
       );
     `);
-
-    console.log("Users to process:", users.length);
 
     for (let i = 0; i < users.length; i += BATCH_SIZE) {
       const batch = users.slice(i, i + BATCH_SIZE);
