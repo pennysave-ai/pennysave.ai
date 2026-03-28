@@ -18,31 +18,33 @@ export async function GET(
   try {
     const users = await db.$queryRaw<
       {
+        currencySymbol: any;
+        currencyCode: any;
         preferredCurrencyId?: string;
         id: string;
         preferredLanguage: string;
       }[]
     >(Prisma.sql`
-      WITH due AS (
+       WITH due AS (
         SELECT
           u.id,
           u."preferredLanguage",
           u."preferredCurrencyId",
-          -- Guard invalid IANA tz values by validating against pg_timezone_names
           COALESCE(p.name, 'UTC') AS tz,
-
-          -- Start of current month in user's local time, converted to UTC instant
           (date_trunc('month', (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) AT TIME ZONE COALESCE(p.name, 'UTC')) AS start_current_month_utc,
-
-          -- Start of previous month in user's local time, converted to UTC instant
           ((date_trunc('month', (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) - interval '1 month') AT TIME ZONE COALESCE(p.name, 'UTC')) AS start_prev_month_utc
         FROM "User" u
         LEFT JOIN pg_timezone_names p
           ON p.name = u.timezone
         WHERE EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
       )
-      SELECT d.id, d."preferredLanguage", d."preferredCurrencyId"
+      SELECT
+        d.id,
+        d."preferredLanguage",
+        c.symbol AS "currencySymbol",
+        c.name   AS "currencyCode"
       FROM due d
+      LEFT JOIN "Currency" c ON c.id = d."preferredCurrencyId"
       WHERE EXISTS (
         SELECT 1
         FROM "UserAccountAccess" uaa
@@ -69,7 +71,12 @@ export async function GET(
           users: batch.map((u) => ({
             id: u.id,
             language: u.preferredLanguage,
-            currency: u.preferredCurrencyId,
+            currency: u.currencySymbol
+              ? {
+                  symbol: u.currencySymbol,
+                  code: u.currencyCode!,
+                }
+              : undefined,
           })),
         },
         retries: 3,
