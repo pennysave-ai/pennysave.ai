@@ -37,13 +37,10 @@ async function handler(req: Request): Promise<NextResponse> {
             language:
               users.find((u: any) => u.id === userData.userId)?.language ||
               "en",
-            currency: {
-              symbol:
-                users.find((u: any) => u.id === userData.userId)
-                  ?.currencySymbol || "$",
-              code:
-                users.find((u: any) => u.id === userData.userId)?.currencyId ||
-                "USD",
+            currency: users.find((u: any) => u.id === userData.userId)
+              ?.currency || {
+              symbol: "$",
+              code: "USD",
             },
           },
         },
