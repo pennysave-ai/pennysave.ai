@@ -33,10 +33,18 @@ async function handler(req: Request): Promise<NextResponse> {
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/process-user`,
         body: {
           userData: {
+            ...userData,
             language:
               users.find((u: any) => u.id === userData.userId)?.language ||
               "en",
-            ...userData,
+            currency: {
+              symbol:
+                users.find((u: any) => u.id === userData.userId)
+                  ?.currencySymbol || "$",
+              code:
+                users.find((u: any) => u.id === userData.userId)?.currencyId ||
+                "USD",
+            },
           },
         },
         retries: 3, // Retry up to 3 times if the endpoint fails
