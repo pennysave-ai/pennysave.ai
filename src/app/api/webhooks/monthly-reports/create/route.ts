@@ -17,13 +17,13 @@ async function handler(req: Request): Promise<NextResponse> {
     return NextResponse.json("Unauthorized", { status: 401 });
   }
   const { users } = await req.json();
-
+  console.log("@flow users ->", users);
   try {
     const usersData = await getPrevMonthSummaries(users.map((u: any) => u.id));
 
     for (const userData of usersData) {
       console.log(
-        "Queueing report for user:",
+        "@flow userData to process ->",
         JSON.stringify(userData, null, 2),
       );
       // Queue each user data for processing
