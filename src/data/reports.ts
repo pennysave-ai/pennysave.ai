@@ -427,6 +427,10 @@ async function callHuggingFaceTextGeneration(messages: ChatMessage[]) {
 export async function generateMonthlyReportWithHuggingFace(
   userData: any,
 ): Promise<MonthlyReportLLMResponse> {
+  console.log(
+    "Generating report with Hugging Face for user data:",
+    JSON.stringify(userData),
+  );
   const messages = buildLLMPrompt(userData);
   console.log("Generated messages for LLM:", messages);
   const text = await callHuggingFaceTextGeneration(messages);
