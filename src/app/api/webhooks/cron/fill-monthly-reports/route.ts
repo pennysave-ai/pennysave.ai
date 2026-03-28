@@ -27,6 +27,7 @@ export async function GET(
         SELECT
           u.id,
           u."preferredLanguage",
+          u."preferredCurrencyId",
           -- Guard invalid IANA tz values by validating against pg_timezone_names
           COALESCE(p.name, 'UTC') AS tz,
 
