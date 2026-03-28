@@ -89,6 +89,8 @@ model User {
   timezone      String?   @default("UTC")
   email         String?   @unique
   preferredLanguage String? @default("EN")
+  preferredCurrency Currency? @relation(fields: [preferredCurrencyId], references: [id])
+  preferredCurrencyId String?
   emailVerified DateTime?
   image         String?
   accounts      Account[]
@@ -156,6 +158,7 @@ model Currency {
   exchangeRate Float
   budget Budget[]
   receipts Receipt[]
+  users        User[]
   @@unique([id])
 }
 
