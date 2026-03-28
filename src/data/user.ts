@@ -131,6 +131,7 @@ export async function updateUserProfile(
     preferredLanguage: string;
     image: string;
     sendMonthlyReport: boolean;
+    preferredCurrencyId: string;
   }>,
 ) {
   return db.user.update({

@@ -34,6 +34,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   let name: string | undefined;
   let timezone: string | undefined;
   let preferredLanguage: string | undefined;
+  let preferredCurrency: string | undefined;
   let sendMonthlyReport: boolean | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let filePart: any;
@@ -53,6 +54,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     }
     if (part.name === "preferredLanguage") {
       preferredLanguage = part.data.toString().trim();
+    }
+    if (part.name === "preferredCurrency") {
+      preferredCurrency = part.data.toString().trim();
     }
   }
 
@@ -103,6 +107,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   if (timezone !== undefined) update.timezone = timezone;
   if (preferredLanguage !== undefined)
     update.preferredLanguage = preferredLanguage;
+  if (preferredCurrency !== undefined)
+    update.preferredCurrencyId = preferredCurrency;
   if (sendMonthlyReport !== undefined)
     update.sendMonthlyReport = sendMonthlyReport;
   if (uploadedImageUrl !== undefined) update.image = uploadedImageUrl;
