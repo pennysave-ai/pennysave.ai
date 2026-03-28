@@ -19,7 +19,9 @@ async function handler(req: Request): Promise<NextResponse> {
   const { users } = await req.json();
   console.log("@flow users ->", users);
   try {
-    const usersData = await getPrevMonthSummaries(users.map((u: any) => u.id));
+    const usersData = await getPrevMonthSummaries(
+      users.map((u: any) => ({ id: u.id, currency: u.currencyId })),
+    );
 
     for (const userData of usersData) {
       console.log(

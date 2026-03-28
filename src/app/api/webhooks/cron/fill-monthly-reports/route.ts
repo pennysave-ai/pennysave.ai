@@ -17,7 +17,11 @@ export async function GET(
 
   try {
     const users = await db.$queryRaw<
-      { id: string; preferredLanguage: string }[]
+      {
+        preferredCurrencyId?: string;
+        id: string;
+        preferredLanguage: string;
+      }[]
     >(Prisma.sql`
       WITH due AS (
         SELECT
@@ -36,7 +40,7 @@ export async function GET(
           ON p.name = u.timezone
         WHERE EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
       )
-      SELECT d.id, d."preferredLanguage"
+      SELECT d.id, d."preferredLanguage", d."preferredCurrencyId"
       FROM due d
       WHERE EXISTS (
         SELECT 1
@@ -64,6 +68,7 @@ export async function GET(
           users: batch.map((u) => ({
             id: u.id,
             language: u.preferredLanguage,
+            currency: u.preferredCurrencyId,
           })),
         },
         retries: 3,
