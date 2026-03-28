@@ -428,6 +428,7 @@ export async function generateMonthlyReportWithHuggingFace(
   userData: any,
 ): Promise<MonthlyReportLLMResponse> {
   const messages = buildLLMPrompt(userData);
+  console.log("Generated messages for LLM:", messages);
   const text = await callHuggingFaceTextGeneration(messages);
   const raw = extractJsonObject(text);
 
