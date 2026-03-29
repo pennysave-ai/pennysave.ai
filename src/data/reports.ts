@@ -917,7 +917,7 @@ export async function getPrevMonthSummaries(
 
     const targetExchangeRate = targetCurrency.exchangeRate;
     const targetSymbol = targetCurrency.symbol;
-    const targetCode = targetCurrency.code;
+    const targetCode = targetCurrency.name;
 
     // Current month totals & aggregates
     const currentTotals = computeTotalsInTargetCurrency({
