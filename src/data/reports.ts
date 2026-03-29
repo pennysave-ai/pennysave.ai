@@ -657,9 +657,17 @@ function computeTotalsInTargetCurrency(params: {
       targetCurrencyId,
       targetExchangeRate,
     });
-
-    if (amtTarget > 0) income += amtTarget;
-    else expenses += amtTarget; // negative
+    if (amtTarget > 0) {
+      console.log(
+        "Adding to income:",
+        amtTarget,
+        "from transaction",
+        JSON.stringify(t, null, 2),
+      );
+      income += amtTarget;
+    } else {
+      expenses += amtTarget;
+    }
   }
 
   return {
