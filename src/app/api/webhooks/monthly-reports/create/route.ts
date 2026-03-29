@@ -21,7 +21,7 @@ async function handler(req: Request): Promise<NextResponse> {
   console.log("@flow currencies ->", currencies);
   try {
     const usersData = await getPrevMonthSummaries(
-      users.map((u: any) => ({ id: u.id, currency: u.currencyId })),
+      users.map((u: any) => ({ id: u.id, currencyId: u.currencyId })),
       currencies,
     );
 
@@ -30,7 +30,6 @@ async function handler(req: Request): Promise<NextResponse> {
         "@flow userData to process ->",
         JSON.stringify(userData, null, 2),
       );
-      // Queue each user data for processing
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_URL}/api/webhooks/monthly-reports/process-user`,
         body: {
@@ -39,14 +38,9 @@ async function handler(req: Request): Promise<NextResponse> {
             language:
               users.find((u: any) => u.id === userData.userId)?.language ||
               "en",
-            currency: users.find((u: any) => u.id === userData.userId)
-              ?.currency || {
-              symbol: "$",
-              code: "USD",
-            },
           },
         },
-        retries: 3, // Retry up to 3 times if the endpoint fails
+        retries: 3,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.CRON_SECRET}`,
