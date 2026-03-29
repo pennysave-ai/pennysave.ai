@@ -628,12 +628,11 @@ function toTargetCurrencyMilliunits(params: {
   } = params;
 
   if (fromCurrencyId === targetCurrencyId) return amountMilliunits;
-  return Math.round(amountMilliunits * (targetExchangeRate / fromExchangeRate));
-  // return convertCurrency(
-  //   amountMilliunits,
-  //   fromExchangeRate,
-  //   targetExchangeRate,
-  // );
+  return convertCurrency(
+    amountMilliunits,
+    fromExchangeRate,
+    targetExchangeRate,
+  );
 }
 
 /**
@@ -663,7 +662,11 @@ function computeTotalsInTargetCurrency(params: {
     else expenses += amtTarget; // negative
   }
 
-  return { income, expenses, netFlow: income + expenses };
+  return {
+    income: Math.round(income),
+    expenses: Math.round(expenses),
+    netFlow: Math.round(income + expenses),
+  };
 }
 
 function normalizeForRecurring(s: string | null | undefined) {
