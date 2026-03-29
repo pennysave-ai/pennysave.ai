@@ -16,11 +16,13 @@ async function handler(req: Request): Promise<NextResponse> {
   ) {
     return NextResponse.json("Unauthorized", { status: 401 });
   }
-  const { users } = await req.json();
+  const { users, currencies } = await req.json();
   console.log("@flow users ->", users);
+  console.log("@flow currencies ->", currencies);
   try {
     const usersData = await getPrevMonthSummaries(
       users.map((u: any) => ({ id: u.id, currency: u.currencyId })),
+      currencies,
     );
 
     for (const userData of usersData) {
