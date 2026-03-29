@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       orderBy: { periodStart: "desc" },
       take: limit,
     });
-    console.log("Fetched reports for user", { reports });
+    console.log("Fetched reports for user", JSON.stringify(reports, null, 2));
     return NextResponse.json({ data: reports });
   } catch (error) {
     console.error("Error fetching reports:", error);
