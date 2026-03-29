@@ -628,11 +628,12 @@ function toTargetCurrencyMilliunits(params: {
   } = params;
 
   if (fromCurrencyId === targetCurrencyId) return amountMilliunits;
-  return convertCurrency(
-    amountMilliunits,
-    fromExchangeRate,
-    targetExchangeRate,
-  );
+  return Math.round(amountMilliunits * (targetExchangeRate / fromExchangeRate));
+  // return convertCurrency(
+  //   amountMilliunits,
+  //   fromExchangeRate,
+  //   targetExchangeRate,
+  // );
 }
 
 /**
