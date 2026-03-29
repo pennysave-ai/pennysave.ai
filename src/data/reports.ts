@@ -854,7 +854,7 @@ export async function getPrevMonthSummaries(
   allCurrencies: {
     id: string;
     symbol: string;
-    code: string;
+    name: string;
     exchangeRate: number;
   }[] = [],
 ): Promise<any[]> {
@@ -917,7 +917,7 @@ export async function getPrevMonthSummaries(
 
     const targetExchangeRate = targetCurrency.exchangeRate;
     const targetSymbol = targetCurrency.symbol;
-    const targetCode = targetCurrency.name;
+    const targetName = targetCurrency.name;
 
     // Current month totals & aggregates
     const currentTotals = computeTotalsInTargetCurrency({
@@ -1028,7 +1028,7 @@ export async function getPrevMonthSummaries(
       },
       currency: {
         symbol: targetSymbol,
-        code: targetCode,
+        code: targetName,
       },
       totalsAbs: {
         incomeReceived: incomeReceivedThis,
