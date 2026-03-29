@@ -57,7 +57,7 @@ export async function GET(
 
     // Fetch ALL currencies once — passed down through the queue payload
     const allCurrencies = await db.currency.findMany({
-      select: { id: true, symbol: true, code: true, exchangeRate: true },
+      select: { id: true, symbol: true, name: true, exchangeRate: true },
     });
 
     for (let i = 0; i < users.length; i += BATCH_SIZE) {
