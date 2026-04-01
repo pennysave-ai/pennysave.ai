@@ -658,12 +658,6 @@ function computeTotalsInTargetCurrency(params: {
       targetExchangeRate,
     });
     if (amtTarget > 0) {
-      console.log(
-        "Adding to income:",
-        amtTarget,
-        "from transaction",
-        JSON.stringify(t, null, 2),
-      );
       income += amtTarget;
     } else {
       expenses += amtTarget;
@@ -872,7 +866,10 @@ export async function getPrevMonthSummaries(
 ): Promise<any[]> {
   // Report is always previous month; keep params for now to avoid breaking call sites,
   // but derive the report month from "now" to match getTransactions().
-  const now = new Date();
+
+  // const now = new Date();
+  const now = subMonths(new Date(), 1);
+
   const reportMonthDate = subMonths(now, 1);
   const reportStart = startOfMonth(reportMonthDate);
   const reportEnd = endOfMonth(reportMonthDate);
