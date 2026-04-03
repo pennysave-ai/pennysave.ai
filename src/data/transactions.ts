@@ -859,8 +859,7 @@ export function computeTransactionAggregates(params: {
  */
 export async function getTransactions({ userIds }: { userIds: string[] }) {
   try {
-    // const now = new Date();
-    const now = subMonths(new Date(), 1);
+    const now = new Date();
 
     const reportMonthDate = subMonths(now, 1);
     const currentStart = startOfMonth(reportMonthDate); // beginning of prev month
