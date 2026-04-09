@@ -109,7 +109,8 @@ export class APNService {
     });
 
     const result = await this.provider.send(notification, deviceToken);
-    console.log("APN send result:", result);
+    console.log("APN send result:", JSON.stringify(result, null, 2));
+
     if (result.sent.length > 0) {
       console.log("🔔 Visible APNs sent to user");
     }
