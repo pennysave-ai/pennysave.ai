@@ -867,8 +867,7 @@ export async function getPrevMonthSummaries(
   // Report is always previous month; keep params for now to avoid breaking call sites,
   // but derive the report month from "now" to match getTransactions().
 
-  // const now = new Date();
-  const now = subMonths(new Date(), 1);
+  const now = new Date();
 
   const reportMonthDate = subMonths(now, 1);
   const reportStart = startOfMonth(reportMonthDate);

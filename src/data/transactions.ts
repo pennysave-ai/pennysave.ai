@@ -859,8 +859,7 @@ export function computeTransactionAggregates(params: {
  */
 export async function getTransactions({ userIds }: { userIds: string[] }) {
   try {
-    // const now = new Date();
-    const now = subMonths(new Date(), 1);
+    const now = new Date();
 
     const reportMonthDate = subMonths(now, 1);
     const currentStart = startOfMonth(reportMonthDate); // beginning of prev month
@@ -873,6 +872,14 @@ export async function getTransactions({ userIds }: { userIds: string[] }) {
 
     // History window for recurring detection (3 months before report start)
     const historyStart = subMonths(currentStart, 3);
+
+    console.log("Fetching transactions for users:", userIds);
+    console.log(
+      "Date range - History Start:",
+      historyStart,
+      "Current End:",
+      currentEnd,
+    );
 
     const allTransactionsData = await db.transaction.findMany({
       select: transactionSelect,
