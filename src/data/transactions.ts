@@ -873,6 +873,14 @@ export async function getTransactions({ userIds }: { userIds: string[] }) {
     // History window for recurring detection (3 months before report start)
     const historyStart = subMonths(currentStart, 3);
 
+    console.log("Fetching transactions for users:", userIds);
+    console.log(
+      "Date range - History Start:",
+      historyStart,
+      "Current End:",
+      currentEnd,
+    );
+
     const allTransactionsData = await db.transaction.findMany({
       select: transactionSelect,
       where: {
