@@ -30,9 +30,10 @@ export class APNService {
 
   private constructor() {
     // Initialize APNs provider
+    const key = (process.env.APNS_KEY_PATH || "").replace(/\\n/g, "\n");
     this.provider = new apn.Provider({
       token: {
-        key: process.env.APNS_KEY_PATH || "", // Path to .p8 file
+        key, // Path to .p8 file
         keyId: process.env.APNS_KEY_ID || "",
         teamId: process.env.APNS_TEAM_ID || "",
       },
@@ -46,6 +47,8 @@ export class APNService {
       process.env.APNS_TEAM_ID,
       "production:",
       process.env.NODE_ENV === "production",
+      "key preview:",
+      key.substring(0, 40),
     );
   }
 
