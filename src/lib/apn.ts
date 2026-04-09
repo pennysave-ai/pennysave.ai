@@ -39,7 +39,14 @@ export class APNService {
       production: process.env.NODE_ENV === "production",
     });
 
-    console.log("✅ APNs Provider initialized");
+    console.log(
+      "✅ APNs Provider initialized with keyId:",
+      process.env.APNS_KEY_ID,
+      "teamId:",
+      process.env.APNS_TEAM_ID,
+      "production:",
+      process.env.NODE_ENV === "production",
+    );
   }
 
   public static getInstance(): APNService {
