@@ -37,8 +37,7 @@ export class APNService {
         keyId: process.env.APNS_KEY_ID || "",
         teamId: process.env.APNS_TEAM_ID || "",
       },
-      production: true,
-      // production: process.env.NODE_ENV === "production",
+      production: process.env.NODE_ENV === "production",
     });
 
     console.log(
