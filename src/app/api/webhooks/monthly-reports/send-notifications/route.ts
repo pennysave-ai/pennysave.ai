@@ -1,6 +1,7 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { NextResponse } from "next/server";
 import { APNService, APNNotificationType } from "@/lib/apn";
+import { markReportsAsSent } from "@/data/reports";
 
 /**
  * Send monthly reports to the users
@@ -27,11 +28,12 @@ async function handler(req: Request): Promise<NextResponse> {
     console.log("Batch sending notifications:", messages);
     await apnService.sendBatchNotifications(messages);
 
-    // // This function emails the reports to the users NOOP
+    // This function emails the reports to the users NOOP
     // await sendMonthlyReports(reportsToSend);
-    // await markReportsAsSent(
-    //   reportsToSend.map((report: { id: string }) => report.id),
-    // );
+
+    await markReportsAsSent(
+      reportsToSend.map((report: { id: string }) => report.id),
+    );
 
     return NextResponse.json({ message: "Monthly reports sent" });
   } catch (error) {

@@ -233,6 +233,7 @@ export async function getUnsendedReports(): Promise<
         -- current month (UTC). If you want "current month per user", that's a different filter.
         AND r."createdAt" >= date_trunc('month', now())
         AND r."createdAt" <  (date_trunc('month', now()) + interval '1 month')
+        AND u."sendMonthlyReport" = true
         -- only users whose local time is HOUR_TO_SEND:xx right now
         AND EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_SEND}
     `);
