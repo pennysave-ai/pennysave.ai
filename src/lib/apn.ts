@@ -2,10 +2,13 @@ import { ApnsClient, Errors, Notification, SilentNotification } from "apns2";
 import { getDeviceTokenByUserId } from "@/data/user";
 
 interface APNMessage {
-  title: string;
-  body: string;
+  title?: string;
+  body?: string;
   subtitle?: string;
   category?: string; // Determine action buttons in notification
+  "loc-key"?: string; // Localization key for body
+  "loc-args"?: string[]; // Localization args for body
+  [key: string]: unknown;
 }
 
 export enum APNNotificationType {
@@ -104,15 +107,18 @@ export class APNService {
     payload: APNPayload,
   ): Promise<boolean> {
     try {
+      // Spread all message fields into alert so loc-key/loc-args pass through
+      // to the iOS Notification Service Extension unchanged
+      const { category, ...alertFields } = message;
       const notification = new Notification(deviceToken, {
-        alert: {
-          title: message.title,
-          body: message.body,
-          subtitle: message.subtitle,
+        alert: alertFields as unknown as {
+          title: string;
+          body: string;
+          subtitle?: string;
         },
         badge: 0, // set badge for app icon if needed
         sound: "default",
-        category: message.category || "DEFAULT",
+        category: category || "DEFAULT",
         mutableContent: true, // Allow notification service extension to modify the notification
         data: payload,
       });
