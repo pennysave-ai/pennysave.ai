@@ -72,7 +72,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^2.0.0",
     "apexcharts": "^4.2.0",
-    "apn": "^2.2.0",
+    "apns2": "^12.2.0",
     "apple-signin-auth": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",
