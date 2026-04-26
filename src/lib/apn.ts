@@ -1,4 +1,4 @@
-import apn from "apn";
+import { ApnsClient, Errors, Notification, SilentNotification } from "apns2";
 import { getDeviceTokenByUserId } from "@/data/user";
 
 interface APNMessage {
@@ -15,6 +15,7 @@ export enum APNNotificationType {
 
 interface APNPayload {
   type: APNNotificationType;
+  [key: string]: unknown;
 }
 
 interface BatchNotification {
@@ -26,18 +27,29 @@ interface BatchNotification {
 
 export class APNService {
   private static instance: APNService;
-  private provider: apn.Provider;
+  private client: ApnsClient;
 
   private constructor() {
-    // Initialize APNs provider
     const key = (process.env.APNS_KEY_PATH || "").replace(/\\n/g, "\n");
-    this.provider = new apn.Provider({
-      token: {
-        key, // Path to .p8 file
-        keyId: process.env.APNS_KEY_ID || "",
-        teamId: process.env.APNS_TEAM_ID || "",
-      },
-      production: process.env.NODE_ENV === "production",
+    this.client = new ApnsClient({
+      team: process.env.APNS_TEAM_ID || "",
+      keyId: process.env.APNS_KEY_ID || "",
+      signingKey: key,
+      defaultTopic: "ai.pennysave.app",
+      host:
+        process.env.NODE_ENV === "production"
+          ? "api.push.apple.com"
+          : "api.sandbox.push.apple.com",
+    });
+
+    // Listen for any APN errors globally
+    this.client.on(Errors.error, (err) => {
+      console.error(
+        "❌ APNs error:",
+        err.reason,
+        err.statusCode,
+        err.notification.deviceToken,
+      );
     });
 
     console.log(
@@ -65,33 +77,21 @@ export class APNService {
    */
   async sendSilentNotification(
     deviceToken: string,
-    payload?: APNPayload,
-  ): Promise<apn.Responses | null> {
-    if (!deviceToken) return null;
+    _payload?: APNPayload,
+  ): Promise<boolean> {
+    if (!deviceToken) return false;
 
-    const notification = new apn.Notification({
-      // contentAvailable: true,
-      topic: "ai.pennysave.app",
-      priority: 5,
-      pushType: "background",
-      payload: payload,
-    });
-
-    const result = await this.provider.send(notification, deviceToken);
-
-    if (result.sent.length > 0) {
+    try {
+      // apns2 SilentNotification does not accept extra options by design
+      // (Apple recommends only content-available flag for true silent notifications)
+      const notification = new SilentNotification(deviceToken);
+      await this.client.send(notification);
       console.log("🔕 Silent APNs sent to user");
-      return result;
+      return true;
+    } catch (err) {
+      console.error("❌ Silent APNs failed for user", err);
+      return false;
     }
-    if (result.failed.length > 0) {
-      console.error(
-        `❌ Silent APNs failed for user`,
-        result.failed[0].response,
-      );
-      return null;
-    }
-
-    return result;
   }
 
   /**
@@ -102,36 +102,30 @@ export class APNService {
     deviceToken: string,
     message: APNMessage,
     payload: APNPayload,
-  ) {
-    const notification = new apn.Notification({
-      alert: {
-        ...message,
-      },
-      badge: 0, // set badge for app icon if needed
-      sound: "default",
-      topic: "ai.pennysave.app",
-      category: message.category || "DEFAULT",
-      contentAvailable: false, // Also trigger background refresh
-      payload: payload,
-      mutableContent: 1, // Allow notification service extension to modify the notification (e.g. localize strings, add images)
-      pushType: "alert", // ← ADD THIS (required for service extension)
-      priority: 10,
-    });
+  ): Promise<boolean> {
+    try {
+      const notification = new Notification(deviceToken, {
+        alert: {
+          title: message.title,
+          body: message.body,
+          subtitle: message.subtitle,
+        },
+        badge: 0, // set badge for app icon if needed
+        sound: "default",
+        category: message.category || "DEFAULT",
+        mutableContent: true, // Allow notification service extension to modify the notification
+        data: payload,
+      });
 
-    const result = await this.provider.send(notification, deviceToken);
-    console.log("APN send result:", JSON.stringify(result, null, 2));
-
-    if (result.sent.length > 0) {
+      await this.client.send(notification);
+      console.log("APN send result: success");
       console.log("🔔 Visible APNs sent to user");
+      return true;
+    } catch (err) {
+      console.error("❌ Visible APNs failed for user", err);
+      console.log("APN send result: failed", JSON.stringify(err, null, 2));
+      return false;
     }
-    if (result.failed.length > 0) {
-      console.error(
-        "❌ Visible APNs failed for user",
-        result.failed[0].response,
-      );
-    }
-
-    return result;
   }
 
   /**
@@ -158,15 +152,11 @@ export class APNService {
       ),
     );
 
-    const sent = results.filter((r) => (r?.sent?.length ?? 0) > 0).length;
-    const failed = results.filter((r) => (r?.failed?.length ?? 0) > 0).length;
+    const sent = results.filter(Boolean).length;
+    const failed = results.filter((r) => !r).length;
 
     console.log(`📊 Batch notifications: ${sent} sent, ${failed} failed`);
     return { sent, failed };
-  }
-
-  shutdown(): void {
-    this.provider.shutdown();
   }
 }
 
