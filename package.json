@@ -52,6 +52,7 @@
     "@heroui/select": "^2.4.28",
     "@heroui/skeleton": "^2.2.17",
     "@heroui/slider": "^2.4.24",
+    "@heroui/spacer": "^2.2.25",
     "@heroui/spinner": "^2.2.24",
     "@heroui/switch": "^2.2.24",
     "@heroui/system": "^2.4.23",
