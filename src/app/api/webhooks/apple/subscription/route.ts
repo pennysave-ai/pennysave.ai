@@ -3,7 +3,6 @@ import { updateAppleSubscription } from "@/data/user";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
 import { getSharedAccountUserIds } from "@/data/accounts";
-// import { APNService, APNNotificationType } from "@/lib/apn";
 
 // Apple notification types
 enum NotificationType {
@@ -58,7 +57,7 @@ async function notifySharedUsers(ownerUserId: string) {
       type: BroadcastType.OWNERS_APPLE_SUBSCRIPTION_ENDED,
       recipients: sharedUserIds,
     },
-    ownerUserId
+    ownerUserId,
   );
 }
 
@@ -73,7 +72,7 @@ export async function POST(req: Request) {
       console.error("❌ No signedPayload in webhook");
       return NextResponse.json(
         { error: "Missing signedPayload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -83,7 +82,7 @@ export async function POST(req: Request) {
       console.error("❌ Failed to decode signedPayload");
       return NextResponse.json(
         { error: "Invalid signedPayload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -294,7 +293,7 @@ export async function POST(req: Request) {
         type: BroadcastType.APPLE_SUBSCRIPTION_UPDATED,
         recipients: [userId],
       },
-      userId
+      userId,
     );
 
     return NextResponse.json({ status: "success" });
@@ -302,7 +301,7 @@ export async function POST(req: Request) {
     console.error("❌ Error processing Apple webhook:", error);
     return NextResponse.json(
       { error: "Error processing apple subscription webhook" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
