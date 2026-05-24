@@ -36,40 +36,36 @@ export async function POST(req: NextRequest) {
       ? imageBase64.split(",")[1]
       : imageBase64;
 
-    // For now the fastest model from HuggingFace
-    // https://huggingface.co/inference/models?search=vl&asc_sort=firstTokenLatencyMs
-    const MODEL = "Qwen/Qwen3-VL-30B-A3B-Instruct:fireworks-ai";
+    const MODEL = "gpt-4o-mini";
 
     const hfStart = performance.now();
 
-    const response = await fetch(
-      "https://router.huggingface.co/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a precise receipt parser. Extract structured data from receipt images. Always respond with valid JSON only, no markdown, no explanations. Do not guess coordinates: only return coordinates if the receipt provides a full address you can confidently locate; otherwise use null.",
-            },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:image/jpeg;base64,${base64Image}`,
-                  },
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a precise receipt parser. Extract structured data from receipt images. Always respond with valid JSON only, no markdown, no explanations. Do not guess coordinates: only return coordinates if the receipt provides a full address you can confidently locate; otherwise use null.",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
                 },
-                {
-                  type: "text",
-                  text: `Parse this receipt and return ONLY this JSON structure (no markdown, no code blocks):
+              },
+              {
+                type: "text",
+                text: `Parse this receipt and return ONLY this JSON structure (no markdown, no code blocks):
                   {
                     "payee": string,
                     "total": number,
@@ -92,15 +88,14 @@ export async function POST(req: NextRequest) {
                       }
                     ]
                   }`,
-                },
-              ],
-            },
-          ],
-          max_tokens: 1024,
-          temperature: 0,
-        }),
-      },
-    );
+              },
+            ],
+          },
+        ],
+        max_tokens: 1024,
+        temperature: 0,
+      }),
+    });
 
     const hfEnd = performance.now();
     console.log(`[OCR] ${MODEL} duration: ${(hfEnd - hfStart).toFixed(0)}ms`);
