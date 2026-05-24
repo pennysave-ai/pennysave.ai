@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { qstash } from "@/qstash";
 import { NextRequest, NextResponse } from "next/server";
 import { convertAmountToMilliunits } from "@/lib/utils";
