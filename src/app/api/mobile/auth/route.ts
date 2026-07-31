@@ -26,7 +26,7 @@ async function verifyAppleToken(identityToken: string) {
     // Find corresponding key in Apple's JWKS
     const appleKey = keys.find(
       (key: { kid: string | undefined; alg: string }) =>
-        key.kid === kid && key.alg === alg
+        key.kid === kid && key.alg === alg,
     );
     if (!appleKey) throw new Error("Public key for Apple token not found");
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     if (!idToken && !appleIdentityToken) {
       return NextResponse.json(
         { error: "No tokens provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         console.log("error", error);
         return NextResponse.json(
           { error: "Invalid Apple identity token" },
-          { status: 401 }
+          { status: 401 },
         );
       }
     }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { error: "Email not found in token" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const existingUser = await getUserByEmail(email);
@@ -150,6 +150,7 @@ export async function POST(req: NextRequest) {
             expiresAt: undefined,
           },
         });
+        console.log("tokens - >", tokens);
         return NextResponse.json({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
@@ -158,7 +159,7 @@ export async function POST(req: NextRequest) {
         console.error("Error creating user:", error);
         return NextResponse.json(
           { error: "Failed to create user" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -189,7 +190,7 @@ export async function POST(req: NextRequest) {
         error:
           (error as { message?: string })?.message || "Authentication failed",
       },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }
