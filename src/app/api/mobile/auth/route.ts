@@ -150,7 +150,6 @@ export async function POST(req: NextRequest) {
             expiresAt: undefined,
           },
         });
-        console.log("tokens - >", tokens);
         return NextResponse.json({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
@@ -178,7 +177,7 @@ export async function POST(req: NextRequest) {
     });
 
     const { accessToken, refreshToken } = tokens;
-
+    console.log("tokens - >", tokens);
     return NextResponse.json({
       accessToken,
       refreshToken,
