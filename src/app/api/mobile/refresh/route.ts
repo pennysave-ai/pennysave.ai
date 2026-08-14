@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   if (!body || !body.refreshToken) {
     return NextResponse.json(
       { error: "Refresh token is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   // Validate refresh token format (basic check)
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (typeof refreshToken !== "string" || refreshToken.length < 10) {
     return NextResponse.json(
       { error: "Invalid refresh token format" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   try {
@@ -23,14 +23,16 @@ export async function POST(req: NextRequest) {
     if (!tokens) {
       return NextResponse.json(
         { error: "Failed to refresh access token" },
-        { status: 500 }
+        { status: 500 },
       );
     }
     return NextResponse.json(tokens, { status: 200 });
   } catch (error: unknown) {
+    console.error("recieved refresh token:", refreshToken);
+    console.error("Error refreshing access token:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }
