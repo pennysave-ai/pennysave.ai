@@ -8,4 +8,12 @@ export type Account = {
   currency: Currency;
   institution: Institution;
   users: User[];
+  /**
+   * Set only for a member of an account whose owner's subscription has
+   * lapsed, and only when the caller asked for paused accounts. Sharing is
+   * the owner's plan, so the account pauses for its members rather than
+   * disappearing. `pausedAt` is when the owner's subscription ended, if known.
+   */
+  paused?: true;
+  pausedAt?: Date | null;
 };

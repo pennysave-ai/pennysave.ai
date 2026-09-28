@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { updateAppleSubscription } from "@/data/user";
+import {
+  getUserById,
+  hasActiveAppleSubscription,
+  updateAppleSubscription,
+} from "@/data/user";
+import { notifyOwnedAccountsUpdated } from "@/lib/accountEvents";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
 import { getSharedAccountUserIds } from "@/data/accounts";
@@ -27,6 +32,8 @@ interface DecodedJWT {
   };
   appAccountToken?: string;
   expiresDate?: string;
+  purchaseDate?: string;
+  originalPurchaseDate?: string;
   offerType?: number;
   storefront?: string;
   gracePeriodExpiresDate?: string;
@@ -106,6 +113,19 @@ export async function POST(req: Request) {
       ? new Date(parseInt(transactionInfo.expiresDate))
       : null;
 
+    // Start of the current period, and the first-ever purchase for this
+    // subscription. Deliberately undefined rather than null when absent: these
+    // are only ever written by purchase/renewal notifications, and undefined
+    // leaves the stored value alone instead of erasing it. Existing
+    // subscribers get originalPurchaseDate backfilled on their next DID_RENEW.
+    const purchaseDate = transactionInfo?.purchaseDate
+      ? new Date(parseInt(transactionInfo.purchaseDate))
+      : undefined;
+
+    const originalPurchaseDate = transactionInfo?.originalPurchaseDate
+      ? new Date(parseInt(transactionInfo.originalPurchaseDate))
+      : undefined;
+
     // CHECK IF IT'S A FREE TRIAL
     const offerType = transactionInfo?.offerType;
     const isFreeTrial = offerType === 1; // 1 = Introductory offer (free trial)
@@ -122,6 +142,13 @@ export async function POST(req: Request) {
       console.error("❌ No userId (appAccountToken) in transaction info");
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
+    // Read before the switch writes the new status: a change between active
+    // and lapsed is what pauses or resumes every account they share.
+    const wasActive = hasActiveAppleSubscription(
+      (await getUserById(userId))?.appleSubscriptionStatus || "inactive",
+    );
+    let sharedUsersNotified = false;
+
     // Handle different notification types
     switch (notificationType) {
       case NotificationType.SUBSCRIBED:
@@ -132,6 +159,9 @@ export async function POST(req: Request) {
           await updateAppleSubscription({
             userId,
             expiresAt: expiresDate,
+            startedAt: purchaseDate,
+            originalPurchaseDate,
+            trialStartedAt: purchaseDate,
             status: "trial", // Mark as trial
             country,
           });
@@ -140,6 +170,8 @@ export async function POST(req: Request) {
           await updateAppleSubscription({
             userId,
             expiresAt: expiresDate,
+            startedAt: purchaseDate,
+            originalPurchaseDate,
             status: "active",
             country,
           });
@@ -159,6 +191,8 @@ export async function POST(req: Request) {
           userId,
           expiresAt: expiresDate,
           gracePeriodExpiresAt: null,
+          startedAt: purchaseDate,
+          originalPurchaseDate,
           status: "active", // Now a paying customer
           country,
         });
@@ -208,6 +242,7 @@ export async function POST(req: Request) {
         // so we have pulled logic on app side to refresh accounts every 5 minutes if needed
         // se we send websocket message just in case if application is life and can receive it
         await notifySharedUsers(userId);
+        sharedUsersNotified = true;
         break;
 
       case NotificationType.EXPIRED:
@@ -228,6 +263,7 @@ export async function POST(req: Request) {
         });
         // Notify shared account users
         await notifySharedUsers(userId);
+        sharedUsersNotified = true;
         break;
 
       case NotificationType.REFUND:
@@ -243,6 +279,7 @@ export async function POST(req: Request) {
         });
         // Notify shared account users
         await notifySharedUsers(userId);
+        sharedUsersNotified = true;
         break;
 
       case NotificationType.DID_CHANGE_RENEWAL_STATUS:
@@ -278,6 +315,8 @@ export async function POST(req: Request) {
         await updateAppleSubscription({
           userId,
           expiresAt: expiresDate,
+          startedAt: purchaseDate,
+          originalPurchaseDate,
           status: "active",
           country,
         });
@@ -285,6 +324,17 @@ export async function POST(req: Request) {
 
       default:
         console.log("⚠️ Unhandled notification type:", notificationType);
+    }
+
+    const isActive = hasActiveAppleSubscription(
+      (await getUserById(userId))?.appleSubscriptionStatus || "inactive",
+    );
+    if (wasActive !== isActive) {
+      // Older builds only refetch on this, and a lapse without a grace period
+      // (DID_FAIL_TO_RENEW → "canceled") used to send nothing at all.
+      if (!isActive && !sharedUsersNotified) await notifySharedUsers(userId);
+      // Paused ↔ live, in place, for builds that list paused accounts.
+      await notifyOwnedAccountsUpdated(userId);
     }
 
     // Notify owner that subscription was updated

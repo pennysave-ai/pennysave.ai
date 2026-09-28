@@ -15,6 +15,8 @@ export const publicRoutes = [
   "/api/webhooks/monthly-reports/create",
   "/api/webhooks/monthly-reports/send",
   "/api/webhooks/monthly-reports/process-user",
+  // Guarded by CRON_SECRET, and off in production unless REPORTS_TEST_ENDPOINT=true
+  "/api/webhooks/monthly-reports/generate-test",
   "/api/webhooks/apple/subscription",
   "/api/mobile/auth",
   "/api/mobile/refresh",

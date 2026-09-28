@@ -6,16 +6,19 @@ import { GET, POST, DELETE, PATCH } from "@/app/api/categories/route";
 import { getAuthenticatedUser } from "@/auth.helper";
 import {
   getUserCategories,
+  getCategoriesHistory,
   createCategory,
   getCategoriesCount,
   deleteCategories,
   updateCategory,
 } from "@/data/categories";
+import { getUserTimezone } from "@/data/user";
 import { categorySchema } from "@/schemas";
 import { Category } from "@/types";
 
 // Mock dependencies
 jest.mock("next/server", () => ({
+  after: jest.fn(),
   NextResponse: {
     json: jest.fn((data, init) => ({
       status: init?.status || 200,
@@ -32,10 +35,25 @@ jest.mock("@/auth.helper", () => ({
 
 jest.mock("@/data/categories", () => ({
   getUserCategories: jest.fn(),
+  getCategoriesHistory: jest.fn(),
   createCategory: jest.fn(),
   getCategoriesCount: jest.fn(),
   deleteCategories: jest.fn(),
   updateCategory: jest.fn(),
+}));
+
+jest.mock("@/data/categoryMappings", () => ({
+  getCategoryResolver: jest.fn(async () => mockResolver),
+  ensureCategoryEmbeddings: jest.fn(),
+  freezeNameMatchesBeforeRename: jest.fn(),
+  getCoMemberIds: jest.fn(),
+  notifyCategoryMappingsChanged: jest.fn(),
+}));
+
+const mockResolver = { viewerId: "user-id" };
+
+jest.mock("@/data/user", () => ({
+  getUserTimezone: jest.fn(),
 }));
 
 jest.mock("@/schemas", () => ({
@@ -58,15 +76,28 @@ describe("Categories API", () => {
   });
 
   describe("GET /api/categories", () => {
+    const mockGetReq = (query = "") =>
+      ({
+        nextUrl: { searchParams: new URLSearchParams(query) },
+      }) as unknown as NextRequest;
+
+    const mockHistory = [
+      { month: "2026-04", totals: [{ currencyId: "eur", amount: -1234500 }] },
+      { month: "2026-05", totals: [] },
+      { month: "2026-06", totals: [] },
+      { month: "2026-07", totals: [] },
+      { month: "2026-08", totals: [{ currencyId: "eur", amount: 320000 }] },
+    ];
+
     it("should return 401 if not authenticated", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
-      const response = await GET();
+      const response = await GET(mockGetReq());
       expect(response.status).toBe(401);
     });
 
     it("should return 401 if user has no id", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
-      const response = await GET();
+      const response = await GET(mockGetReq());
       expect(response.status).toBe(401);
     });
 
@@ -74,7 +105,7 @@ describe("Categories API", () => {
       (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
       (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
 
-      const response = await GET();
+      const response = await GET(mockGetReq());
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -84,12 +115,75 @@ describe("Categories API", () => {
       });
     });
 
+    it("should leave history out unless it is asked for", async () => {
+      (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
+      (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
+
+      const response = await GET(mockGetReq("include=stores"));
+      const data = await response.json();
+
+      expect(data.data[0]).not.toHaveProperty("history");
+      expect(getCategoriesHistory).not.toHaveBeenCalled();
+      expect(getUserTimezone).not.toHaveBeenCalled();
+    });
+
+    it("should attach history when include=history is passed", async () => {
+      (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
+      (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
+      (getUserTimezone as jest.Mock).mockResolvedValueOnce("Europe/Madrid");
+      (getCategoriesHistory as jest.Mock).mockResolvedValueOnce(
+        new Map([[mockCategory.id, mockHistory]])
+      );
+
+      const response = await GET(mockGetReq("include=history"));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual({
+        data: [{ ...mockCategory, history: mockHistory }],
+        meta: { count: 1 },
+      });
+      expect(getCategoriesHistory).toHaveBeenCalledWith(
+        mockUser.id,
+        [mockCategory.id],
+        "Europe/Madrid",
+        mockResolver
+      );
+    });
+
+    it("should recognise history inside a comma separated include", async () => {
+      (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
+      (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
+      (getUserTimezone as jest.Mock).mockResolvedValueOnce("UTC");
+      (getCategoriesHistory as jest.Mock).mockResolvedValueOnce(new Map());
+
+      const response = await GET(mockGetReq("include=stores,%20history"));
+      const data = await response.json();
+
+      expect(getCategoriesHistory).toHaveBeenCalled();
+      // A category the aggregation returned nothing for still gets the key.
+      expect(data.data[0].history).toEqual([]);
+    });
+
+    it("should fail loudly rather than report empty history", async () => {
+      (getUserCategories as jest.Mock).mockResolvedValueOnce([mockCategory]);
+      (getCategoriesCount as jest.Mock).mockResolvedValueOnce(1);
+      (getUserTimezone as jest.Mock).mockResolvedValueOnce("UTC");
+      (getCategoriesHistory as jest.Mock).mockRejectedValueOnce(
+        new Error("aggregation blew up")
+      );
+
+      const response = await GET(mockGetReq("include=history"));
+
+      expect(response.status).toBe(500);
+    });
+
     it("should handle errors gracefully", async () => {
       (getUserCategories as jest.Mock).mockRejectedValueOnce(
         new Error("Failed to fetch categories")
       );
 
-      const response = await GET();
+      const response = await GET(mockGetReq());
       const data = await response.json();
 
       expect(response.status).toBe(500);

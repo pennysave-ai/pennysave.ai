@@ -15,6 +15,15 @@ jest.mock("next/server", () => ({
     })),
   },
   NextRequest: jest.fn(),
+  after: jest.fn((task: () => unknown) => task()),
+}));
+
+// Reads the database; covered in __tests__/lib/accountEvents.test.ts.
+jest.mock("@/lib/accountEvents", () => ({
+  getAccountMembers: jest.fn().mockResolvedValue(["user-id", "partner"]),
+  getOwnedAccountIds: jest.fn(async (ids: string[]) => ids),
+  notifyAccountUpdated: jest.fn(),
+  notifyAccountRemoved: jest.fn(),
 }));
 
 // Mock createAccount function
@@ -42,6 +51,10 @@ jest.mock("@/auth.helper", () => ({
 
 // Import mocked modules
 import { auth } from "@/auth";
+import {
+  notifyAccountRemoved,
+  notifyAccountUpdated,
+} from "@/lib/accountEvents";
 import {
   createAccount,
   deleteAccounts,
@@ -95,10 +108,29 @@ describe("Accounts API", () => {
       expect(response.status).toBe(401);
     });
 
+    it("asks for paused accounts only when the client opts in", async () => {
+      (getUserAccountsCount as jest.Mock).mockResolvedValue(1);
+      (getUserAccounts as jest.Mock).mockResolvedValue([]);
+      await GET({
+        nextUrl: new URL("http://localhost/api/accounts?includePaused=true"),
+      } as NextRequest);
+      expect(getUserAccounts).toHaveBeenLastCalledWith(expect.anything(), {
+        includePaused: true,
+      });
+      await GET({
+        nextUrl: new URL("http://localhost/api/accounts"),
+      } as NextRequest);
+      expect(getUserAccounts).toHaveBeenLastCalledWith(expect.anything(), {
+        includePaused: false,
+      });
+    });
+
     it("should return accounts if authenticated", async () => {
       (getUserAccountsCount as jest.Mock).mockResolvedValueOnce(1);
       (getUserAccounts as jest.Mock).mockResolvedValueOnce([mockAccount]);
-      const mockReq = {} as NextRequest;
+      const mockReq = {
+        nextUrl: new URL("http://localhost/api/accounts"),
+      } as NextRequest;
       const response = await GET(mockReq);
       const data = await response.json();
 
@@ -269,6 +301,17 @@ describe("Accounts API", () => {
         mockUser.id
       );
       expect(data).toEqual({ data: mockDeleteResult });
+      // Everyone who was on each deleted account hears it is gone.
+      expect(notifyAccountRemoved).toHaveBeenCalledWith(
+        "account-1",
+        ["user-id", "partner"],
+        mockUser.id
+      );
+      expect(notifyAccountRemoved).toHaveBeenCalledWith(
+        "account-2",
+        ["user-id", "partner"],
+        mockUser.id
+      );
     });
 
     it("should handle database errors gracefully", async () => {
@@ -365,6 +408,7 @@ describe("Accounts API", () => {
         mockUser.id,
         "Updated Bank"
       );
+      expect(notifyAccountUpdated).toHaveBeenCalledWith("account-1", mockUser.id);
     });
 
     it("should handle database errors gracefully", async () => {

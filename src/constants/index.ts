@@ -37,3 +37,21 @@ export const COLORS = [
   "#FF8C00", // Dark Orange
   "#9400D3", // Dark Violet
 ];
+
+// Transaction amount limits.
+//
+// Transaction.amount is a Postgres 4-byte `integer` holding MILLIUNITS
+// (the UI multiplies by 1000 via convertAmountToMilliunits), so the column
+// itself tops out at 2_147_483_647 milliunits -- i.e. 2,147,483.647 in
+// currency units. We deliberately cap lower than the column allows, so the
+// limit is a product decision rather than a storage accident and stays valid
+// if the column type ever changes.
+//
+// The biggest amount a single transaction can take is 999,999.99 and the
+// smallest is -999,999.99 (negative amounts are expenses).
+export const MAX_TRANSACTION_AMOUNT = 999_999.99;
+export const MIN_TRANSACTION_AMOUNT = -999_999.99;
+
+// The same limits in milliunits, which is how amounts are validated and stored.
+export const MAX_TRANSACTION_AMOUNT_MILLIUNITS = 999_999_990;
+export const MIN_TRANSACTION_AMOUNT_MILLIUNITS = -999_999_990;

@@ -108,7 +108,14 @@ model User {
   appleSubscriptionExpiresAt DateTime?
   appleSubscriptionCountry String?
   appleSubscriptionGracePeriodExpiresAt DateTime?
-  appleSubscriptionStatus String   @default("inactive") // "active", "past_due", "grace_period", "canceled", "grace_period_expired","active_until_expiration", "trial"
+  /// Start of the CURRENT subscription period (Apple transaction purchaseDate). Moves forward on every renewal.
+  appleSubscriptionStartedAt DateTime?
+  /// First time this user ever subscribed (Apple originalPurchaseDate). Stable across renewals — use this for tenure.
+  appleSubscriptionOriginalPurchaseDate DateTime?
+  /// When the user's free trial began. Non-null means they had a trial; never cleared, so it survives trial -> paid conversion.
+  appleTrialStartedAt DateTime?
+  /// See SubscriptionStatus in src/types/Subscription.ts for the full set of values.
+  appleSubscriptionStatus String   @default("inactive") // "active", "past_due", "grace_period", "canceled", "expired", "grace_period_expired", "active_until_expiration", "trial", "inactive"
   report Report[]
   sendMonthlyReport Boolean? @default(true)
   gdprConsent DateTime?
@@ -118,6 +125,8 @@ model User {
   deviceToken String? @unique
   createdInvites AccountInvite[]
   createdReceipts    Receipt[] @relation("ReceiptCreatedBy")
+  categoryMappings CategoryMapping[]
+  transactionPlacements TransactionPlacement[]
 }
 
 model Transaction {
@@ -133,6 +142,7 @@ model Transaction {
   createdBy   String    // User ID of who created this transaction
   createdByUser User    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
+  placements  TransactionPlacement[]
   @@unique([id])
   @@index([createdBy])
 }
@@ -144,9 +154,57 @@ model Category {
   owner       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   description String?
   icon        String?
+  /// Tie-breaker for name matching: when several of a viewer's categories share a normalized name, the oldest wins.
+  createdAt   DateTime  @default(now())
+  /// Multilingual embedding of the name, used only to suggest mappings. Empty until first computed.
+  nameEmbedding Float[] @default([])
+  /// The normalized name `nameEmbedding` was computed from, so a rename is detected as stale.
+  nameEmbeddingKey String?
+  /// Set instead of deleting. The owner no longer sees it and their rows in it
+  /// read as uncategorized, but a partner's mapping or pick for those rows still
+  /// holds, so deleting a category never re-sorts somebody else's books.
+  archivedAt  DateTime?
   transactions Transaction[]
   budgetAllocations BudgetAllocation[]
+  mappedFrom  CategoryMapping[] @relation("CategoryMappingSource")
+  mappedTo    CategoryMapping[] @relation("CategoryMappingTarget")
+  placements  TransactionPlacement[]
   @@unique([id])
+}
+
+/// A per-viewer rule "count partner category `source` under my category `target`".
+/// Only the viewer sees it; the author's transactions are never changed by it.
+model CategoryMapping {
+  viewerId         String
+  viewer           User     @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+  sourceCategoryId String
+  sourceCategory   Category @relation("CategoryMappingSource", fields: [sourceCategoryId], references: [id], onDelete: Cascade)
+  /// Null means the viewer removed it: the source counts nowhere for them,
+  /// not even under a category with the same name.
+  targetCategoryId String?
+  targetCategory   Category? @relation("CategoryMappingTarget", fields: [targetCategoryId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@id([viewerId, sourceCategoryId])
+  @@index([targetCategoryId])
+  @@index([sourceCategoryId])
+}
+
+/// A per-viewer pick for one row someone else added: "count this row under my
+/// category". It beats every other rule for that viewer, and only they see it;
+/// the row itself keeps its author's category.
+model TransactionPlacement {
+  viewerId      String
+  viewer        User        @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@id([viewerId, transactionId])
+  @@index([transactionId])
+  @@index([categoryId])
 }
 
 model Currency {
@@ -215,7 +273,8 @@ model UserAccountAccess {
 // Table to store shared account invites
 model AccountInvite {
   id          String      @id @default(uuid())
-  token       String      @unique
+  /// The 6-digit invite code the recipient types in the app.
+  code        String      @unique
   accountId   String
   account     UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   createdById String
@@ -224,7 +283,7 @@ model AccountInvite {
   usedAt      DateTime?
   createdAt   DateTime    @default(now())
   
-  @@index([token])
+  @@index([code])
   @@index([accountId])
 }
 

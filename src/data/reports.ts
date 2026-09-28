@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { Prisma } from "@prisma/client";
 import { getTopStores } from "@/data/stores";
-import { format, startOfMonth, endOfMonth, subMonths, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import {
   getTopReceiptItems,
   getItemsTotal,
@@ -22,168 +22,108 @@ import {
   getTransactions,
 } from "@/data/transactions";
 import { Transaction } from "@/types";
-
-export type MonthlyReportLLMResponse = {
-  insights: string;
-  income_analysis: string;
-  expense_analysis: string;
-  health: "green" | "yellow" | "red";
-  health_analysis: string;
-  blocks?: Array<{
-    id:
-      | "overview"
-      | "month_over_month"
-      | "categories"
-      | "recurring"
-      | "tips"
-      | "limitations";
-    title: string;
-    bullets: string[];
-  }>;
-};
-
-type ChatMessage = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
+import {
+  type Finding,
+  type MonthFacts,
+  ruleHealth,
+  topFindings,
+} from "@/lib/reportFindings";
+import {
+  previousUtcMonth,
+  reportMonthLabel,
+  safeTimeZone,
+} from "@/lib/reportSchedule";
 
 /**
- * Bulk upsert reports into the database
- * @param reports
- * @returns {Promise<void>}
+ * Whether a report for this user and month is already written. A report that
+ * exists is never replaced.
  */
-export async function upsertReport(report: any): Promise<void> {
+export async function reportExistsForMonth(
+  userId: string,
+  reportMonth: string,
+): Promise<boolean> {
+  const periodStart = parseMonthYearToUtcDate(reportMonth);
+  const existing = await db.report.findFirst({
+    select: { id: true },
+    where: { userId, periodStart },
+  });
+  return !!existing;
+}
+
+/**
+ * Writes one user's report for the month in `userData.reportMonth`, unless
+ * that month already has one.
+ *
+ * The rows written here are the month as it stood at the time; a read
+ * recomputes all of it (see `withLiveFacts`). What the stored report really
+ * fixes is that the month has one, which the list and the "report ready" push
+ * go by, and `Report.data.currencyId`, the currency to recompute it in.
+ */
+export async function upsertReport(report: { userData: any }): Promise<void> {
   try {
-    // Check if the reports are already exists
-    // for the current month and user
-    const { llmResponse, userData } = report;
-    const existingReports = await db.report.findMany({
-      select: {
-        userId: true,
-      },
-      where: {
-        userId: {
-          in: [userData.userId],
-        },
-        createdAt: {
-          gte: startOfMonth(new Date()),
-          lte: endOfMonth(new Date()),
-        },
-      },
+    const { userData } = report;
+    const reportStart = parseMonthYearToUtcDate(userData.reportMonth);
+    // Keyed on the month the report is about, not on when it was written: a
+    // run that lands in a later month would otherwise write a second one.
+    const existing = await db.report.findFirst({
+      select: { id: true },
+      where: { userId: userData.userId, periodStart: reportStart },
     });
-    if (!existingReports.length) {
-      const reportStart = parseMonthYearToUtcDate(userData.reportMonth);
-      // Where you create reports, use a transaction to insert everything atomically:
-      const { health, ...rest } = llmResponse;
-      await db.$transaction(async (tx) => {
-        const report = await tx.report.create({
+    if (existing) return;
+
+    const rows = reportRows(userData);
+    await db.$transaction(async (tx) => {
+      const report = await tx.report.create({
+        data: {
+          userId: userData.userId,
+          periodStart: reportStart,
+          health: ruleHealth(userData.facts),
           data: {
-            userId: userData.userId,
-            periodStart: reportStart,
-            health,
-            data: rest,
+            version: 3,
+            currencyId: userData.currency.id ?? null,
           },
-        });
-        await tx.reportSnapshot.create({
-          data: {
-            reportId: report.id,
-            currencyCode: userData.currency.code,
-            currencySymbol: userData.currency.symbol,
-            incomeReceived: convertAmountToMilliunits(
-              userData.totalsAbs.incomeReceived,
-            ),
-            expenseSpend: convertAmountToMilliunits(
-              userData.totalsAbs.expenseSpend,
-            ),
-            netFlow: convertAmountToMilliunits(userData.netFlow),
-            expenseByPayee: userData.transactionAggregates.expenseByPayee.map(
-              (e: any) => ({
-                ...e,
-                pct: convertPctToRatio(e.pct),
-                spend: convertAmountToMilliunits(e.spend),
-              }),
-            ),
-            largestExpenses: userData.transactionAggregates.largestExpenses.map(
-              (e: any) => ({
-                ...e,
-                amount: convertAmountToMilliunits(e.amount),
-              }),
-            ),
-            largestIncome: userData.transactionAggregates.largestIncome.map(
-              (e: any) => ({
-                ...e,
-                amount: convertAmountToMilliunits(e.amount),
-              }),
-            ),
-            uncategorized: userData.transactionAggregates.uncategorized,
-          },
-        });
-        await tx.reportComparison.create({
-          data: {
-            reportId: report.id,
-            prevMonthAvailable: userData.comparisons.prevMonthAvailable,
-            incomeReceivedDelta: convertAmountToMilliunits(
-              userData.comparisons.incomeReceivedDelta,
-            ),
-            incomeReceivedDeltaPct: convertPctToRatio(
-              userData.comparisons.incomeReceivedDeltaPct,
-            ),
-            expenseSpendDelta: convertAmountToMilliunits(
-              userData.comparisons.expenseSpendDelta,
-            ),
-            expenseSpendDeltaPct: convertPctToRatio(
-              userData.comparisons.expenseSpendDeltaPct,
-            ),
-            netFlowDelta: convertAmountToMilliunits(
-              userData.comparisons.netFlowDelta ?? 0,
-            ),
-            netFlowDeltaPct: convertPctToRatio(
-              userData.comparisons.netFlowDeltaPct,
-            ),
-            topCategoryChanges: userData.comparisons.topCategoryChanges.map(
-              (c: any) => ({
-                category: c.category,
-                delta: convertAmountToMilliunits(c.delta),
-                prevSpend: convertAmountToMilliunits(c.prevSpend),
-                thisSpend: convertAmountToMilliunits(c.thisSpend),
-              }),
-            ),
-          },
-        });
-        if (userData.transactionAggregates.expenseByCategory.length) {
-          await tx.reportCategoryBreakdown.createMany({
-            data: userData.transactionAggregates.expenseByCategory.map(
-              (c: any) => ({
-                reportId: report.id,
-                category: c.category,
-                spend: convertAmountToMilliunits(c.spend),
-                pct: convertPctToRatio(c.pct),
-              }),
-            ),
-          });
-        }
-        if (userData.recurringCandidates.length) {
-          await tx.reportRecurringCandidate.createMany({
-            data: userData.recurringCandidates.map((r: any) => ({
-              reportId: report.id,
-              payee: r.payee,
-              direction: r.direction,
-              occurrences: r.occurrences,
-              months: r.months,
-              avgAmount: convertAmountToMilliunits(r.avgAmount),
-              medianAmount: convertAmountToMilliunits(r.medianAmount),
-              amountStdDev: convertAmountToMilliunits(r.amountStdDev),
-              amountStdDevPct: convertPctToRatio(r.amountStdDevPct),
-              lastSeenAt: new Date(r.lastSeenAt),
-              last3Amounts: r.last3Amounts.map((a: any) =>
-                convertAmountToMilliunits(a),
-              ),
-              nextExpectedWindow: r.nextExpectedWindow,
-            })),
-          });
-        }
+        },
       });
-    }
+      await tx.reportSnapshot.create({
+        data: {
+          reportId: report.id,
+          currencyCode: userData.currency.code,
+          currencySymbol: userData.currency.symbol,
+          ...rows.snapshot,
+        },
+      });
+      await tx.reportComparison.create({
+        data: { reportId: report.id, ...rows.comparison },
+      });
+      if (rows.categoryBreakdowns.length) {
+        await tx.reportCategoryBreakdown.createMany({
+          data: rows.categoryBreakdowns.map((c) => ({
+            reportId: report.id,
+            ...c,
+          })),
+        });
+      }
+      if (userData.recurringCandidates.length) {
+        await tx.reportRecurringCandidate.createMany({
+          data: userData.recurringCandidates.map((r: any) => ({
+            reportId: report.id,
+            payee: r.payee,
+            direction: r.direction,
+            occurrences: r.occurrences,
+            months: r.months,
+            avgAmount: convertAmountToMilliunits(r.avgAmount),
+            medianAmount: convertAmountToMilliunits(r.medianAmount),
+            amountStdDev: convertAmountToMilliunits(r.amountStdDev),
+            amountStdDevPct: convertPctToRatio(r.amountStdDevPct),
+            lastSeenAt: new Date(r.lastSeenAt),
+            last3Amounts: r.last3Amounts.map((a: any) =>
+              convertAmountToMilliunits(a),
+            ),
+            nextExpectedWindow: r.nextExpectedWindow,
+          })),
+        });
+      }
+    });
   } catch (e) {
     console.error("Error inserting the following reports:", e);
     throw new Error("Failed to create reports");
@@ -191,7 +131,12 @@ export async function upsertReport(report: any): Promise<void> {
 }
 
 /**
- * Get the created and unsended reports for the current month
+ * Reports written in the last week whose "report ready" push hasn't gone out,
+ * for users who want it, with each user's timezone so the push can be timed
+ * to their morning.
+ *
+ * The week bounds it: a report left unsent for longer (the user turned the
+ * push back on, say) is old news, not something to announce.
  * @returns {Promise}
  */
 export async function getUnsendedReports(): Promise<
@@ -202,21 +147,21 @@ export async function getUnsendedReports(): Promise<
     user: { email: string | null };
     deviceToken?: string | null;
     reportDate: Date;
+    timeZone: string;
+    language: string;
   }[]
 > {
   try {
-    const HOUR_TO_SEND = parseInt(process.env.REPORT_SENT_HOUR || "9", 10);
-    console.log(
-      `Getting unsended reports for hour ${HOUR_TO_SEND} (user's local time)`,
-    );
     const reports = await db.$queryRaw<
       {
         id: string;
         userId: string;
-        data: any;
+        data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
         email: string | null;
         deviceToken: string | null;
         reportDate: Date;
+        timeZone: string | null;
+        language: string | null;
       }[]
     >(Prisma.sql`
       SELECT
@@ -225,22 +170,15 @@ export async function getUnsendedReports(): Promise<
         r.data,
         u.email,
         u."deviceToken",
-        r."periodStart" AS "reportDate"
+        r."periodStart" AS "reportDate",
+        u.timezone AS "timeZone",
+        u."preferredLanguage" AS "language"
       FROM "Report" r
       JOIN "User" u ON u.id = r."userId"
-      LEFT JOIN pg_timezone_names p ON p.name = u.timezone
       WHERE r."sentAt" IS NULL
-        -- current month (UTC). If you want "current month per user", that's a different filter.
-        AND r."createdAt" >= date_trunc('month', now())
-        AND r."createdAt" <  (date_trunc('month', now()) + interval '1 month')
+        AND r."createdAt" >= (now() AT TIME ZONE 'UTC') - interval '7 days'
         AND u."sendMonthlyReport" = true
-        -- only users whose local time is HOUR_TO_SEND:xx right now
-        AND EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_SEND}
     `);
-
-    console.log(
-      `Found ${reports.length} unsended reports for hour ${HOUR_TO_SEND}`,
-    );
 
     return reports.map((r) => ({
       id: r.id,
@@ -249,10 +187,33 @@ export async function getUnsendedReports(): Promise<
       user: { email: r.email },
       deviceToken: r.deviceToken,
       reportDate: r.reportDate,
+      timeZone: safeTimeZone(r.timeZone),
+      language: (r.language || "en").toLowerCase(),
     }));
   } catch (e) {
     console.error("Error getting the unsended reports:", e);
     throw new Error("Failed to get unsended reports");
+  }
+}
+
+/**
+ * "August 2026" in the user's language, for the push's `loc-args`: the app
+ * supplies the sentence, the server only the month it names.
+ */
+export function reportMonthName(reportDate: Date | string, language: string) {
+  const date = new Date(reportDate);
+  try {
+    return new Intl.DateTimeFormat(language, {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("en", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(date);
   }
 }
 
@@ -278,167 +239,19 @@ export const markReportsAsSent = async (ids: string[]) => {
   }
 };
 
-/**
- * Build a prompt for the LLM based on the provided facts pack,
- * following strict instructions for output format and content.
- */
-export function buildLLMPrompt(factsPack: any): ChatMessage[] {
-  const language = factsPack.language?.toLowerCase() ?? "en";
-
-  const languageMap: Record<string, string> = {
-    en: "English",
-    de: "German",
-    fr: "French",
-    es: "Spanish",
-  };
-
-  const languageName = languageMap[language] ?? "English";
-
-  const userContent = [
-    "Return ONLY a valid JSON object. No Markdown. No greeting. No sign-off. No extra text.",
-    "You must follow this JSON shape (keys exactly):",
-    `{`,
-    `  "insights": string,`,
-    `  "income_analysis": string,`,
-    `  "expense_analysis": string,`,
-    `  "health": "green"|"yellow"|"red",`,
-    `  "health_analysis": string,`,
-    `}`,
-    "",
-    "Rules:",
-    `- Write ALL text fields (insights, income_analysis, expense_analysis, health_analysis) in ${languageName}.`,
-    "- Use totalsAbs.expenseSpend for 'spending' and totalsAbs.incomeReceived for 'income'.",
-    "- Use netFlow (signed) for surplus/deficit wording.",
-    "- Use comparisons.expenseSpendDelta and comparisons.incomeReceivedDelta for month-over-month changes when prevMonthAvailable is true.",
-    "- IMPORTANT: Interpret comparisons.netFlowDeltaPct sign as trend: negative => worse (net flow decreased), positive => better (net flow increased).",
-    "- If a percentage is null, do not mention a percent change.",
-    "- Do NOT recommend external tools or methods (no apps, no notebooks, no spreadsheets, no 'track your spending' advice).",
-    "- Tips must be action-oriented and based on the provided aggregates (categories/payees/recurring), not generic tracking advice.",
-    "- Do NOT invent transactions, stores, prices, or savings opportunities.",
-    "- Do NOT include an expenses breakdown (but you may mention top categories at a high level).",
-    "- Keep numbers consistent with totalsAbs, netFlow, and comparisons.",
-    "",
-    `DATA: ${JSON.stringify(factsPack)}`,
-  ].join("\n");
-
-  return [
-    {
-      role: "system",
-      content:
-        "You are a financial assistant. Output strictly valid JSON following the required shape.",
-    },
-    { role: "user", content: userContent },
-  ];
-}
-
-function extractJsonObject(text: string): any {
-  // Try fenced ```json blocks first
-  const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) {
-    return JSON.parse(fenced[1]);
-  }
-
-  // Otherwise parse the first {...} block
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    return JSON.parse(text.slice(start, end + 1));
-  }
-
-  // Last resort
-  return JSON.parse(text);
-}
-
-/**
- * Normalize and validate the LLM response,
- * ensuring it adheres to the expected structure and types.
- */
-function normalizeReportShape(raw: any): MonthlyReportLLMResponse {
-  const expenseAnalysis = raw.expense_analysis ?? raw.expence_analysis ?? "";
-
-  const out: MonthlyReportLLMResponse = {
-    insights: String(raw.insights ?? ""),
-    income_analysis: String(raw.income_analysis ?? ""),
-    expense_analysis: String(expenseAnalysis ?? ""),
-    health: (raw.health ?? "yellow") as MonthlyReportLLMResponse["health"],
-    health_analysis: String(raw.health_analysis ?? ""),
-  };
-
-  if (
-    !out.insights ||
-    !out.income_analysis ||
-    !out.expense_analysis ||
-    !out.health_analysis
-  ) {
-    throw new Error("LLM returned incomplete JSON report payload");
-  }
-  if (!["green", "yellow", "red"].includes(out.health)) {
-    out.health = "yellow";
-  }
-  return out;
-}
-
-/**
- * Call Hugging Face's text generation API with the given messages and return the generated text.
- */
-async function callHuggingFaceTextGeneration(messages: ChatMessage[]) {
-  const token = process.env.HF_TOKEN;
-  if (!token) throw new Error("HF_TOKEN is not set");
-
-  const model = process.env.HF_LLM_MODEL ?? "Qwen/Qwen2.5-7B-Instruct";
-
-  const resp = await fetch(
-    "https://router.huggingface.co/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: 700,
-        temperature: 0.3,
-        top_p: 0.9,
-      }),
-    },
-  );
-
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    throw new Error(`HF text-generation failed (${resp.status}): ${body}`);
-  }
-
-  const json = await resp.json();
-  const generated = json?.choices?.[0]?.message?.content;
-  if (!generated || typeof generated !== "string") {
-    throw new Error(
-      `HF returned unexpected payload: ${JSON.stringify(json).slice(0, 2000)}`,
-    );
-  }
-
-  return generated;
-}
-
-/**
- * Generate a monthly report for a user by calling the LLM with a built prompt based on their data,
- */
-export async function generateMonthlyReportWithHuggingFace(
-  userData: any,
-): Promise<MonthlyReportLLMResponse> {
-  console.log(
-    "Generating report with Hugging Face for user data:",
-    JSON.stringify(userData),
-  );
-  const messages = buildLLMPrompt(userData);
-  console.log("Generated messages for LLM:", messages);
-  const text = await callHuggingFaceTextGeneration(messages);
-  const raw = extractJsonObject(text);
-
-  return normalizeReportShape(raw);
-}
+/** What `GET /api/reports` returns for each report, before live facts. */
+export const reportSelect = {
+  id: true,
+  periodStart: true,
+  health: true,
+  data: true,
+  createdAt: true,
+  sentAt: true,
+  snapshot: true,
+  comparisons: true,
+  categoryBreakdowns: { orderBy: { spend: "desc" } },
+  recurringCandidates: { orderBy: { occurrences: "desc" } },
+} satisfies Prisma.ReportSelect;
 
 /**
  * NOOP - is not used so far
@@ -857,34 +670,31 @@ function toISODateOnly(d: Date) {
  * Fetch users analytics data for AI model context
  */
 export async function getPrevMonthSummaries(
-  users: { id: string; currencyId?: string }[],
+  users: { id: string; currencyId?: string; timeZone?: string }[],
   allCurrencies: {
     id: string;
     symbol: string;
     name: string;
     exchangeRate: number;
   }[] = [],
+  /** UTC midnight on the 1st of the month to report on. */
+  reportMonth: Date = previousUtcMonth(),
 ): Promise<any[]> {
-  // Report is always previous month; keep params for now to avoid breaking call sites,
-  // but derive the report month from "now" to match getTransactions().
-
-  const now = new Date();
-
-  const reportMonthDate = subMonths(now, 1);
-  const reportStart = startOfMonth(reportMonthDate);
-  const reportEnd = endOfMonth(reportMonthDate);
-
   const { currentByUser, prevByUser, historyByUser } = await getTransactions({
     userIds: users.map((u) => u.id),
+    reportMonth,
+    timeZones: new Map(
+      users.map((u) => [u.id, safeTimeZone(u.timeZone)] as const),
+    ),
   });
 
   // Use pre-fetched currencies if provided, otherwise fetch from DB (direct call fallback)
   const currencyMap = new Map(
-    (
-      allCurrencies ??
-      (await db.currency.findMany({
-        select: { id: true, symbol: true, code: true, exchangeRate: true },
-      }))
+    (allCurrencies.length
+      ? allCurrencies
+      : await db.currency.findMany({
+          select: { id: true, symbol: true, name: true, exchangeRate: true },
+        })
     ).map((c) => [c.id, c]),
   );
 
@@ -924,136 +734,399 @@ export async function getPrevMonthSummaries(
       currencyMap.get(targetCurrencyId) ??
       currencyMap.get(currentTx[0]!.account.currency.id)!;
 
-    const targetExchangeRate = targetCurrency.exchangeRate;
-    const targetSymbol = targetCurrency.symbol;
-    const targetName = targetCurrency.name;
-
-    // Current month totals & aggregates
-    const currentTotals = computeTotalsInTargetCurrency({
-      transactions: currentTx,
-      targetCurrencyId,
-      targetExchangeRate,
-    });
-
-    const transactionAggregates = computeTransactionAggregates({
-      userTransactions: currentTx,
-      targetCurrencyId,
-      targetExchangeRate,
-      topN: 5,
-    });
-
-    // Previous month aggregates (same target currency)
-    const prevTotals = computeTotalsInTargetCurrency({
-      transactions: prevTx,
-      targetCurrencyId,
-      targetExchangeRate,
-    });
-
-    const prevTransactionAggregates =
-      prevTx.length > 0
-        ? computeTransactionAggregates({
-            userTransactions: prevTx,
-            targetCurrencyId,
-            targetExchangeRate,
-            topN: 5,
-          })
-        : null;
-
-    const incomeReceivedThis = Number(
-      convertAmountFromMilliunits(currentTotals.income).toFixed(2),
-    ); // positive
-    const expenseSpendThis = Number(
-      Math.abs(convertAmountFromMilliunits(currentTotals.expenses)).toFixed(2),
-    ); // positive
-    const netFlowThis = Number(
-      (incomeReceivedThis - expenseSpendThis).toFixed(2),
-    ); // signed
-
-    const incomeReceivedPrev = Number(
-      convertAmountFromMilliunits(prevTotals.income).toFixed(2),
-    );
-    const expenseSpendPrev = Number(
-      Math.abs(convertAmountFromMilliunits(prevTotals.expenses)).toFixed(2),
-    );
-    const netFlowPrev = Number(
-      (incomeReceivedPrev - expenseSpendPrev).toFixed(2),
-    );
-
-    const comparisons = {
-      prevMonthAvailable: prevTx.length > 0,
-
-      incomeReceivedDelta:
-        prevTx.length > 0
-          ? Number((incomeReceivedThis - incomeReceivedPrev).toFixed(2))
-          : 0,
-      incomeReceivedDeltaPct:
-        prevTx.length > 0
-          ? pctChange(
-              incomeReceivedThis - incomeReceivedPrev,
-              incomeReceivedPrev,
-            )
-          : 0,
-
-      expenseSpendDelta:
-        prevTx.length > 0
-          ? Number((expenseSpendThis - expenseSpendPrev).toFixed(2))
-          : 0,
-      expenseSpendDeltaPct:
-        prevTx.length > 0
-          ? pctChange(expenseSpendThis - expenseSpendPrev, expenseSpendPrev)
-          : 0,
-
-      netFlowDelta:
-        prevTx.length > 0 ? Number((netFlowThis - netFlowPrev).toFixed(2)) : 0,
-
-      netFlowDeltaPct:
-        prevTx.length > 0
-          ? pctChange(netFlowThis - netFlowPrev, netFlowPrev)
-          : 0,
-
-      topCategoryChanges: prevTransactionAggregates
-        ? buildTopCategoryChanges({
-            current: transactionAggregates.expenseByCategory,
-            prev: prevTransactionAggregates.expenseByCategory,
-            topN: 5,
-          })
-        : [],
-    };
-
-    // Recurring candidates already computed elsewhere; keep your existing logic
-    const recurringCandidates = buildRecurringCandidates({
-      historyTransactions: historyTx,
-      targetCurrencyId,
-      targetExchangeRate,
-      topN: 5,
-    });
-
     usersData.push({
       userId,
-      reportMonth: format(reportStart, "MMMM yyyy"),
+      reportMonth: reportMonthLabel(reportMonth),
+      // Calendar dates of the month, in the user's own timezone.
       period: {
-        start: toISODateOnly(reportStart),
-        end: toISODateOnly(reportEnd),
+        start: reportMonth.toISOString().slice(0, 10),
+        end: new Date(
+          Date.UTC(
+            reportMonth.getUTCFullYear(),
+            reportMonth.getUTCMonth() + 1,
+            0,
+          ),
+        )
+          .toISOString()
+          .slice(0, 10),
       },
       currency: {
-        symbol: targetSymbol,
-        code: targetName,
+        id: targetCurrencyId,
+        symbol: targetCurrency.symbol,
+        code: targetCurrency.name,
       },
-      totalsAbs: {
-        incomeReceived: incomeReceivedThis,
-        expenseSpend: expenseSpendThis,
-      },
-      netFlow: netFlowThis,
-      transactionAggregates,
-      comparisons,
-      recurringCandidates,
-      dataQuality: {
-        transactionCount: currentTx.length,
-        expenseTransactionCount: currentTx.filter((t) => t.amount < 0).length,
-        incomeTransactionCount: currentTx.filter((t) => t.amount > 0).length,
-        accountCount: new Set(currentTx.map((t) => t.account.id)).size,
-      },
+      ...summarizeMonth({
+        currentTx,
+        prevTx,
+        historyTx,
+        targetCurrencyId,
+        targetExchangeRate: targetCurrency.exchangeRate,
+      }),
     });
   }
   return usersData;
+}
+
+export type MonthSummary = ReturnType<typeof summarizeMonth>;
+
+/** What `computeTransactionAggregates` calls spend with no category. */
+const UNCATEGORIZED_LABEL = "Uncategorized";
+
+/**
+ * Everything a report says about one month, from that month's transactions,
+ * the month before and the recurring-detection history. The monthly job runs
+ * it once to write the report; `GET /api/reports` runs it again on every read,
+ * so the numbers a report shows are always the transactions as they are now.
+ */
+export function summarizeMonth({
+  currentTx,
+  prevTx,
+  historyTx,
+  targetCurrencyId,
+  targetExchangeRate,
+}: {
+  currentTx: Transaction[];
+  prevTx: Transaction[];
+  historyTx: Transaction[];
+  targetCurrencyId: string;
+  targetExchangeRate: number;
+}) {
+  const currentTotals = computeTotalsInTargetCurrency({
+    transactions: currentTx,
+    targetCurrencyId,
+    targetExchangeRate,
+  });
+
+  // Every category and payee: findings compare categories across months,
+  // and one outside the top five can still be the one that moved.
+  const allAggregates = computeTransactionAggregates({
+    userTransactions: currentTx,
+    targetCurrencyId,
+    targetExchangeRate,
+    topN: Number.MAX_SAFE_INTEGER,
+  });
+  const transactionAggregates = {
+    ...allAggregates,
+    expenseByCategory: allAggregates.expenseByCategory.slice(0, 5),
+    expenseByPayee: allAggregates.expenseByPayee.slice(0, 5),
+    largestExpenses: allAggregates.largestExpenses.slice(0, 5),
+    largestIncome: allAggregates.largestIncome.slice(0, 5),
+  };
+
+  const prevTotals = computeTotalsInTargetCurrency({
+    transactions: prevTx,
+    targetCurrencyId,
+    targetExchangeRate,
+  });
+
+  const prevAggregates =
+    prevTx.length > 0
+      ? computeTransactionAggregates({
+          userTransactions: prevTx,
+          targetCurrencyId,
+          targetExchangeRate,
+          topN: Number.MAX_SAFE_INTEGER,
+        })
+      : null;
+
+  const incomeReceivedThis = Number(
+    convertAmountFromMilliunits(currentTotals.income).toFixed(2),
+  ); // positive
+  const expenseSpendThis = Number(
+    Math.abs(convertAmountFromMilliunits(currentTotals.expenses)).toFixed(2),
+  ); // positive
+  const netFlowThis = Number(
+    (incomeReceivedThis - expenseSpendThis).toFixed(2),
+  ); // signed
+
+  const incomeReceivedPrev = Number(
+    convertAmountFromMilliunits(prevTotals.income).toFixed(2),
+  );
+  const expenseSpendPrev = Number(
+    Math.abs(convertAmountFromMilliunits(prevTotals.expenses)).toFixed(2),
+  );
+  const netFlowPrev = Number(
+    (incomeReceivedPrev - expenseSpendPrev).toFixed(2),
+  );
+
+  const hasPrev = prevTx.length > 0;
+
+  const comparisons = {
+    prevMonthAvailable: hasPrev,
+
+    incomeReceivedDelta: hasPrev
+      ? Number((incomeReceivedThis - incomeReceivedPrev).toFixed(2))
+      : 0,
+    incomeReceivedDeltaPct: hasPrev
+      ? pctChange(incomeReceivedThis - incomeReceivedPrev, incomeReceivedPrev)
+      : 0,
+
+    expenseSpendDelta: hasPrev
+      ? Number((expenseSpendThis - expenseSpendPrev).toFixed(2))
+      : 0,
+    expenseSpendDeltaPct: hasPrev
+      ? pctChange(expenseSpendThis - expenseSpendPrev, expenseSpendPrev)
+      : 0,
+
+    netFlowDelta: hasPrev ? Number((netFlowThis - netFlowPrev).toFixed(2)) : 0,
+
+    netFlowDeltaPct: hasPrev
+      ? pctChange(netFlowThis - netFlowPrev, netFlowPrev)
+      : 0,
+
+    topCategoryChanges: prevAggregates
+      ? buildTopCategoryChanges({
+          current: transactionAggregates.expenseByCategory,
+          prev: prevAggregates.expenseByCategory.slice(0, 5),
+          topN: 5,
+        })
+      : [],
+  };
+
+  const recurringCandidates = buildRecurringCandidates({
+    historyTransactions: historyTx,
+    targetCurrencyId,
+    targetExchangeRate,
+    topN: 5,
+  });
+
+  const milli = convertAmountToMilliunits;
+  // The aggregates file rows without a category under an English
+  // "Uncategorized" label. Findings have their own kind for that spend, and a
+  // category name is shown as-is, so the label must not pass as a category.
+  const named = (c: { category: string }) => c.category !== UNCATEGORIZED_LABEL;
+  const facts: MonthFacts = {
+    income: Math.round(currentTotals.income),
+    expense: Math.round(-currentTotals.expenses),
+    net: Math.round(currentTotals.income + currentTotals.expenses),
+    prev: hasPrev
+      ? {
+          income: Math.round(prevTotals.income),
+          expense: Math.round(-prevTotals.expenses),
+          net: Math.round(prevTotals.income + prevTotals.expenses),
+        }
+      : null,
+    categories: allAggregates.expenseByCategory.filter(named).map((c) => ({
+      name: c.category,
+      spend: milli(c.spend),
+    })),
+    prevCategories: (prevAggregates?.expenseByCategory ?? [])
+      .filter(named)
+      .map((c) => ({
+        name: c.category,
+        spend: milli(c.spend),
+      })),
+    payees: allAggregates.expenseByPayee.map((p) => ({
+      name: p.payee,
+      spend: milli(p.spend),
+    })),
+    largestExpenses: transactionAggregates.largestExpenses.map((e) => ({
+      payee: e.payee,
+      amount: milli(e.amount),
+    })),
+    uncategorizedSpend: milli(allAggregates.uncategorized.spend),
+    recurring: recurringCandidates.map((r) => ({
+      payee: r.payee,
+      direction: r.direction,
+      months: r.months,
+      medianAmount: milli(r.medianAmount),
+    })),
+  };
+
+  return {
+    totalsAbs: {
+      incomeReceived: incomeReceivedThis,
+      expenseSpend: expenseSpendThis,
+    },
+    netFlow: netFlowThis,
+    transactionAggregates,
+    comparisons,
+    recurringCandidates,
+    facts,
+    dataQuality: {
+      transactionCount: currentTx.length,
+      expenseTransactionCount: currentTx.filter((t) => t.amount < 0).length,
+      incomeTransactionCount: currentTx.filter((t) => t.amount > 0).length,
+      accountCount: new Set(currentTx.map((t) => t.account.id)).size,
+    },
+  };
+}
+
+/**
+ * The stored shape of a month — milliunits and ratios — as the report tables
+ * hold it and the app reads it. One mapping for both the write and the live
+ * read, so a live report can never be in different units from a stored one.
+ */
+export function reportRows(
+  summary: Omit<MonthSummary, "facts" | "dataQuality">,
+) {
+  const milli = convertAmountToMilliunits;
+  const ratio = (pct: number | null | undefined) => convertPctToRatio(pct ?? 0);
+  const { transactionAggregates: agg, comparisons: cmp } = summary;
+  return {
+    snapshot: {
+      incomeReceived: milli(summary.totalsAbs.incomeReceived),
+      expenseSpend: milli(summary.totalsAbs.expenseSpend),
+      netFlow: milli(summary.netFlow),
+      expenseByPayee: agg.expenseByPayee.map((e) => ({
+        ...e,
+        pct: ratio(e.pct),
+        spend: milli(e.spend),
+      })),
+      largestExpenses: agg.largestExpenses.map((e) => ({
+        ...e,
+        amount: milli(e.amount),
+      })),
+      largestIncome: agg.largestIncome.map((e) => ({
+        ...e,
+        amount: milli(e.amount),
+      })),
+      uncategorized: agg.uncategorized,
+    },
+    comparison: {
+      prevMonthAvailable: cmp.prevMonthAvailable,
+      incomeReceivedDelta: milli(cmp.incomeReceivedDelta),
+      incomeReceivedDeltaPct: ratio(cmp.incomeReceivedDeltaPct),
+      expenseSpendDelta: milli(cmp.expenseSpendDelta),
+      expenseSpendDeltaPct: ratio(cmp.expenseSpendDeltaPct),
+      netFlowDelta: milli(cmp.netFlowDelta ?? 0),
+      netFlowDeltaPct: ratio(cmp.netFlowDeltaPct),
+      topCategoryChanges: cmp.topCategoryChanges.map((c) => ({
+        category: c.category,
+        delta: milli(c.delta),
+        prevSpend: milli(c.prevSpend),
+        thisSpend: milli(c.thisSpend),
+      })),
+    },
+    categoryBreakdowns: agg.expenseByCategory.map((c) => ({
+      category: c.category,
+      spend: milli(c.spend),
+      pct: ratio(c.pct),
+    })),
+  };
+}
+
+type StoredReport = {
+  periodStart: Date;
+  health: string | null;
+  data: unknown;
+  snapshot: {
+    currencyCode: string;
+  } | null;
+  comparisons: object | null;
+  categoryBreakdowns: object[];
+};
+
+export type LiveFinding = Omit<Finding, "score">;
+
+type LiveReport<R> = R & { findings: LiveFinding[] | null };
+
+/** Reports recomputed in parallel at most this many at a time. */
+const LIVE_CONCURRENCY = 4;
+
+/**
+ * Reports as the transactions stand now, not as they stood when each was
+ * written.
+ *
+ * Each month is summarised again: its totals, comparisons, breakdowns and
+ * payees replace the stored ones, in the same shape and units; `health` is
+ * worked out again from those totals; and `findings` are the claims the month
+ * leads with, with today's numbers. Nothing a report shows is kept from when
+ * it was written, so none of it can disagree with the rest.
+ *
+ * A month that can't be recomputed is returned as stored, with `findings`
+ * null, rather than failing the whole list.
+ */
+export async function withLiveFacts<R extends StoredReport>(
+  userId: string,
+  reports: R[],
+): Promise<Array<LiveReport<R>>> {
+  if (!reports.length) return [];
+  const [currencies, user] = await Promise.all([
+    db.currency.findMany({
+      select: { id: true, name: true, exchangeRate: true },
+    }),
+    // Months are cut in the viewer's timezone, as the monthly job cuts them.
+    db.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+  ]);
+  const timeZone = safeTimeZone(user?.timezone);
+  const byId = new Map(currencies.map((c) => [c.id, c]));
+  // Reports written before `currencyId` was stored only have the snapshot's
+  // `currencyCode`, which holds the currency's `name` ("USD", "EUR").
+  const byName = new Map(currencies.map((c) => [c.name, c]));
+
+  const out: Array<LiveReport<R>> = [];
+  for (let i = 0; i < reports.length; i += LIVE_CONCURRENCY) {
+    const batch = reports.slice(i, i + LIVE_CONCURRENCY);
+    out.push(
+      ...(await Promise.all(
+        batch.map(async (report) => {
+          const currency =
+            byId.get(storedCurrencyId(report) ?? "") ??
+            (report.snapshot
+              ? byName.get(report.snapshot.currencyCode)
+              : undefined);
+          if (!currency || !report.snapshot) {
+            return { ...report, findings: null };
+          }
+          try {
+            return await liveReport(userId, timeZone, report, currency);
+          } catch (e) {
+            console.error(
+              `Could not recompute report for ${report.periodStart.toISOString()}:`,
+              e,
+            );
+            return { ...report, findings: null };
+          }
+        }),
+      )),
+    );
+  }
+  return out;
+}
+
+async function liveReport<R extends StoredReport>(
+  userId: string,
+  timeZone: string,
+  report: R,
+  currency: { id: string; exchangeRate: number },
+): Promise<LiveReport<R>> {
+  const { currentByUser, prevByUser, historyByUser } = await getTransactions({
+    userIds: [userId],
+    reportMonth: report.periodStart,
+    timeZones: new Map([[userId, timeZone]]),
+  });
+  const currentTx = currentByUser.get(userId) ?? [];
+  const summary = summarizeMonth({
+    currentTx,
+    prevTx: prevByUser.get(userId) ?? [],
+    historyTx: historyByUser.get(userId) ?? currentTx,
+    targetCurrencyId: currency.id,
+    targetExchangeRate: currency.exchangeRate,
+  });
+  const rows = reportRows(summary);
+
+  return {
+    ...report,
+    health: ruleHealth(summary.facts),
+    snapshot: { ...report.snapshot, ...rows.snapshot },
+    comparisons: report.comparisons
+      ? { ...report.comparisons, ...rows.comparison }
+      : report.comparisons,
+    // Keyed by category name so the same category has the same id in every
+    // month — the app pairs a month's category with the one before by id.
+    categoryBreakdowns: rows.categoryBreakdowns.map((c) => ({
+      id: c.category,
+      ...c,
+    })),
+    findings: topFindings(summary.facts).map(({ score: _score, ...f }) => f),
+  };
+}
+
+/** `Report.data.currencyId`; reports from before it was stored have none. */
+function storedCurrencyId(report: StoredReport): string | undefined {
+  const data = report.data;
+  if (!data || typeof data !== "object") return undefined;
+  const id = (data as { currencyId?: unknown }).currencyId;
+  return typeof id === "string" ? id : undefined;
 }

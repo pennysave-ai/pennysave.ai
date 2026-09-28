@@ -8,6 +8,63 @@ import {
   convertAmountFromMilliunits,
 } from "@/lib/utils";
 import { BASE_CURRENCY } from "@/constants";
+import { getCategoryResolver } from "@/data/categoryMappings";
+
+/**
+ * The spending on a budget's accounts since `since`, each row with the
+ * category it counts under for the budget's owner, the same rule the category
+ * screen and the transaction list use. A partner's row the owner mapped or
+ * picked into a budgeted category counts; a partner's row that resolves nowhere
+ * doesn't.
+ * @param {String} userId - The budget's owner
+ * @param {String[]} accountIds - The budget's accounts
+ * @param {Date} since - Start of the period
+ * @param {String[]} categoryIds - The budgeted categories
+ * @param {String | null} excludeId - A transaction to leave out
+ */
+async function getBudgetSpending(
+  userId: string,
+  accountIds: string[],
+  since: Date,
+  categoryIds: string[],
+  excludeId: string | null = null,
+) {
+  const [rows, resolver] = await Promise.all([
+    db.transaction.findMany({
+      where: {
+        createdAt: { gte: since },
+        accountId: { in: accountIds },
+        amount: { lt: 0 }, // Only include transactions with negative amounts
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: {
+        id: true,
+        amount: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            archivedAt: true,
+            owner: { select: { id: true } },
+          },
+        },
+        account: {
+          select: {
+            currency: { select: { id: true, exchangeRate: true } },
+          },
+        },
+      },
+    }),
+    getCategoryResolver(userId),
+  ]);
+  const budgeted = new Set(categoryIds);
+  return rows.flatMap(({ id, category, ...row }) => {
+    const categoryId = resolver.resolve(category, id)?.id;
+    return categoryId && budgeted.has(categoryId)
+      ? [{ ...row, categoryId }]
+      : [];
+  });
+}
 
 export type BudgetAllocations = {
   categoryId: string;
@@ -124,6 +181,8 @@ export async function getBudgets(
         },
       },
       budgetAllocations: {
+        // A deleted category is archived, and drops out of the budget with it.
+        where: { category: { archivedAt: null } },
         select: {
           category: {
             select: {
@@ -158,37 +217,12 @@ export async function getBudgets(
       where: { id: budget.currencyId },
     });
 
-    // Fetch transactions and their currencies
-    const transactions = await db.transaction.findMany({
-      where: {
-        createdAt: {
-          gte: periodStartDate,
-        },
-        AND: [
-          { categoryId: { in: categoryIds } },
-          { accountId: { in: accountIds } },
-          {
-            amount: {
-              lt: 0, // Only include transactions with negative amounts
-            },
-          },
-        ],
-      },
-      select: {
-        categoryId: true,
-        amount: true,
-        account: {
-          select: {
-            currency: {
-              select: {
-                id: true,
-                exchangeRate: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const transactions = await getBudgetSpending(
+      userId,
+      accountIds,
+      periodStartDate,
+      categoryIds,
+    );
 
     // Convert transaction amounts to the budget's currency
     const totalTransactions = transactions.reduce((total, transaction) => {
@@ -473,38 +507,13 @@ export async function checkBudgetExceedance(
       where: { id: budget.currencyId },
     });
 
-    // Fetch transactions and their currencies
-    const transactions = await db.transaction.findMany({
-      where: {
-        createdAt: {
-          gte: startDate,
-        },
-        AND: [
-          { categoryId: { in: categoryIds } },
-          { accountId: { in: accountIds } },
-          {
-            amount: {
-              lt: 0, // Only include transactions with negative amounts
-            },
-          },
-          transactionId ? { id: { not: transactionId } } : {}, // Exclude the current transaction if updating
-        ],
-      },
-      select: {
-        categoryId: true,
-        amount: true,
-        account: {
-          select: {
-            currency: {
-              select: {
-                id: true,
-                exchangeRate: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const transactions = await getBudgetSpending(
+      userId,
+      accountIds,
+      startDate,
+      categoryIds,
+      transactionId, // Exclude the current transaction if updating
+    );
 
     const totalSpent = transactions.reduce((total, transaction) => {
       const transactionCurrency = transaction.account.currency;

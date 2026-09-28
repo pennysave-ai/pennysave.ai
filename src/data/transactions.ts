@@ -1,11 +1,5 @@
 import { v4 as uuid } from "uuid";
-import {
-  format,
-  endOfDay,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-} from "date-fns";
+import { format, endOfDay } from "date-fns";
 import { db } from "@/db";
 import { UpdateTransaction } from "@/features/transactions/hooks";
 import { createTransactionSchema } from "@/schemas";
@@ -14,13 +8,22 @@ import { sendBudgetExceedNotification } from "@/lib/mail";
 import {
   convertCurrency,
   convertAmountFromMilliunits,
-  isWithin,
   normalizePayee,
 } from "@/lib/utils";
 import { hasActiveAppleSubscription } from "@/data/user";
-import { Transaction, NewTransaction } from "@/types";
+import {
+  previousUtcMonth,
+  reportWindows,
+  safeTimeZone,
+} from "@/lib/reportSchedule";
+import { Category, Transaction, NewTransaction } from "@/types";
 import { accountSelect } from "@/data/accounts";
 import { categorySelect } from "@/data/categories";
+import {
+  getCategoryResolver,
+  getCategoryResolvers,
+  type CategoryResolver,
+} from "@/data/categoryMappings";
 
 export const transactionSelect = {
   id: true,
@@ -125,6 +128,9 @@ export async function createTransaction(
     const { userAccess, ...accountWithoutUserAccess } = transaction.account;
     return {
       ...transaction,
+      // The author is the viewer, so their pick is also what it resolves to.
+      sourceCategory: transaction.category,
+      canFile: true,
       account: {
         ...accountWithoutUserAccess,
         institution: { name: transaction.account.institutionName || "" },
@@ -199,11 +205,75 @@ export async function deleteTransactions(
       id: {
         in: transactionIds,
       },
+      createdBy: userId,
       account: {
         userAccess: { some: { userId } },
       },
     },
   });
+}
+
+/**
+ * Get the author of each transaction the user can see
+ * @param {String[]} transactionIds - Array of transaction IDs
+ * @param {String} userId - User ID
+ * @returns {Promise<Map<string, string>>} - Author user ID keyed by transaction
+ * ID; transactions the user cannot see are left out
+ */
+export async function getTransactionAuthors(
+  transactionIds: string[],
+  userId: string,
+): Promise<Map<string, string>> {
+  const rows = await db.transaction.findMany({
+    where: {
+      id: { in: transactionIds },
+      account: { userAccess: { some: { userId } } },
+    },
+    select: { id: true, createdBy: true },
+  });
+  return new Map(rows.map((row) => [row.id, row.createdBy]));
+}
+
+/**
+ * Get the account of each transaction the user can see. Read before a delete
+ * or an edit that moves the row, since afterwards nothing says who could see
+ * it.
+ * @param {String[]} transactionIds - Array of transaction IDs
+ * @param {String} userId - User ID
+ * @returns {Promise<Map<string, string>>} - Account ID keyed by transaction
+ * ID; transactions the user cannot see are left out
+ */
+export async function getTransactionAccounts(
+  transactionIds: string[],
+  userId: string,
+): Promise<Map<string, string>> {
+  const rows = await db.transaction.findMany({
+    where: {
+      id: { in: transactionIds },
+      account: { userAccess: { some: { userId } } },
+    },
+    select: { id: true, accountId: true },
+  });
+  return new Map(rows.map((row) => [row.id, row.accountId]));
+}
+
+/**
+ * Check that every given category belongs to the user, so a transaction can
+ * only ever store its author's own category
+ * @param {String[]} categoryIds - Category IDs; empty values are ignored
+ * @param {String} userId - The transaction author's user ID
+ * @returns {Promise<Boolean>}
+ */
+export async function categoriesBelongToUser(
+  categoryIds: (string | null | undefined)[],
+  userId: string,
+): Promise<boolean> {
+  const ids = [...new Set(categoryIds.filter((id): id is string => !!id))];
+  if (!ids.length) return true;
+  const count = await db.category.count({
+    where: { id: { in: ids }, userId, archivedAt: null },
+  });
+  return count === ids.length;
 }
 
 /**
@@ -236,6 +306,7 @@ export async function updateTransaction(
   const transaction = await db.transaction.update({
     where: {
       id,
+      createdBy: userId,
       account: {
         userAccess: { some: { userId } },
       },
@@ -248,6 +319,9 @@ export async function updateTransaction(
   const { userAccess, ...accountWithoutUserAccess } = transaction.account;
   return {
     ...transaction,
+    // Only the author can edit, so their pick is also what it resolves to.
+    sourceCategory: transaction.category,
+    canFile: true,
     account: {
       ...accountWithoutUserAccess,
       institution: { name: transaction.account.institutionName || "" },
@@ -385,25 +459,114 @@ export async function getUserTransactions(
     transactions,
     userId,
   );
+  const resolver = await getCategoryResolver(userId);
+  return filteredTransactions.map((transaction) =>
+    toViewerRow(transaction, resolver),
+  );
+}
 
-  // Map institutionName to institution: { name } and exclude userAccess
-  return filteredTransactions.map((transaction) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { userAccess, ...accountWithoutUserAccess } = transaction.account;
-    return {
-      ...transaction,
-      payee: transaction.payee || "",
-      account: {
-        ...accountWithoutUserAccess,
-        institution: { name: transaction.account.institutionName || "" },
-        users: userAccess.map((access) => ({
-          id: access.userId,
-          name: access.user.name,
-          image: access.user.image,
-        })),
-      },
+/**
+ * A row as `resolver`'s viewer sees it: `category` is what it counts under for
+ * them, `sourceCategory` what the author picked, and the account's userAccess
+ * flattened to `users`.
+ */
+function toViewerRow<
+  T extends {
+    id: string;
+    payee: string | null;
+    category: (Category & { archivedAt?: Date | null }) | null;
+    account: {
+      institutionName: string | null;
+      userAccess: {
+        userId: string;
+        user: { name: string | null; image: string | null };
+      }[];
     };
+  },
+>(transaction: T, resolver: CategoryResolver) {
+  const { userAccess, ...accountWithoutUserAccess } = transaction.account;
+  return {
+    ...transaction,
+    // What the row counts under for this viewer; null when unmapped.
+    category: resolver.resolve(transaction.category, transaction.id),
+    // What the author picked, never changed by a mapping.
+    sourceCategory: transaction.category,
+    canFile: true,
+    payee: transaction.payee || "",
+    account: {
+      ...accountWithoutUserAccess,
+      institution: { name: transaction.account.institutionName || "" },
+      users: userAccess.map((access) => ({
+        id: access.userId,
+        name: access.user.name,
+        image: access.user.image,
+      })),
+    },
+  };
+}
+
+/**
+ * File a row someone else added under one of the viewer's own categories, for
+ * the viewer only: the row keeps its author's category, and the pick beats
+ * every other rule in the viewer's resolver. `categoryId: null` takes the pick
+ * back (Undo). Nothing but the category may change, so `fields` has to match
+ * the stored row.
+ * @param {String} id - Transaction ID
+ * @param {String} viewerId - Who is filing it; must not be its author
+ * @param {String | null} categoryId - One of the viewer's categories, or null
+ * @param {Object} fields - The rest of the row as the client sent it
+ * @returns The row as the viewer now sees it, or why it was refused
+ */
+export async function placeTransaction(
+  id: string,
+  viewerId: string,
+  categoryId: string | null,
+  fields: {
+    amount: number;
+    payee?: string | null;
+    notes?: string | null;
+    accountId: string;
+    createdAt: string | Date;
+  },
+): Promise<
+  | { ok: true; transaction: Transaction }
+  | { ok: false; status: 400 | 403 | 404 }
+> {
+  const stored = await db.transaction.findFirst({
+    where: { id, account: { userAccess: { some: { userId: viewerId } } } },
+    select: { ...transactionSelect, accountId: true, createdBy: true },
   });
+  if (!stored) return { ok: false, status: 404 };
+  const unchanged =
+    stored.amount === fields.amount &&
+    (stored.payee || "") === (fields.payee || "") &&
+    (stored.notes || "") === (fields.notes || "") &&
+    stored.accountId === fields.accountId &&
+    new Date(stored.createdAt).getTime() ===
+      new Date(fields.createdAt).getTime();
+  if (stored.createdBy === viewerId || !unchanged) {
+    return { ok: false, status: 403 };
+  }
+  if (categoryId && !(await categoriesBelongToUser([categoryId], viewerId))) {
+    return { ok: false, status: 400 };
+  }
+
+  if (categoryId) {
+    await db.transactionPlacement.upsert({
+      where: { viewerId_transactionId: { viewerId, transactionId: id } },
+      create: { viewerId, transactionId: id, categoryId },
+      update: { categoryId },
+    });
+  } else {
+    await db.transactionPlacement.deleteMany({
+      where: { viewerId, transactionId: id },
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { accountId, createdBy, ...row } = stored;
+  const resolver = await getCategoryResolver(viewerId);
+  return { ok: true, transaction: toViewerRow(row, resolver) };
 }
 
 /**
@@ -518,36 +681,47 @@ export async function getUserTransactionsTotalsByCategory({
   const start = startDate ? new Date(startDate) : undefined;
   const end = endDate ? endOfDay(new Date(endDate)) : undefined;
 
-  const transactions = await db.transaction.findMany({
-    where: {
-      account: { userAccess: { some: { userId } }, ...accountIdFilter },
-      ...(start && end ? { createdAt: { gte: start, lte: end } } : {}),
-    },
-    select: {
-      amount: true,
-      createdByUser: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
+  const [transactions, resolver] = await Promise.all([
+    db.transaction.findMany({
+      where: {
+        account: { userAccess: { some: { userId } }, ...accountIdFilter },
+        ...(start && end ? { createdAt: { gte: start, lte: end } } : {}),
       },
-      category: {
-        select: {
-          id: true,
-          name: true,
-          icon: true,
+      select: {
+        id: true,
+        amount: true,
+        createdByUser: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
         },
-      },
-      account: {
-        select: {
-          currency: {
-            select: { id: true, name: true, symbol: true, exchangeRate: true },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            archivedAt: true,
+            owner: { select: { id: true } },
+          },
+        },
+        account: {
+          select: {
+            currency: {
+              select: {
+                id: true,
+                name: true,
+                symbol: true,
+                exchangeRate: true,
+              },
+            },
           },
         },
       },
-    },
-  });
+    }),
+    getCategoryResolver(userId),
+  ]);
 
   let targetExchangeRate = 1;
   if (!accountId && currencyId) {
@@ -588,9 +762,11 @@ export async function getUserTransactionsTotalsByCategory({
   let totalIncome = 0;
   // Aggregate amounts by category calculate persentaces and totals
   for (const transaction of convertedTransactions) {
-    const categoryId = transaction.category?.id || "uncategorized";
-    const categoryName = transaction.category?.name || "";
-    const categoryIcon = transaction.category?.icon || null;
+    // Grouped the way the viewer's category screen groups them.
+    const category = resolver.resolve(transaction.category, transaction.id);
+    const categoryId = category?.id || "uncategorized";
+    const categoryName = category?.name || "";
+    const categoryIcon = category?.icon || null;
     const user = transaction.createdByUser;
     if (!totals[categoryId]) {
       totals[categoryId] = {
@@ -750,7 +926,13 @@ export function computeTransactionAggregates(params: {
       targetExchangeRate,
     });
 
-    const cat = t.category?.name || "Uncategorized";
+    // A partner row that resolves to none of the viewer's categories is left
+    // out of the category breakdown and is not "uncategorized" either; where a
+    // name is still shown, it is the one the author picked.
+    const unmappedPartner = !t.category && !!t.sourceCategory;
+    const cat =
+      t.category?.name ||
+      (unmappedPartner ? t.sourceCategory!.name : "Uncategorized");
     const payee = normalizePayee(t.payee) || "(no payee)";
     const accountName = t.account.name;
 
@@ -771,10 +953,12 @@ export function computeTransactionAggregates(params: {
     const spend = -amtTarget; // positive
     totalExpenseSpendMilliunits += spend;
 
-    byCategory.set(cat, (byCategory.get(cat) ?? 0) + spend);
+    if (!unmappedPartner) {
+      byCategory.set(cat, (byCategory.get(cat) ?? 0) + spend);
+    }
     byPayee.set(payee, (byPayee.get(payee) ?? 0) + spend);
 
-    if (!t.category?.name) {
+    if (!t.category?.name && !unmappedPartner) {
       uncategorizedCount += 1;
       uncategorizedSpendMilliunits += spend;
     }
@@ -856,22 +1040,36 @@ export function computeTransactionAggregates(params: {
  * history window (default: 3 months prior to `start`) to support:
  * - previous-month comparisons
  * - recurring-candidate detection
+ *
+ * `reportMonth` names the month to report on by its UTC year and month (a
+ * `Report.periodStart`); it defaults to the previous UTC month. Each user's
+ * rows are split into months in that user's timezone from `timeZones` (UTC
+ * when missing), so a purchase at 23:30 on 31 August in Madrid counts in
+ * August for them.
  */
-export async function getTransactions({ userIds }: { userIds: string[] }) {
+export async function getTransactions({
+  userIds,
+  reportMonth = previousUtcMonth(),
+  timeZones,
+}: {
+  userIds: string[];
+  reportMonth?: Date;
+  timeZones?: Map<string, string>;
+}) {
   try {
-    const now = new Date();
-
-    const reportMonthDate = subMonths(now, 1);
-    const currentStart = startOfMonth(reportMonthDate); // beginning of prev month
-    const currentEnd = endOfMonth(reportMonthDate); // end of prev month
-
-    // Month before previous (for comparisons)
-    const prevMonthDate = subMonths(now, 2);
-    const prevStart = startOfMonth(prevMonthDate);
-    const prevEnd = endOfMonth(prevMonthDate);
-
-    // History window for recurring detection (3 months before report start)
-    const historyStart = subMonths(currentStart, 3);
+    const windows = new Map(
+      userIds.map((id) => [
+        id,
+        reportWindows(reportMonth, safeTimeZone(timeZones?.get(id))),
+      ]),
+    );
+    // One query wide enough for every user's timezone; each row is then kept
+    // only where it falls inside its viewer's own months.
+    const all = [...windows.values()];
+    const historyStart = new Date(
+      Math.min(...all.map((w) => w.historyStart.getTime())),
+    );
+    const currentEnd = new Date(Math.max(...all.map((w) => w.end.getTime())));
 
     console.log("Fetching transactions for users:", userIds);
     console.log(
@@ -889,12 +1087,13 @@ export async function getTransactions({ userIds }: { userIds: string[] }) {
         },
         createdAt: {
           gte: historyStart,
-          lte: currentEnd,
+          lt: currentEnd,
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
+    const resolvers = await getCategoryResolvers(userIds);
     const currentByUser = new Map<string, Transaction[]>();
     const prevByUser = new Map<string, Transaction[]>();
     const historyByUser = new Map<string, Transaction[]>();
@@ -903,9 +1102,16 @@ export async function getTransactions({ userIds }: { userIds: string[] }) {
       const createdAt = new Date(transaction.createdAt);
 
       for (const access of transaction.account.userAccess) {
-        if (!userIds.includes(access.userId)) continue;
+        const w = windows.get(access.userId);
+        if (!w || createdAt < w.historyStart || createdAt >= w.end) continue;
         const t: Transaction = {
           ...transaction,
+          // Each recipient sees the row under their own category.
+          category:
+            resolvers
+              .get(access.userId)
+              ?.resolve(transaction.category, transaction.id) ?? null,
+          sourceCategory: transaction.category,
           payee: transaction.payee || "",
           account: {
             ...transaction.account,
@@ -927,14 +1133,14 @@ export async function getTransactions({ userIds }: { userIds: string[] }) {
         }
 
         // current month bucket
-        if (isWithin(createdAt, currentStart, currentEnd)) {
+        if (createdAt >= w.start) {
           const arr = currentByUser.get(access.userId) ?? [];
           arr.push(t);
           currentByUser.set(access.userId, arr);
         }
 
         // previous month bucket
-        if (isWithin(createdAt, prevStart, prevEnd)) {
+        if (createdAt >= w.prevStart && createdAt < w.start) {
           const arr = prevByUser.get(access.userId) ?? [];
           arr.push(t);
           prevByUser.set(access.userId, arr);

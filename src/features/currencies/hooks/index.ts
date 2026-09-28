@@ -12,7 +12,7 @@ export const useGetCurrencies = () => {
         throw new Error("Failed to fetch currencies");
       }
       const { data } = await response.json();
-      return { data } as { data: CurrencyItem[] };
+      return { data: data.allCurrencies } as { data: CurrencyItem[] };
     },
     refetchOnWindowFocus: false,
   });

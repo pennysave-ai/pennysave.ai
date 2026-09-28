@@ -9,11 +9,17 @@ export async function GET(req: NextRequest) {
   }
   try {
     const currencies = await getAllCurrencies();
-    return NextResponse.json({ data: currencies });
+    // Split the currencies into pupular EUR/USD and All Others
+    const popularCurrencies = currencies.filter(
+      (currency) => currency?.code === "EUR" || currency?.code === "USD",
+    );
+    return NextResponse.json({
+      data: { popular: popularCurrencies, allCurrencies: currencies },
+    });
   } catch {
     return NextResponse.json(
       { error: "Could not fetch currencies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

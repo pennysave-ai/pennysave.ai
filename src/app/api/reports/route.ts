@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/auth.helper";
 import { db } from "@/db";
+import { reportSelect, withLiveFacts } from "@/data/reports";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,23 +22,11 @@ export async function GET(req: NextRequest) {
 
     const reports = await db.report.findMany({
       where: { userId: user.id },
-      select: {
-        id: true,
-        periodStart: true,
-        health: true,
-        data: true,
-        createdAt: true,
-        sentAt: true,
-        snapshot: true,
-        comparisons: true,
-        categoryBreakdowns: { orderBy: { spend: "desc" } },
-        recurringCandidates: { orderBy: { occurrences: "desc" } },
-      },
+      select: reportSelect,
       orderBy: { periodStart: "desc" },
       take: limit,
     });
-    console.log("Fetched reports for user", JSON.stringify(reports, null, 2));
-    return NextResponse.json({ data: reports });
+    return NextResponse.json({ data: await withLiveFacts(user.id, reports) });
   } catch (error) {
     console.error("Error fetching reports:", error);
     return NextResponse.json(

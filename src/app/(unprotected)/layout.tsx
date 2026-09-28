@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ThemeSwitcher from "@/components/theme-switcher";
 
 import {
@@ -56,7 +56,6 @@ export default function UnprotectedRoadsLayout({
 }>) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
-  const pathName = usePathname();
 
   const handleHomeClick = () => {
     router.push("/");
@@ -102,29 +101,6 @@ export default function UnprotectedRoadsLayout({
                 Home
               </Link>
             </NavbarItem>
-            {pathName === "/" && (
-              <>
-                <NavbarItem>
-                  <Link className="text-default-600" href="#features" size="sm">
-                    Features
-                  </Link>
-                </NavbarItem>
-                <NavbarItem>
-                  <Link
-                    className="text-default-600"
-                    href="#testimonials"
-                    size="sm"
-                  >
-                    Testimonials
-                  </Link>
-                </NavbarItem>
-                <NavbarItem>
-                  <Link className="text-default-600" href="#contacts" size="sm">
-                    Contacts
-                  </Link>
-                </NavbarItem>
-              </>
-            )}
             <Button
               color="primary"
               radius="full"

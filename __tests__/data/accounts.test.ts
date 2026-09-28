@@ -10,6 +10,7 @@ import {
   getUserAccountsCount,
   updateAccount,
   accountSelect,
+  getAccountWriteAccess,
 } from "@/data/accounts";
 import { Account } from "@/types";
 
@@ -381,6 +382,50 @@ describe("accounts", () => {
       expect(result).toHaveLength(2);
       expect(result.map((a) => a.id)).toEqual(["account-1", "account-2"]);
     });
+
+    it("returns a lapsed owner's shared account as paused when asked", async () => {
+      const pausedAt = new Date("2026-09-14T00:00:00.000Z");
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: "account-3",
+          name: "Shared Account - Inactive Owner",
+          currency: { id: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1 },
+          institutionName: "Test Bank",
+          userAccess: [
+            {
+              userId: "owner-789",
+              role: "owner",
+              user: {
+                name: "Inactive Owner",
+                email: "inactive@example.com",
+                image: null,
+                appleSubscriptionStatus: "expired",
+                appleSubscriptionExpiresAt: pausedAt,
+              },
+            },
+            {
+              userId: "user-123",
+              role: "member",
+              user: {
+                name: "Test User",
+                email: "test@example.com",
+                image: null,
+                appleSubscriptionStatus: null,
+              },
+            },
+          ],
+        },
+      ]);
+
+      const hidden = await getUserAccounts(mockUserId);
+      expect(hidden).toHaveLength(0);
+
+      const [account] = await getUserAccounts(mockUserId, { includePaused: true });
+      expect(account.paused).toBe(true);
+      expect(account.pausedAt).toEqual(pausedAt);
+      // Members still see everyone on it.
+      expect(account.users.map((u) => u.id)).toEqual(["owner-789", "user-123"]);
+    });
   });
 
   describe("getUserAccountsCount", () => {
@@ -539,6 +584,52 @@ describe("accounts", () => {
           },
         })
       );
+    });
+  });
+
+  describe("getAccountWriteAccess", () => {
+    const account = (id: string, ownerStatus: string, viewerRole: string) => ({
+      id,
+      userAccess: [
+        { userId: "owner-1", role: "owner", user: { appleSubscriptionStatus: ownerStatus } },
+        { userId: "user-123", role: viewerRole, user: { appleSubscriptionStatus: null } },
+      ],
+    });
+
+    it("lets a member write while the owner is subscribed", async () => {
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue([
+        account("a", "active", "member"),
+      ]);
+      await expect(getAccountWriteAccess("user-123", ["a"])).resolves.toBe("ok");
+    });
+
+    it("pauses a member's writes once the owner lapses", async () => {
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue([
+        account("a", "active", "member"),
+        account("b", "expired", "member"),
+      ]);
+      await expect(getAccountWriteAccess("user-123", ["a", "b"])).resolves.toBe("paused");
+    });
+
+    it("never pauses the owner", async () => {
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: "a",
+          userAccess: [
+            { userId: "user-123", role: "owner", user: { appleSubscriptionStatus: "expired" } },
+          ],
+        },
+      ]);
+      await expect(getAccountWriteAccess("user-123", ["a"])).resolves.toBe("ok");
+    });
+
+    it("forbids an account they aren't on, or that doesn't exist", async () => {
+      (db.userAccount.findMany as jest.Mock).mockResolvedValue([
+        { id: "a", userAccess: [{ userId: "owner-1", role: "owner", user: { appleSubscriptionStatus: "active" } }] },
+      ]);
+      await expect(getAccountWriteAccess("user-123", ["a"])).resolves.toBe("forbidden");
+      await expect(getAccountWriteAccess("user-123", ["a", "missing"])).resolves.toBe("forbidden");
+      await expect(getAccountWriteAccess("user-123", [])).resolves.toBe("forbidden");
     });
   });
 });

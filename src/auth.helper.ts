@@ -1,26 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import jwt from "jsonwebtoken";
-
-interface JWTPayload {
-  sub: string;
-  email: string;
-  name: string;
-  picture?: string;
-  role: string;
-  familyId: string;
-  version: number;
-  type: "access" | "refresh";
-  activeSubscription: boolean;
-  priceId?: string;
-  expires?: string;
-  cancelAt?: string;
-  monthlyReports: boolean;
-  jti: string;
-  iat: number;
-  exp: number;
-  aud: string;
-}
+import type { JWTPayload } from "@/app/api/mobile/auth/JWTTokenManager";
 
 export async function getAuthenticatedUser(req: NextRequest) {
   // Try NextAuth session first (for web app)
@@ -39,6 +20,12 @@ export async function getAuthenticatedUser(req: NextRequest) {
     const token = authHeader.substring(7);
     try {
       const decoded = jwt.verify(token, process.env.AUTH_SECRET!) as JWTPayload;
+      // Only access tokens carry user claims; a refresh token here would
+      // produce a user object with undefined email/name.
+      if (decoded.type !== "access") {
+        console.log("JWT verification error: expected an access token");
+        return null;
+      }
       // Convert your token structure to match NextAuth user structure
       return {
         id: decoded.sub,

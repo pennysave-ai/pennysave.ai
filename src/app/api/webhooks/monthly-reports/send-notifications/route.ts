@@ -1,7 +1,7 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { NextResponse } from "next/server";
 import { APNService, APNNotificationType } from "@/lib/apn";
-import { markReportsAsSent } from "@/data/reports";
+import { markReportsAsSent, reportMonthName } from "@/data/reports";
 
 /**
  * Send monthly reports to the users
@@ -14,11 +14,14 @@ async function handler(req: Request): Promise<NextResponse> {
     const apnService = APNService.getInstance();
     const messages = reportsToSend
       .filter(({ deviceToken }: any) => deviceToken)
-      .map(({ deviceToken, reportDate }: any) => ({
+      .map(({ deviceToken, reportDate, language }: any) => ({
         deviceToken: deviceToken,
         message: {
           "loc-key": "MONTHLY_REPORT_READY",
-          "loc-args": [reportDate],
+          // Was the raw periodStart, which the push printed as
+          // "2026-08-01T00:00:00.000Z". Messages queued before `language`
+          // was sent fall back to English.
+          "loc-args": [reportMonthName(reportDate, language || "en")],
         },
         payload: {
           type: APNNotificationType.MONTHLY_REPORT_READY,

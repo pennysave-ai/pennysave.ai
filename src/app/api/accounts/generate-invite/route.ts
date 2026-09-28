@@ -1,86 +1,122 @@
-import crypto from "crypto";
 import { NextResponse, NextRequest } from "next/server";
 import { getAuthenticatedUser } from "@/auth.helper";
 import { getUserAccounts } from "@/data/accounts";
-import { createAccountInvite } from "@/data/accountInvites";
+import {
+  createAccountInvite,
+  inviteCacheKey,
+  INVITE_TTL_MS,
+} from "@/data/accountInvites";
 import { client } from "@/lib/redis";
 
+// Matches the invite row's own lifetime, so a cached code is never handed out
+// after the invite behind it has expired.
+const CACHE_EXPIRATION = INVITE_TTL_MS / 1000; // 15 minutes
+
+const inviteLinkFor = (code: string) =>
+  `${process.env.NEXT_PUBLIC_URL}/invite/${code}`;
+
+/**
+ * Either the account id to work with, or the response to send back instead —
+ * the optional-`undefined` halves are what let `if (resolved.error)` narrow.
+ */
+type ResolvedAccount =
+  | { error: NextResponse; accountId?: undefined }
+  | { error?: undefined; accountId: string };
+
+/**
+ * Resolves the account the caller wants an invite for, or the response to
+ * send back instead. Only the owner of an account may invite to it.
+ */
+async function resolveOwnedAccount(
+  userId: string,
+  accountId: unknown
+): Promise<ResolvedAccount> {
+  if (typeof accountId !== "string" || !accountId) {
+    return { error: NextResponse.json("accountId is required", { status: 400 }) };
+  }
+
+  const accounts = await getUserAccounts(userId);
+  const account = accounts.find(({ id }) => id === accountId);
+
+  if (!account) {
+    return { error: NextResponse.json("Forbidden", { status: 403 }) };
+  }
+
+  const isOwner = account.users.some(
+    (access) => access.id === userId && access.role === "owner"
+  );
+
+  if (!isOwner) {
+    return { error: NextResponse.json("Forbidden", { status: 403 }) };
+  }
+
+  return { accountId };
+}
+
+/**
+ * Mints an invite for a single account, on demand — the app calls this when
+ * the user actually presses Invite, so there is exactly one account in play.
+ */
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser(req);
-    // const user = await req.json();
+
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all accounts where user is owner
-    const accounts = await getUserAccounts(user.id);
-    const ownedAccounts = accounts.filter((account) =>
-      account.users.some(
-        (access) => access.id === user.id && access.role === "owner"
-      )
-    );
+    const body = await req.json().catch(() => ({}));
+    const resolved = await resolveOwnedAccount(user.id, body?.accountId);
 
-    if (ownedAccounts.length === 0) {
+    if (resolved.error) {
+      return resolved.error;
+    }
+
+    const { accountId } = resolved;
+    const cacheKey = inviteCacheKey(accountId);
+
+    // An invite that is still live is reused rather than replaced, so a link
+    // already sent out keeps working.
+    const cachedInvite = await client.get(cacheKey);
+
+    if (cachedInvite) {
+      const invite = JSON.parse(cachedInvite);
+      console.log("✅ Returning cached invite for account:", accountId);
+
       return NextResponse.json({
-        invites: [],
-        message: "No owned accounts found",
+        data: {
+          accountId,
+          inviteCode: invite.code,
+          inviteLink: inviteLinkFor(invite.code),
+          expiresAt: invite.expiresAt,
+        },
       });
     }
 
-    // Generate invites for all owned accounts
-    const invites = await Promise.all(
-      ownedAccounts.map(async (account) => {
-        const accountId = account.id;
-        const cacheKey = `invite:active:${accountId}`;
+    const invite = await createAccountInvite({
+      accountId,
+      createdById: user.id,
+    });
 
-        // Check cache first
-        const cachedInvite = await client.get(cacheKey);
+    const inviteData = {
+      code: invite.code,
+      expiresAt: invite.expiresAt.toISOString(),
+    };
 
-        if (cachedInvite) {
-          const invite = JSON.parse(cachedInvite);
-          console.log("✅ Returning cached invite for account:", accountId);
+    await client.setEx(cacheKey, CACHE_EXPIRATION, JSON.stringify(inviteData));
 
-          return {
-            accountId,
-            inviteLink: `${process.env.NEXT_PUBLIC_URL}/invite/${invite.token}`,
-          };
-        }
-
-        // No cached invite - generate new one
-        const token = crypto.randomBytes(32).toString("hex");
-
-        // Create invite in database
-        await createAccountInvite({
-          accountId,
-          createdById: user.id!,
-          token,
-        });
-
-        // Cache the invite
-        const inviteData = { token };
-        const cacheExpiration = 7 * 24 * 60 * 60; // 7 days
-
-        await client.setEx(
-          cacheKey,
-          cacheExpiration,
-          JSON.stringify(inviteData)
-        );
-
-        console.log("✅ Created new invite for account:", accountId);
-
-        return {
-          accountId,
-          inviteLink: `${process.env.NEXT_PUBLIC_URL}/invite/${token}`,
-        };
-      })
-    );
+    console.log("✅ Created new invite for account:", accountId);
 
     return NextResponse.json({
-      data: invites,
+      data: {
+        accountId,
+        inviteCode: invite.code,
+        inviteLink: inviteLinkFor(invite.code),
+        expiresAt: inviteData.expiresAt,
+      },
     });
   } catch (error) {
-    console.error("Error creating invites:", error);
+    console.error("Error creating invite:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -88,7 +124,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Optional: Add GET endpoint to just retrieve existing invites without creating new ones
+/**
+ * Reads back the invite an account already has, without minting one.
+ * `GET /api/accounts/generate-invite?accountId=…`
+ */
 export async function GET(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -97,46 +136,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all accounts where user is owner
-    const accounts = await getUserAccounts(user.id);
-    const ownedAccounts = accounts.filter((account) =>
-      account.users.some(
-        (access) => access.id === user.id && access.role === "owner"
-      )
+    const resolved = await resolveOwnedAccount(
+      user.id,
+      req.nextUrl.searchParams.get("accountId")
     );
 
-    // Get cached invites (if they exist)
-    const invites = await Promise.all(
-      ownedAccounts.map(async (account) => {
-        const accountId = account.id;
-        const cacheKey = `invite:active:${accountId}`;
-        const cachedInvite = await client.get(cacheKey);
+    if (resolved.error) {
+      return resolved.error;
+    }
 
-        if (cachedInvite) {
-          const invite = JSON.parse(cachedInvite);
-          return {
-            accountId,
-            accountName: account.name,
-            inviteLink: `${process.env.NEXT_PUBLIC_URL}/invite/${invite.token}`,
-            exists: true,
-          };
-        }
+    const { accountId } = resolved;
+    const cachedInvite = await client.get(inviteCacheKey(accountId));
 
-        return {
+    if (!cachedInvite) {
+      return NextResponse.json({
+        data: {
           accountId,
-          accountName: account.name,
+          inviteCode: null,
           inviteLink: null,
           exists: false,
-        };
-      })
-    );
+        },
+      });
+    }
+
+    const invite = JSON.parse(cachedInvite);
 
     return NextResponse.json({
-      invites,
-      count: invites.length,
+      data: {
+        accountId,
+        inviteCode: invite.code,
+        inviteLink: inviteLinkFor(invite.code),
+        expiresAt: invite.expiresAt,
+        exists: true,
+      },
     });
   } catch (error) {
-    console.error("Error fetching invites:", error);
+    console.error("Error fetching invite:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
