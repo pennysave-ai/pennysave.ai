@@ -48,9 +48,11 @@ describe("legal documents", () => {
     });
 
     it.each(TRANSLATIONS)(
-      "flags %s as unreviewed so clients can say English governs",
+      "marks the %s translation as reviewed",
       (language) => {
-        expect(getLegalDocuments(language).reviewed).toBe(false);
+        const result = getLegalDocuments(language);
+        expect(result.reviewed).toBe(true);
+        expect(result.isSourceLanguage).toBe(false);
       },
     );
 

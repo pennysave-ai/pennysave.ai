@@ -3,10 +3,9 @@ import type { LegalCatalogEntry } from "./types";
 /**
  * Spanish translation of ./en.ts.
  *
- * `reviewed: false` — this text has NOT been through legal review. It is
- * served so Spanish-speaking users can read the documents in their own
- * language, and every surface that shows it must also say that the English
- * version is the binding one.
+ * `reviewed: true` — this translation has been through legal review. When
+ * ./en.ts changes, it is stale until it is updated and re-reviewed; set
+ * `reviewed` back to false until then.
  */
 const es: LegalCatalogEntry = {
   reviewed: true,

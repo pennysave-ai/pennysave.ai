@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import TermsOfService from "../../../../src/app/(landing)/terms-of-service/page";
 import { getLegalDocument } from "@/data/legal";
 
@@ -27,20 +27,12 @@ describe("TermsOfServicePage", () => {
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 
-  it("follows the saved site language and flags the unreviewed translation", () => {
+  it("follows the saved site language without a notice for a reviewed translation", () => {
     localStorage.setItem("pennysave-landing-lang", "de");
     render(<TermsOfService />);
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       getLegalDocument("terms", "de").label,
-    );
-    expect(screen.getByRole("note")).toHaveTextContent(
-      "Verbindlich ist die englische Fassung",
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Auf Englisch lesen" }));
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Terms of Service",
     );
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
