@@ -147,7 +147,11 @@ export async function POST(req: NextRequest) {
           sendMonthlyReport: user?.sendMonthlyReport ?? false,
           subscription: {
             status: "inactive",
+            startedAt: null,
             expiresAt: undefined,
+            gracePeriodExpiresAt: null,
+            trialStartedAt: null,
+            originalPurchaseDate: null,
           },
         });
         return NextResponse.json({
@@ -172,7 +176,13 @@ export async function POST(req: NextRequest) {
       sendMonthlyReport: existingUser?.sendMonthlyReport ?? false,
       subscription: {
         status: existingUser.appleSubscriptionStatus as SubscriptionStatus,
+        startedAt: existingUser.appleSubscriptionStartedAt,
         expiresAt: existingUser.appleSubscriptionExpiresAt,
+        gracePeriodExpiresAt:
+          existingUser.appleSubscriptionGracePeriodExpiresAt,
+        trialStartedAt: existingUser.appleTrialStartedAt,
+        originalPurchaseDate:
+          existingUser.appleSubscriptionOriginalPurchaseDate,
       },
     });
 

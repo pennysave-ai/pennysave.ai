@@ -351,6 +351,27 @@ export function normalizePayee(payee: string | null | undefined) {
 }
 
 /**
+ * Normalize a category name for matching across users: trim, lowercase and
+ * strip diacritics, so "Grocéries", " groceries " and "Groceries" are equal.
+ * The mobile app applies the same rule for its own fallback — keep them in sync.
+ */
+export function normalizeCategoryName(name: string | null | undefined) {
+  return (name ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Normalize free text (payee or notes) into a key for matching transactions
+ * across users: the category-name rule plus collapsed inner whitespace.
+ */
+export function normalizeMatchKey(text: string | null | undefined) {
+  return normalizeCategoryName(text).replace(/\s+/g, " ");
+}
+
+/**
  * Parses a month-year string (e.g. "January 2026") and returns a Date object representing the first day of that month in UTC.
  * @param {string} monthYear - The month-year string to parse.
  * @returns {Date} - A Date object representing the first day of the specified month in UTC.
@@ -394,4 +415,18 @@ export function parseMonthYearToUtcDate(monthYear: string): Date {
 
   // Month bucket at midnight UTC on the first day
   return new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0));
+}
+
+/**
+ * Checks whether a string is an IANA timezone id the runtime understands.
+ * @param {string} tz - Candidate timezone id, e.g. "Europe/Madrid".
+ * @returns {boolean} - True when the id resolves, false otherwise.
+ */
+export function isValidIanaTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
 }

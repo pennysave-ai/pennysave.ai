@@ -1,5 +1,4 @@
-import type { Metadata } from "next";
-import Script from "next/script";
+import type { Metadata, Viewport } from "next";
 import Providers from "@/app/providers";
 import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
@@ -36,6 +35,11 @@ export const metadata: Metadata = {
   ],
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -50,31 +54,7 @@ export default async function RootLayout({
           href="https://api.iconify.design"
           crossOrigin="anonymous"
         />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, shrink-to-fit=no"
-        />
       </head>
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=AW-17082312814"
-        strategy="afterInteractive"
-      />
-      <Script id="gtag-init" strategy="afterInteractive">
-        {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){ dataLayer?.push(arguments); }
-            gtag('js', new Date());
-            gtag('config', 'AW-17082312814');
-          `}
-      </Script>
-      <Script id="clarity-init" strategy="afterInteractive">
-        {`(function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "rwywkz1jir");
-        `}
-      </Script>
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

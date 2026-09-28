@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { v4 as uuid } from "uuid";
 import { accountSchema } from "@/schemas";
@@ -351,71 +352,133 @@ export async function updateLastTransactionRefreshId(
  * @throws {Error} - If the account retrieval fails
  */
 // TODO add pagination here
-export async function getUserAccounts(userId: string): Promise<Account[]> {
-  const accounts = await db.userAccount.findMany({
+/** `accountSelect` plus the owner's subscription, which decides who sees what. */
+const accountWithSubscriptionSelect = {
+  ...accountSelect,
+  userAccess: {
+    ...accountSelect.userAccess,
     select: {
-      ...accountSelect,
-      userAccess: {
-        ...accountSelect.userAccess,
+      ...accountSelect.userAccess.select,
+      user: {
         select: {
-          ...accountSelect.userAccess.select,
-          user: {
-            select: {
-              ...accountSelect.userAccess.select.user.select,
-              appleSubscriptionStatus: true,
-            },
-          },
+          ...accountSelect.userAccess.select.user.select,
+          appleSubscriptionStatus: true,
+          appleSubscriptionExpiresAt: true,
         },
       },
     },
-    where: {
+  },
+};
+
+type AccountWithSubscription = {
+  id: string;
+  name: string;
+  institutionName: string | null;
+  currency: { id: string; name: string; symbol: string; exchangeRate: Account["currency"]["exchangeRate"] };
+  userAccess: {
+    role: string;
+    userId: string;
+    user: {
+      name: string | null;
+      image: string | null;
+      email: string | null;
+      appleSubscriptionStatus: string | null;
+      appleSubscriptionExpiresAt?: Date | null;
+    };
+  }[];
+};
+
+export type AccountVisibilityOptions = {
+  /**
+   * Return a member's account whose owner has lapsed, marked `paused`,
+   * instead of hiding it. Opt-in, so app builds that don't know `paused`
+   * keep the old behaviour and never offer it as writable.
+   */
+  includePaused?: boolean;
+};
+
+/**
+ * Whether `userId` may add to, edit or delete rows on every one of
+ * `accountIds`:
+ * - `"forbidden"` if any of them doesn't exist or they aren't on it;
+ * - `"paused"` if on any of them they are a member and the owner's
+ *   subscription has lapsed — sharing is the owner's plan, so the account is
+ *   read-only for its members until the owner renews (canvas 9a);
+ * - `"ok"` otherwise. The owner can always write to their own account.
+ */
+export async function getAccountWriteAccess(
+  userId: string,
+  accountIds: string[],
+): Promise<"ok" | "paused" | "forbidden"> {
+  const ids = [...new Set(accountIds.filter(Boolean))];
+  if (!ids.length) return "forbidden";
+  const accounts = await db.userAccount.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
       userAccess: {
-        some: { userId },
+        select: {
+          role: true,
+          userId: true,
+          user: { select: { appleSubscriptionStatus: true } },
+        },
       },
     },
   });
-
-  // Filter accounts where:
-  // 1. User is the owner (always include, regardless of subscription)
-  // 2. User is NOT the owner, but the owner has an active subscription
-  const filteredAccounts = accounts.filter((account) => {
-    const userAccess = account.userAccess.find(
-      (access) => access.userId === userId
-    );
-
-    // If user is the owner, always include
-    if (userAccess?.role === "owner") return true;
-
-    // If user is not the owner, check if owner has active subscription
-    const ownerAccess = account.userAccess.find(
-      (access) => access.role === "owner"
-    );
-
-    if (!ownerAccess) return false;
-
-    const ownerSubscriptionStatus =
-      ownerAccess.user.appleSubscriptionStatus || "inactive";
-    return hasActiveAppleSubscription(ownerSubscriptionStatus);
-  });
-  // If owner does not have subscription, filter userAccess to only include self in userAccess array
-  filteredAccounts.forEach((account: { userAccess: any[] }) => {
-    const userAccess = account.userAccess.find(
-      (access) => access.userId === userId
-    );
-    const ownerAccess = account.userAccess.find(
-      (access) => access.role === "owner"
-    );
-    const ownerSubscriptionStatus =
-      ownerAccess?.user.appleSubscriptionStatus || "inactive";
+  if (accounts.length !== ids.length) return "forbidden";
+  let paused = false;
+  for (const account of accounts) {
+    const viewer = account.userAccess.find((access) => access.userId === userId);
+    if (!viewer) return "forbidden";
+    if (viewer.role === "owner") continue;
+    const owner = account.userAccess.find((access) => access.role === "owner");
     if (
-      userAccess?.role === "owner" &&
-      !hasActiveAppleSubscription(ownerSubscriptionStatus)
+      !owner ||
+      !hasActiveAppleSubscription(owner.user.appleSubscriptionStatus || "inactive")
     ) {
-      account.userAccess = [userAccess!];
+      paused = true;
     }
-  });
+  }
+  return paused ? "paused" : "ok";
+}
 
-  return filteredAccounts.map((account) => ({
+/** The response for a write `getAccountWriteAccess` refused. */
+export function accountWriteRefusal(access: "paused" | "forbidden") {
+  // 423 Locked, not 403: the member still has access, and it comes back
+  // untouched once the owner renews. The app tells the two apart by status.
+  return access === "paused"
+    ? NextResponse.json("Account paused", { status: 423 })
+    : NextResponse.json("Forbidden", { status: 403 });
+}
+
+/**
+ * An account as `viewerId` sees it, or null when they can't see it. The one
+ * rule for the account list and for account events, so an event can never
+ * show someone an account their list wouldn't:
+ * 1. The owner always sees it — but only themselves on it while their
+ *    subscription is inactive.
+ * 2. Anyone else sees it while the owner's subscription is active. Once it
+ *    lapses they see it only with `includePaused`, marked `paused`.
+ */
+function accountAsSeenBy(
+  account: AccountWithSubscription,
+  viewerId: string,
+  { includePaused = false }: AccountVisibilityOptions = {},
+): Account | null {
+  const viewer = account.userAccess.find((access) => access.userId === viewerId);
+  if (!viewer) return null;
+  const owner = account.userAccess.find((access) => access.role === "owner");
+  // A viewer who is the owner is found here, so no owner means nobody sees it.
+  if (!owner) return null;
+  const ownerActive = hasActiveAppleSubscription(
+    owner.user.appleSubscriptionStatus || "inactive",
+  );
+  const paused = viewer.role !== "owner" && !ownerActive;
+  if (paused && !includePaused) return null;
+  const visibleAccess =
+    viewer.role === "owner" && !ownerActive ? [viewer] : account.userAccess;
+
+  return {
     id: account.id,
     name: account.name,
     currency: {
@@ -424,7 +487,7 @@ export async function getUserAccounts(userId: string): Promise<Account[]> {
       symbol: account.currency.symbol,
       exchangeRate: account.currency.exchangeRate,
     },
-    users: account.userAccess.map((access) => ({
+    users: visibleAccess.map((access) => ({
       id: access.userId,
       role: access.role as "owner" | "member", // ✅ Type cast
       name: access.user.name,
@@ -434,6 +497,49 @@ export async function getUserAccounts(userId: string): Promise<Account[]> {
     institution: {
       name: account.institutionName || "",
     },
+    ...(paused
+      ? { paused: true, pausedAt: owner.user.appleSubscriptionExpiresAt ?? null }
+      : {}),
+  } as Account;
+}
+
+export async function getUserAccounts(
+  userId: string,
+  options: AccountVisibilityOptions = {},
+): Promise<Account[]> {
+  const accounts = await db.userAccount.findMany({
+    select: accountWithSubscriptionSelect,
+    where: {
+      userAccess: {
+        some: { userId },
+      },
+    },
+  });
+  return accounts
+    .map((account) =>
+      accountAsSeenBy(account as AccountWithSubscription, userId, options),
+    )
+    .filter((account): account is Account => account !== null);
+}
+
+/**
+ * One account as each person on it sees it — `account` is null for anyone
+ * who can't (see `accountAsSeenBy`). For sending an account in an event.
+ */
+export async function getAccountAsSeenByMembers(
+  accountId: string,
+): Promise<{ viewerId: string; account: Account | null }[]> {
+  const account = await db.userAccount.findUnique({
+    where: { id: accountId },
+    select: accountWithSubscriptionSelect,
+  });
+  if (!account) return [];
+  return account.userAccess.map(({ userId }) => ({
+    viewerId: userId,
+    // Paused views included: the event type tells the app which it is.
+    account: accountAsSeenBy(account as AccountWithSubscription, userId, {
+      includePaused: true,
+    }),
   }));
 }
 

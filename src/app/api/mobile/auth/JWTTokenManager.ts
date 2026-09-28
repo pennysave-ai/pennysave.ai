@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import { db } from "@/db";
+import type { SubscriptionStatusValue } from "@/types/Subscription";
 
 const JWT_SECRET = process.env.AUTH_SECRET!;
 const ACCESS_TOKEN_EXPIRES_IN = parseInt(
@@ -12,16 +13,11 @@ const REFRESH_TOKEN_EXPIRES_IN = parseInt(
   process.env.MOBILE_REFRESH_TOKEN_EXPIRES_IN || "1209600"
 ); // 14 days
 export const AUDIENCE = "mobile-app";
-export enum SubscriptionStatus {
-  Active = "active",
-  Trial = "trial",
-  ActiveUntilExpiration = "active_until_expiration",
-  PastDue = "past_due",
-  GracePeriod = "grace_period",
-  Inactive = "inactive",
-  Canceled = "canceled",
-  GracePeriodExpired = "grace_period_expired",
-}
+
+// Re-exported for existing importers; canonical definition is in @/types.
+export { SubscriptionStatus } from "@/types/Subscription";
+export type { SubscriptionStatusValue } from "@/types/Subscription";
+
 interface UserData {
   id: string;
   email: string;
@@ -29,17 +25,12 @@ interface UserData {
   image?: string | null;
   role: string;
   subscription: {
-    status:
-      | "active"
-      | "trial"
-      | "active_until_expiration"
-      | "past_due"
-      | "grace_period"
-      | "inactive"
-      | "canceled"
-      | "grace_period_expired";
+    status: SubscriptionStatusValue;
+    startedAt?: Date | null;
     expiresAt?: Date | null;
     gracePeriodExpiresAt?: Date | null;
+    trialStartedAt?: Date | null;
+    originalPurchaseDate?: Date | null;
   };
   hasActiveStripeSubscription: boolean;
   stripePriceId?: string | null;
@@ -57,29 +48,49 @@ interface TokenPair {
   refreshExpiresAt: Date;
 }
 
-interface JWTPayload {
+// Claims shared by both token types. Note these describe a *decoded* token:
+// jwt.sign JSON-serializes the payload, so Dates arrive back as ISO strings and
+// undefined values are absent entirely.
+interface BaseTokenClaims {
   sub: string;
+  familyId: string;
+  version: number;
+  jti: string;
+  iat: number;
+  exp: number;
+  aud: string;
+  iss: string;
+}
+
+export interface AccessTokenPayload extends BaseTokenClaims {
+  type: "access";
   email: string;
   name: string;
   picture?: string | null;
   role: string;
-  familyId: string;
-  version: number;
-  type: "access" | "refresh";
-  jti: string;
   subscription: {
-    isActive: boolean;
-    isTrial: boolean;
-    isRenewing: boolean;
+    status: SubscriptionStatusValue;
+    /** Start of the current billing period; moves on each renewal. */
+    startedAt?: string | null;
+    expiresAt?: string | null;
+    gracePeriodExpiresAt?: string | null;
+    /** Non-null means the user had a free trial; survives conversion to paid. */
+    trialStartedAt?: string | null;
+    /** First ever purchase - stable across renewals, use for "member since". */
+    originalPurchaseDate?: string | null;
   };
+  activeSubscription: boolean;
   priceId?: string | null;
   expires?: string;
   cancelAt?: string;
   monthlyReports: boolean;
-  iat: number;
-  exp: number;
-  aud: string;
 }
+
+export interface RefreshTokenPayload extends BaseTokenClaims {
+  type: "refresh";
+}
+
+export type JWTPayload = AccessTokenPayload | RefreshTokenPayload;
 
 export class JWTTokenManager {
   // Hash tokens for secure storage
@@ -111,8 +122,11 @@ export class JWTTokenManager {
       // Subscription data
       subscription: {
         status: user.subscription.status,
+        startedAt: user.subscription.startedAt,
         expiresAt: user.subscription.expiresAt,
         gracePeriodExpiresAt: user.subscription.gracePeriodExpiresAt,
+        trialStartedAt: user.subscription.trialStartedAt,
+        originalPurchaseDate: user.subscription.originalPurchaseDate,
       },
       activeSubscription: user.hasActiveStripeSubscription,
       priceId: user.stripePriceId,
@@ -211,8 +225,11 @@ export class JWTTokenManager {
               role: true,
               hasActiveStripeSubscription: true,
               appleSubscriptionStatus: true,
+              appleSubscriptionStartedAt: true,
               appleSubscriptionExpiresAt: true,
               appleSubscriptionGracePeriodExpiresAt: true,
+              appleTrialStartedAt: true,
+              appleSubscriptionOriginalPurchaseDate: true,
               stripePriceId: true,
               stripeSubscriptionEndDate: true,
               stripeSubscriptionCancelAtDate: true,
@@ -295,9 +312,13 @@ export class JWTTokenManager {
             (storedToken.user
               .appleSubscriptionStatus as UserData["subscription"]["status"]) ||
             "inactive",
+          startedAt: storedToken.user.appleSubscriptionStartedAt,
           expiresAt: storedToken.user.appleSubscriptionExpiresAt,
           gracePeriodExpiresAt:
             storedToken.user.appleSubscriptionGracePeriodExpiresAt,
+          trialStartedAt: storedToken.user.appleTrialStartedAt,
+          originalPurchaseDate:
+            storedToken.user.appleSubscriptionOriginalPurchaseDate,
         },
         hasActiveStripeSubscription:
           storedToken.user.hasActiveStripeSubscription ?? false,

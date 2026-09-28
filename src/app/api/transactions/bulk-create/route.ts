@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { bulkCreateTransactions } from "@/data/transactions";
+import {
+  bulkCreateTransactions,
+  categoriesBelongToUser,
+} from "@/data/transactions";
 import { v4 as uuid } from "uuid";
+import { accountWriteRefusal, getAccountWriteAccess } from "@/data/accounts";
 import { bulkCreateTransactionsSchema } from "@/schemas";
 
 export async function POST(req: NextRequest) {
@@ -22,6 +26,22 @@ export async function POST(req: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json("Bad Request", { status: 400 });
     }
+  }
+
+  if (body.length) {
+    const access = await getAccountWriteAccess(
+      user.id,
+      body.map((transaction: { accountId: string }) => transaction.accountId),
+    );
+    if (access !== "ok") return accountWriteRefusal(access);
+  }
+
+  // A transaction only ever stores its author's own category.
+  const categoryIds = body.map(
+    (transaction: { categoryId?: string | null }) => transaction.categoryId,
+  );
+  if (!(await categoriesBelongToUser(categoryIds, user.id))) {
+    return NextResponse.json("Bad Request", { status: 400 });
   }
 
   // Prepare data for bulk creation

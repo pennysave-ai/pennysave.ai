@@ -3,14 +3,30 @@ import { put, del } from "@vercel/blob";
 import { parse } from "parse-multipart-data";
 import sharp from "sharp";
 import { getAuthenticatedUser } from "@/auth.helper";
-import { updateUserProfile, deleteProfile } from "@/data/user";
+import {
+  updateUserProfile,
+  deleteProfile,
+  getUserPreferences,
+} from "@/data/user";
+import { isValidIanaTimeZone } from "@/lib/utils";
 
-function isValidIanaTimeZone(tz: string) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const user = await getAuthenticatedUser(request);
+  if (!user || !user.id) {
+    return NextResponse.json("Unauthorized", { status: 401 });
+  }
+
   try {
-    new Intl.DateTimeFormat("en-US", { timeZone: tz }).format(new Date());
-    return true;
+    const preferences = await getUserPreferences(user.id);
+    if (!preferences) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json(preferences);
   } catch {
-    return false;
+    return NextResponse.json(
+      { error: "Error while fetching profile" },
+      { status: 500 },
+    );
   }
 }
 

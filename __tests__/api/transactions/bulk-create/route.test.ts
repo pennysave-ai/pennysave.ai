@@ -2,6 +2,15 @@
  * @jest-environment node
  */
 
+// The write check reaches the database; it is covered in data/accounts.
+jest.mock("@/data/accounts", () => ({
+  getAccountWriteAccess: jest.fn(),
+  accountWriteRefusal: jest.fn((access: string) =>
+    jest
+      .requireMock("next/server")
+      .NextResponse.json(access, { status: access === "paused" ? 423 : 403 }),
+  ),
+}));
 jest.mock("@/data/stripe", () => ({
   STRIPE: {
     getInstance: jest.fn(() => ({
@@ -24,7 +33,11 @@ process.env.RESEND_API_KEY = "test-api-key";
 import { POST } from "@/app/api/transactions/bulk-create/route";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { bulkCreateTransactions } from "@/data/transactions";
+import { getAccountWriteAccess } from "@/data/accounts";
+import {
+  bulkCreateTransactions,
+  categoriesBelongToUser,
+} from "@/data/transactions";
 
 // Mock next/server
 jest.mock("next/server", () => ({
@@ -58,9 +71,24 @@ describe("Bulk Create Transactions API", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getAccountWriteAccess as jest.Mock).mockResolvedValue("ok");
+    (categoriesBelongToUser as jest.Mock).mockResolvedValue(true);
   });
 
   describe("POST /api/transactions/bulk-create", () => {
+    it("should return 400 when a category is not the author's", async () => {
+      (auth as jest.Mock).mockResolvedValue(mockSession);
+      (categoriesBelongToUser as jest.Mock).mockResolvedValue(false);
+
+      const mockReq = {
+        json: jest.fn().mockResolvedValue([]),
+      };
+
+      const response = await POST(mockReq as unknown as NextRequest);
+      expect(response.status).toBe(400);
+      expect(bulkCreateTransactions).not.toHaveBeenCalled();
+    });
+
     it("should return 401 if not authenticated", async () => {
       (auth as jest.Mock).mockResolvedValue(null);
 
@@ -71,6 +99,22 @@ describe("Bulk Create Transactions API", () => {
       const response = await POST(mockReq as unknown as NextRequest);
       expect(response.status).toBe(401);
       expect(await response.json()).toBe("Unautorized");
+    });
+
+    it("refuses rows on an account paused for this member", async () => {
+      (auth as jest.Mock).mockResolvedValue(mockSession);
+      (getAccountWriteAccess as jest.Mock).mockResolvedValue("paused");
+      const mockReq = { json: jest.fn().mockResolvedValue([]) };
+      // An empty batch writes nothing, so it isn't checked.
+      expect((await POST(mockReq as unknown as NextRequest)).status).toBe(200);
+      (bulkCreateTransactions as jest.Mock).mockClear();
+
+      mockReq.json.mockResolvedValue([
+        { amount: 1, payee: "", notes: "", accountId: "0de9d835-f81e-4a88-ba43-c986d2047b0d", createdAt: new Date().toISOString(), categoryId: null },
+      ]);
+      const response = await POST(mockReq as unknown as NextRequest);
+      expect(response.status).toBe(423);
+      expect(bulkCreateTransactions).not.toHaveBeenCalled();
     });
 
     it("should create multiple transactions", async () => {

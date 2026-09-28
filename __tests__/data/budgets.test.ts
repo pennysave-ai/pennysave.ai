@@ -1,7 +1,8 @@
 /**
  * @jest-environment node
  */
-import { createBudget } from "@/data/budgets";
+import { createBudget, getBudgets } from "@/data/budgets";
+import { getCategoryResolver } from "@/data/categoryMappings";
 import { db } from "@/db";
 import { v4 as uuid } from "uuid";
 import { createBudgetSchema } from "@/schemas";
@@ -14,8 +15,15 @@ jest.mock("@/db", () => ({
   db: {
     budget: {
       create: jest.fn(),
+      findMany: jest.fn(),
     },
+    currency: { findUnique: jest.fn() },
+    transaction: { findMany: jest.fn() },
   },
+}));
+
+jest.mock("@/data/categoryMappings", () => ({
+  getCategoryResolver: jest.fn(),
 }));
 
 jest.mock("@/schemas", () => ({
@@ -62,7 +70,7 @@ describe("createBudget", () => {
     });
 
     await expect(createBudget(mockUserId, mockBudget)).rejects.toThrow(
-      "Bad Request"
+      "Bad Request",
     );
   });
 
@@ -109,7 +117,7 @@ describe("createBudget", () => {
             ({ categoryId, allocatedAmount }) => ({
               category: { connect: { id: categoryId } },
               allocatedAmount,
-            })
+            }),
           ),
         },
       },
@@ -118,5 +126,54 @@ describe("createBudget", () => {
         accounts: true,
       },
     });
+  });
+});
+
+describe("getBudgets", () => {
+  it("counts rows by the category they resolve to for the budget's owner", async () => {
+    (db.budget.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: "b_1",
+        name: "Food",
+        totalAmount: 500000,
+        frequency: "MONTHLY",
+        currencyId: "eur",
+        accounts: [{ userAccount: { id: "acc_joint", currencyId: "eur" } }],
+        budgetAllocations: [
+          {
+            category: { id: "c_groceries", name: "Groceries" },
+            allocatedAmount: 500000,
+          },
+        ],
+      },
+    ]);
+    (db.currency.findUnique as jest.Mock).mockResolvedValue({
+      exchangeRate: 1,
+    });
+    const account = { currency: { id: "eur", exchangeRate: 1 } };
+    (db.transaction.findMany as jest.Mock).mockResolvedValue([
+      // Mike's own row.
+      { id: "t_1", amount: -10000, category: { id: "c_groceries" }, account },
+      // Anna's row, mapped onto Mike's Groceries.
+      { id: "t_2", amount: -5000, category: { id: "c_anna_food" }, account },
+      // Anna's row that counts nowhere for Mike.
+      { id: "t_3", amount: -99000, category: { id: "c_anna_hobby" }, account },
+    ]);
+    (getCategoryResolver as jest.Mock).mockResolvedValue({
+      resolve: (category: { id: string }) =>
+        category.id === "c_groceries" || category.id === "c_anna_food"
+          ? { id: "c_groceries" }
+          : null,
+    });
+
+    const [budget] = await getBudgets(
+      "u_mike",
+      new Date("2026-09-01"),
+      new Date("2026-09-30"),
+    );
+
+    expect(getCategoryResolver).toHaveBeenCalledWith("u_mike");
+    expect(budget.totalTransactions).toBe(15000);
+    expect(budget.budgetAllocations[0].spent).toBe(15000);
   });
 });

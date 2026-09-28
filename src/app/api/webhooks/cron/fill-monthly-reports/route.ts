@@ -4,8 +4,20 @@ import { db } from "@/db";
 import { Prisma } from "@prisma/client";
 
 const BATCH_SIZE = 100;
-const HOUR_TO_CREATE = parseInt(process.env.REPORTS_GENERATION_HOUR || "5", 10); // Default to 5 AM if not set
 
+/**
+ * Queue a report for every user whose last month has closed in their own
+ * timezone, has transactions, and has no report yet.
+ *
+ * Runs once a day (vercel.json). There is no hour-of-day filter: it was
+ * written for an hourly cron and, run once a day at 00:00 UTC, only ever
+ * matched users five hours ahead of UTC. When a report is generated doesn't
+ * matter to the user; the push that announces it is timed separately, by
+ * send-reports.
+ *
+ * All timestamps are Prisma `DateTime`s, stored as UTC wall time without a
+ * zone, so every bound is brought back to UTC wall time before comparing.
+ */
 export async function GET(
   req: Request,
 ): Promise<NextResponse<string | object>> {
@@ -21,21 +33,37 @@ export async function GET(
         id: string;
         preferredLanguage: string;
         preferredCurrencyId: string | null;
+        timeZone: string;
+        reportMonth: string;
       }[]
     >(Prisma.sql`
-      WITH due AS (
+      WITH zoned AS (
         SELECT
           u.id,
           u."preferredLanguage",
           u."preferredCurrencyId",
           COALESCE(p.name, 'UTC') AS tz,
-          (date_trunc('month', (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) AT TIME ZONE COALESCE(p.name, 'UTC')) AS start_current_month_utc,
-          ((date_trunc('month', (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) - interval '1 month') AT TIME ZONE COALESCE(p.name, 'UTC')) AS start_prev_month_utc
+          -- 1st of the user's current month, on their wall clock
+          date_trunc('month', now() AT TIME ZONE COALESCE(p.name, 'UTC')) AS local_month_start
         FROM "User" u
         LEFT JOIN pg_timezone_names p ON p.name = u.timezone
-        WHERE EXTRACT(HOUR FROM (now() AT TIME ZONE COALESCE(p.name, 'UTC'))) = ${HOUR_TO_CREATE}
+      ),
+      due AS (
+        SELECT
+          z.*,
+          -- The report month, named as Report.periodStart stores it
+          z.local_month_start - interval '1 month' AS period_start,
+          -- The report month's instants, as UTC wall time
+          ((z.local_month_start - interval '1 month') AT TIME ZONE z.tz) AT TIME ZONE 'UTC' AS from_utc,
+          (z.local_month_start AT TIME ZONE z.tz) AT TIME ZONE 'UTC' AS to_utc
+        FROM zoned z
       )
-      SELECT d.id, d."preferredLanguage", d."preferredCurrencyId"
+      SELECT
+        d.id,
+        d."preferredLanguage",
+        d."preferredCurrencyId",
+        d.tz AS "timeZone",
+        to_char(d.period_start, 'YYYY-MM-DD') AS "reportMonth"
       FROM due d
       WHERE EXISTS (
         SELECT 1
@@ -43,15 +71,15 @@ export async function GET(
         JOIN "UserAccount" ua ON ua.id = uaa."userAccountId"
         JOIN "Transaction" t ON t."accountId" = ua.id
         WHERE uaa."userId" = d.id
-          AND t."createdAt" >= d.start_prev_month_utc
-          AND t."createdAt" <  d.start_current_month_utc
+          AND t."createdAt" >= d.from_utc
+          AND t."createdAt" <  d.to_utc
         LIMIT 1
       )
       AND NOT EXISTS (
         SELECT 1
         FROM "Report" r
         WHERE r."userId" = d.id
-          AND r."periodStart" = d.start_prev_month_utc
+          AND r."periodStart" = d.period_start
       );
     `);
 
@@ -69,6 +97,8 @@ export async function GET(
             id: u.id,
             language: u.preferredLanguage,
             currencyId: u.preferredCurrencyId ?? undefined,
+            timeZone: u.timeZone,
+            reportMonth: u.reportMonth,
           })),
           // Pass full currency table once per batch — not per user
           currencies: allCurrencies,
@@ -83,7 +113,7 @@ export async function GET(
 
     return NextResponse.json({
       status: "success",
-      message: users.length ? "Processing started" : "No users due this hour",
+      message: users.length ? "Processing started" : "No users due",
       processedUsers: users.length,
     });
   } catch (error) {

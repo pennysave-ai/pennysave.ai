@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { subDays, parse, endOfDay } from "date-fns";
 
 import { getTransactionsSchema, updateTransactionSchema } from "@/schemas";
@@ -8,10 +8,18 @@ import {
   deleteTransactions,
   updateTransaction,
   getUserTransactions,
+  getTransactionAuthors,
+  getTransactionAccounts,
+  categoriesBelongToUser,
+  placeTransaction,
 } from "@/data/transactions";
 import { getUsersWithAccessToAccount } from "@/data/userAccounts";
+import { accountWriteRefusal, getAccountWriteAccess } from "@/data/accounts";
 import { getAuthenticatedUser } from "@/auth.helper";
-import { sendWebSocketMessage } from "@/lib/websocket";
+import {
+  notifyTransactionChanged,
+  notifyTransactionsDeleted,
+} from "@/lib/transactionEvents";
 import { BroadcastType } from "@/wstypes";
 
 export async function GET(req: NextRequest) {
@@ -83,6 +91,13 @@ export async function POST(req: NextRequest) {
   }
   const payload = await req.json();
   try {
+    // Only onto an account they are on, and not one paused for them.
+    const access = await getAccountWriteAccess(user.id, [payload?.accountId]);
+    if (access !== "ok") return accountWriteRefusal(access);
+    // A transaction only ever stores its author's own category.
+    if (!(await categoriesBelongToUser([payload?.categoryId], user.id))) {
+      return NextResponse.json("Bad Request", { status: 400 });
+    }
     const newTransaction = await createTransaction(
       payload,
       user.email!,
@@ -94,21 +109,18 @@ export async function POST(req: NextRequest) {
       payload.accountId
     );
 
-    // Send WebSocket message to notify clients about the new transaction
-    // Only send to the who has access to this account
-    // for now our wss server is free and can be in hybernate mode
-    // waiting for the response can take too long and cause timeouts and 504 response for this API
-    // that's why we do not await this function
-    // we can improve this later by using a queue system like RabbitMQ or similar
-    sendWebSocketMessage(
-      {
-        type: BroadcastType.TRANSACTION_CREATED,
-        recipients: usersWithAccess,
-        data: {
-          ...newTransaction,
-        },
-      },
-      user.id
+    // Sent after the response: the socket server can take long enough to
+    // wake that waiting would time this request out. `after`, not a bare
+    // unawaited promise, which a serverless host may stop once the response
+    // is out — losing the event with no error anywhere.
+    const actorId = user.id;
+    after(() =>
+      notifyTransactionChanged(
+        BroadcastType.TRANSACTION_CREATED,
+        newTransaction,
+        usersWithAccess,
+        actorId,
+      ),
     );
     return NextResponse.json(newTransaction);
   } catch {
@@ -128,7 +140,34 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json("Bad Request", { status: 400 });
   }
   try {
+    // Only the author can delete; a co-member's rows are read-only.
+    const authors = await getTransactionAuthors(body.ids, user.id);
+    if ([...authors.values()].some((authorId) => authorId !== user.id)) {
+      return NextResponse.json("Forbidden", { status: 403 });
+    }
+    // Read first: once the rows are gone nothing says whose accounts they
+    // were on.
+    const accounts = await getTransactionAccounts(body.ids, user.id);
+    // A paused account is read-only for its members, deletes included.
+    if (accounts.size) {
+      const access = await getAccountWriteAccess(user.id, [
+        ...new Set(accounts.values()),
+      ]);
+      if (access !== "ok") return accountWriteRefusal(access);
+    }
     const data = await deleteTransactions(body.ids, user.id);
+    const recipients = await Promise.all(
+      [...new Set(accounts.values())].map(getUsersWithAccessToAccount),
+    );
+    // After the response, for the same reason as in POST.
+    const actorId = user.id;
+    after(() =>
+      notifyTransactionsDeleted(
+        [...accounts.keys()],
+        [...new Set(recipients.flat())],
+        actorId,
+      ),
+    );
     return NextResponse.json({ data });
   } catch {
     return NextResponse.json("Error while deleting transactions", {
@@ -160,6 +199,46 @@ export async function PATCH(req: NextRequest) {
     const { id, amount, payee, notes, accountId, createdAt, categoryId } =
       validationResult.data;
 
+    const authorId = (await getTransactionAuthors([id], user.id)).get(id);
+    if (!authorId) {
+      return NextResponse.json("Not Found", { status: 404 });
+    }
+    // Only the author edits the row. Anyone else may only file it, and that
+    // pick is theirs alone; any other change is refused.
+    if (authorId !== user.id) {
+      const placed = await placeTransaction(id, user.id, categoryId || null, {
+        amount,
+        payee,
+        notes,
+        accountId,
+        createdAt,
+      });
+      if (!placed.ok) {
+        return NextResponse.json(
+          placed.status === 404
+            ? "Not Found"
+            : placed.status === 400
+              ? "Bad Request"
+              : "Forbidden",
+          { status: placed.status },
+        );
+      }
+      return NextResponse.json(placed.transaction);
+    }
+    // A transaction only ever stores its author's own category.
+    if (!(await categoriesBelongToUser([categoryId], user.id))) {
+      return NextResponse.json("Bad Request", { status: 400 });
+    }
+
+    const previousAccountId = (await getTransactionAccounts([id], user.id)).get(
+      id,
+    );
+    // Both ends of a move: off a paused account is an edit to it too.
+    const access = await getAccountWriteAccess(
+      user.id,
+      [accountId, previousAccountId].filter((id): id is string => !!id),
+    );
+    if (access !== "ok") return accountWriteRefusal(access);
     const transaction = await updateTransaction(
       id,
       user.id,
@@ -173,6 +252,32 @@ export async function PATCH(req: NextRequest) {
         createdAt,
         categoryId: categoryId ? categoryId : null,
       }
+    );
+
+    // Everyone on the row's account gets the edit. When it moved accounts,
+    // anyone on the old one only can no longer see it, so for them it is a
+    // delete. After the response, for the same reason as in POST.
+    const [current, previous] = await Promise.all([
+      getUsersWithAccessToAccount(accountId),
+      previousAccountId && previousAccountId !== accountId
+        ? getUsersWithAccessToAccount(previousAccountId)
+        : Promise.resolve([] as string[]),
+    ]);
+    const actorId = user.id;
+    after(() =>
+      Promise.all([
+        notifyTransactionChanged(
+          BroadcastType.TRANSACTION_UPDATED,
+          transaction,
+          current,
+          actorId,
+        ),
+        notifyTransactionsDeleted(
+          [id],
+          previous.filter((userId) => !current.includes(userId)),
+          actorId,
+        ),
+      ]),
     );
 
     return NextResponse.json({ ...transaction });

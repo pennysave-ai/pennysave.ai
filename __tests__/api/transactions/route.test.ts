@@ -2,6 +2,15 @@
  * @jest-environment node
  */
 
+// The write check reaches the database; it is covered in data/accounts.
+jest.mock("@/data/accounts", () => ({
+  getAccountWriteAccess: jest.fn(),
+  accountWriteRefusal: jest.fn((access: string) =>
+    jest
+      .requireMock("next/server")
+      .NextResponse.json(access, { status: access === "paused" ? 423 : 403 }),
+  ),
+}));
 jest.mock("@/data/stripe", () => ({
   STRIPE: {
     getInstance: jest.fn(() => ({
@@ -31,8 +40,18 @@ import {
   deleteTransactions,
   updateTransaction,
   getUserTransactions,
+  getTransactionAuthors,
+  getTransactionAccounts,
+  categoriesBelongToUser,
+  placeTransaction,
 } from "@/data/transactions";
 import { getUsersWithAccessToAccount } from "@/data/userAccounts";
+import {
+  notifyTransactionChanged,
+  notifyTransactionsDeleted,
+} from "@/lib/transactionEvents";
+import { BroadcastType } from "@/wstypes";
+import { getAccountWriteAccess } from "@/data/accounts";
 
 // Mock next/server
 jest.mock("next/server", () => ({
@@ -43,6 +62,8 @@ jest.mock("next/server", () => ({
     })),
   },
   NextRequest: jest.fn(),
+  // Run straight away, so the events it schedules can be asserted on.
+  after: jest.fn((task: () => unknown) => task()),
 }));
 
 // Mock the auth module
@@ -55,6 +76,12 @@ jest.mock("@/data/userAccounts");
 
 jest.mock("@/lib/websocket", () => ({
   sendWebSocketMessage: jest.fn(),
+}));
+// Resolves categories per recipient, which reaches the database; covered on
+// its own in __tests__/lib/transactionEvents.test.ts.
+jest.mock("@/lib/transactionEvents", () => ({
+  notifyTransactionChanged: jest.fn(),
+  notifyTransactionsDeleted: jest.fn(),
 }));
 
 jest.mock("resend", () => {
@@ -76,7 +103,20 @@ describe("Transactions API", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getAccountWriteAccess as jest.Mock).mockResolvedValue("ok");
     (getAuthenticatedUser as jest.Mock).mockResolvedValue(mockUser);
+    // By default the viewer wrote the row and owns the category.
+    (getTransactionAuthors as jest.Mock).mockResolvedValue(
+      new Map([["transaction-1", mockUser.id]])
+    );
+    (categoriesBelongToUser as jest.Mock).mockResolvedValue(true);
+    (getTransactionAccounts as jest.Mock).mockResolvedValue(
+      new Map([["transaction-1", "account-1"]])
+    );
+    (getUsersWithAccessToAccount as jest.Mock).mockResolvedValue([
+      mockUser.id,
+      "partner",
+    ]);
   });
 
   describe("GET /api/transactions", () => {
@@ -169,6 +209,18 @@ describe("Transactions API", () => {
       expect(await response.json()).toBe("Unautorized");
     });
 
+    it("refuses a new row on an account paused for this member", async () => {
+      (getAccountWriteAccess as jest.Mock).mockResolvedValue("paused");
+      const mockReq = {
+        json: jest.fn().mockResolvedValue({ amount: 1, accountId: "account-1" }),
+      };
+
+      const response = await POST(mockReq as unknown as NextRequest);
+
+      expect(response.status).toBe(423);
+      expect(createTransaction).not.toHaveBeenCalled();
+    });
+
     it("should create a new transaction", async () => {
       (createTransaction as jest.Mock).mockResolvedValue({
         id: "transaction-1",
@@ -210,6 +262,12 @@ describe("Transactions API", () => {
         createdAt: expect.any(Date),
         categoryId: "category-1",
       });
+      expect(notifyTransactionChanged).toHaveBeenCalledWith(
+        BroadcastType.TRANSACTION_CREATED,
+        expect.objectContaining({ id: "transaction-1" }),
+        expect.any(Array),
+        mockUser.id
+      );
     });
 
     it("should handle errors gracefully", async () => {
@@ -236,7 +294,48 @@ describe("Transactions API", () => {
     });
   });
 
+  describe("POST /api/transactions category ownership", () => {
+    it("should return 400 when the category is not the author's", async () => {
+      (categoriesBelongToUser as jest.Mock).mockResolvedValue(false);
+
+      const mockReq = {
+        json: jest.fn().mockResolvedValue({
+          amount: 100,
+          accountId: "account-1",
+          categoryId: "partner-category",
+        }),
+      };
+
+      const response = await POST(mockReq as unknown as NextRequest);
+      expect(response.status).toBe(400);
+      expect(categoriesBelongToUser).toHaveBeenCalledWith(
+        ["partner-category"],
+        mockUser.id
+      );
+      expect(createTransaction).not.toHaveBeenCalled();
+    });
+  });
+
   describe("DELETE /api/transactions", () => {
+    it("should return 403 when a row was written by someone else", async () => {
+      (getTransactionAuthors as jest.Mock).mockResolvedValue(
+        new Map([
+          ["transaction-1", mockUser.id],
+          ["transaction-2", "partner"],
+        ])
+      );
+
+      const mockReq = {
+        json: jest
+          .fn()
+          .mockResolvedValue({ ids: ["transaction-1", "transaction-2"] }),
+      };
+
+      const response = await DELETE(mockReq as unknown as NextRequest);
+      expect(response.status).toBe(403);
+      expect(deleteTransactions).not.toHaveBeenCalled();
+    });
+
     it("should return 401 if not authenticated", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
@@ -261,6 +360,11 @@ describe("Transactions API", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ data: { count: 1 } });
+      expect(notifyTransactionsDeleted).toHaveBeenCalledWith(
+        ["transaction-1"],
+        [mockUser.id, "partner"],
+        mockUser.id
+      );
     });
 
     it("should return 400 if ids are missing", async () => {
@@ -289,6 +393,77 @@ describe("Transactions API", () => {
   });
 
   describe("PATCH /api/transactions", () => {
+    const validPatch = () =>
+      (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
+        success: true,
+        data: {
+          id: "transaction-1",
+          amount: 100,
+          accountId: "account-1",
+          categoryId: "category-1",
+        },
+      });
+    const patchReq = () =>
+      ({
+        json: jest.fn().mockResolvedValue({ id: "transaction-1" }),
+      }) as unknown as NextRequest;
+
+    it("files someone else's row for the viewer only", async () => {
+      validPatch();
+      (getTransactionAuthors as jest.Mock).mockResolvedValue(
+        new Map([["transaction-1", "partner"]])
+      );
+      const placed = { id: "transaction-1", category: { id: "mine" } };
+      (placeTransaction as jest.Mock).mockResolvedValue({
+        ok: true,
+        transaction: placed,
+      });
+
+      const response = await PATCH(patchReq());
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(placed);
+      expect(placeTransaction).toHaveBeenCalledWith(
+        "transaction-1",
+        expect.any(String),
+        expect.anything(),
+        expect.objectContaining({ amount: expect.any(Number) })
+      );
+      expect(updateTransaction).not.toHaveBeenCalled();
+    });
+
+    it("should return 403 when someone else's row is changed beyond its category", async () => {
+      validPatch();
+      (getTransactionAuthors as jest.Mock).mockResolvedValue(
+        new Map([["transaction-1", "partner"]])
+      );
+      (placeTransaction as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 403,
+      });
+
+      const response = await PATCH(patchReq());
+      expect(response.status).toBe(403);
+      expect(updateTransaction).not.toHaveBeenCalled();
+    });
+
+    it("should return 404 when the row is not visible to the user", async () => {
+      validPatch();
+      (getTransactionAuthors as jest.Mock).mockResolvedValue(new Map());
+
+      const response = await PATCH(patchReq());
+      expect(response.status).toBe(404);
+      expect(updateTransaction).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when the category is not the author's", async () => {
+      validPatch();
+      (categoriesBelongToUser as jest.Mock).mockResolvedValue(false);
+
+      const response = await PATCH(patchReq());
+      expect(response.status).toBe(400);
+      expect(updateTransaction).not.toHaveBeenCalled();
+    });
+
     it("should return 401 if not authenticated", async () => {
       (getAuthenticatedUser as jest.Mock).mockResolvedValue(null);
 
@@ -349,6 +524,80 @@ describe("Transactions API", () => {
         createdAt: expect.any(Date),
         categoryId: "category-1",
       });
+    });
+
+    it("notifies everyone on the account of an edit", async () => {
+      (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
+        success: true,
+        data: { id: "transaction-1", amount: -100, accountId: "account-1" },
+      });
+      const updated = { id: "transaction-1", amount: -100 };
+      (updateTransaction as jest.Mock).mockResolvedValue(updated);
+
+      const mockReq = { json: jest.fn().mockResolvedValue({}) };
+      await PATCH(mockReq as unknown as NextRequest);
+
+      expect(notifyTransactionChanged).toHaveBeenCalledWith(
+        BroadcastType.TRANSACTION_UPDATED,
+        updated,
+        [mockUser.id, "partner"],
+        mockUser.id
+      );
+      // Same account: nobody lost sight of the row.
+      expect(notifyTransactionsDeleted).toHaveBeenCalledWith(
+        ["transaction-1"],
+        [],
+        mockUser.id
+      );
+    });
+
+    it("tells anyone left behind by a move to another account that the row is gone", async () => {
+      (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
+        success: true,
+        data: { id: "transaction-1", amount: -100, accountId: "account-2" },
+      });
+      (updateTransaction as jest.Mock).mockResolvedValue({ id: "transaction-1" });
+      (getUsersWithAccessToAccount as jest.Mock).mockImplementation(
+        async (accountId: string) =>
+          accountId === "account-1"
+            ? [mockUser.id, "partner"]
+            : [mockUser.id, "other"]
+      );
+
+      const mockReq = { json: jest.fn().mockResolvedValue({}) };
+      await PATCH(mockReq as unknown as NextRequest);
+
+      expect(notifyTransactionChanged).toHaveBeenCalledWith(
+        BroadcastType.TRANSACTION_UPDATED,
+        expect.anything(),
+        [mockUser.id, "other"],
+        mockUser.id
+      );
+      expect(notifyTransactionsDeleted).toHaveBeenCalledWith(
+        ["transaction-1"],
+        ["partner"],
+        mockUser.id
+      );
+    });
+
+    it("sends no event when someone files a partner's row for themselves", async () => {
+      (updateTransactionSchema.safeParse as jest.Mock).mockReturnValue({
+        success: true,
+        data: { id: "transaction-1", categoryId: "mine", accountId: "account-1" },
+      });
+      (getTransactionAuthors as jest.Mock).mockResolvedValue(
+        new Map([["transaction-1", "partner"]])
+      );
+      (placeTransaction as jest.Mock).mockResolvedValue({
+        ok: true,
+        transaction: { id: "transaction-1" },
+      });
+
+      const mockReq = { json: jest.fn().mockResolvedValue({}) };
+      await PATCH(mockReq as unknown as NextRequest);
+
+      // The pick is the viewer's alone; nobody else's view changed.
+      expect(notifyTransactionChanged).not.toHaveBeenCalled();
     });
 
     it("should return 400 if validation fails", async () => {

@@ -1,5 +1,7 @@
 import { db } from "@/db";
+import { getCategoryResolvers } from "@/data/categoryMappings";
 import bcrypt from "bcryptjs";
+import type { SubscriptionStatusValue } from "@/types/Subscription";
 
 /**
  * Get user by Stripe customer ID
@@ -38,6 +40,36 @@ export async function getUserById(id: string) {
       id,
     },
   });
+}
+
+/**
+ * Get the user's stored IANA timezone
+ * @param {string} id - User ID
+ * @returns {Promise<string | null>} - The stored timezone, or null when the user does not exist
+ */
+export async function getUserTimezone(id: string): Promise<string | null> {
+  const user = await db.user.findUnique({
+    where: { id },
+    select: { timezone: true },
+  });
+  return user?.timezone ?? null;
+}
+
+/**
+ * Get what a read needs to speak to the user: where they are and what language
+ * they read in. One lookup, since both are wanted on the same request.
+ * @param {string} id - User ID
+ * @returns {Promise<{timezone: string | null, preferredLanguage: string | null}>} - Both, null where unset
+ */
+export async function getUserLocale(id: string) {
+  const user = await db.user.findUnique({
+    where: { id },
+    select: { timezone: true, preferredLanguage: true },
+  });
+  return {
+    timezone: user?.timezone ?? null,
+    preferredLanguage: user?.preferredLanguage ?? null,
+  };
 }
 
 /**
@@ -118,6 +150,32 @@ export async function createUserWithOauth({
 }
 
 /**
+ * Get user profile preferences
+ * @param {string} userId - User ID
+ * @returns {Promise<{baseCurrency: string | null, preferredLanguage: string | null, monthlyReportsEnabled: boolean | null} | null>} - Returns the user's preferences or null if the user does not exist
+ */
+export async function getUserPreferences(userId: string) {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      preferredCurrencyId: true,
+      preferredLanguage: true,
+      sendMonthlyReport: true,
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    baseCurrency: user.preferredCurrencyId,
+    preferredLanguage: user.preferredLanguage,
+    monthlyReportsEnabled: user.sendMonthlyReport,
+  };
+}
+
+/**
  * Update user profile
  * @param {string} userId - User ID
  * @param {Object} data - User's profile data
@@ -148,19 +206,115 @@ export async function updateUserProfile(
  * @returns Promise<void>
  */
 export async function deleteProfile(userId: string) {
-  return db.user.delete({
-    where: {
-      id: userId,
+  // Everything the user added to an account they share is handed on before the
+  // user row goes, because rows and receipts cascade with their author. The
+  // other members keep their balances and history.
+  const accesses = await db.userAccountAccess.findMany({
+    where: { userId },
+    select: {
+      userAccountId: true,
+      userAccount: {
+        select: {
+          userAccess: {
+            where: { userId: { not: userId } },
+            select: { userId: true, role: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
     },
   });
+
+  const handovers: { accountId: string; heirId: string }[] = [];
+  const soleAccountIds: string[] = [];
+  for (const access of accesses) {
+    const others = access.userAccount.userAccess;
+    // The owner inherits, else whoever joined first.
+    const heir = others.find((other) => other.role === "owner") ?? others[0];
+    if (heir) {
+      handovers.push({ accountId: access.userAccountId, heirId: heir.userId });
+    } else {
+      soleAccountIds.push(access.userAccountId);
+    }
+  }
+
+  // Each handed-on row keeps counting where it counted for its new author:
+  // their pick, their mapping or their same-name match becomes the row's own
+  // category. Worked out before the user's categories are deleted with them.
+  const resolvers = await getCategoryResolvers(
+    handovers.map((handover) => handover.heirId),
+  );
+  const rows = handovers.length
+    ? await db.transaction.findMany({
+        where: {
+          createdBy: userId,
+          accountId: { in: handovers.map((handover) => handover.accountId) },
+        },
+        select: {
+          id: true,
+          accountId: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              archivedAt: true,
+              owner: { select: { id: true } },
+            },
+          },
+        },
+      })
+    : [];
+  const heirOf = new Map(
+    handovers.map((handover) => [handover.accountId, handover.heirId]),
+  );
+  // One update per (heir, category) rather than one per row.
+  const groups = new Map<
+    string,
+    { heirId: string; categoryId: string | null; ids: string[] }
+  >();
+  for (const row of rows) {
+    const heirId = heirOf.get(row.accountId)!;
+    const categoryId =
+      resolvers.get(heirId)?.resolve(row.category, row.id)?.id ?? null;
+    const key = `${heirId}:${categoryId}`;
+    const group = groups.get(key) ?? { heirId, categoryId, ids: [] };
+    group.ids.push(row.id);
+    groups.set(key, group);
+  }
+
+  return db.$transaction([
+    ...[...groups.values()].flatMap(({ heirId, categoryId, ids }) => [
+      db.transaction.updateMany({
+        where: { id: { in: ids } },
+        data: { createdBy: heirId, categoryId },
+      }),
+      // Now the heir's own rows, so their pick is the row's category.
+      db.transactionPlacement.deleteMany({
+        where: { viewerId: heirId, transactionId: { in: ids } },
+      }),
+    ]),
+    ...handovers.map(({ accountId, heirId }) =>
+      db.receipt.updateMany({
+        where: { accountId, createdBy: userId },
+        data: { createdBy: heirId },
+      }),
+    ),
+    // Nobody else can see these, so they go with the user.
+    db.userAccount.deleteMany({ where: { id: { in: soleAccountIds } } }),
+    db.user.delete({ where: { id: userId } }),
+  ]);
 }
 
 /** Update apple subscription
+ * Fields left undefined are not written, so a caller that has no opinion on a
+ * column leaves the stored value untouched.
  * @param {Object} data - User subscription details
  * @param {string} data.userId - User ID
- * @param {boolean} data.isActive - Subscription status
  * @param {Date | null} data.expiresAt - Expiration date
  * @param {Date | null} data.gracePeriodExpiresAt - Grace period expiration date
+ * @param {Date | null} data.startedAt - Start of the current subscription period (Apple purchaseDate)
+ * @param {Date | null} data.originalPurchaseDate - First ever purchase (Apple originalPurchaseDate)
+ * @param {Date | null} data.trialStartedAt - When the free trial began
  * @param {string} data.status - Subscription status ("active", "past_due", "grace_period", "canceled")
  * @param {String} data.country - Country code
  * @returns Promise<User>
@@ -169,13 +323,19 @@ export async function updateAppleSubscription({
   userId,
   expiresAt,
   gracePeriodExpiresAt,
+  startedAt,
+  originalPurchaseDate,
+  trialStartedAt,
   status,
   country,
 }: {
   userId: string;
   expiresAt: Date | null;
   gracePeriodExpiresAt?: Date | null;
-  status?: string;
+  startedAt?: Date | null;
+  originalPurchaseDate?: Date | null;
+  trialStartedAt?: Date | null;
+  status?: SubscriptionStatusValue;
   country: string;
 }) {
   return db.user.update({
@@ -185,6 +345,9 @@ export async function updateAppleSubscription({
     data: {
       appleSubscriptionExpiresAt: expiresAt,
       appleSubscriptionGracePeriodExpiresAt: gracePeriodExpiresAt,
+      appleSubscriptionStartedAt: startedAt,
+      appleSubscriptionOriginalPurchaseDate: originalPurchaseDate,
+      appleTrialStartedAt: trialStartedAt,
       appleSubscriptionStatus: status || "active",
       appleSubscriptionCountry: country,
     },

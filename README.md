@@ -13,7 +13,7 @@ npm run dev
 Second run a db locally (you need docker to be installed)
 
 ```bash
-npm run run start:db
+npm run start:db
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -29,7 +29,7 @@ ngrok http 3000
 #### Create and apply new db migration in dev
 
 ```bash
-npm run run prisma:migrate:db
+npm run prisma:migrate:dev
 ```
 
 #### Check prod migration status

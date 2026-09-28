@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { parseISO, isValid } from "date-fns";
 import { BudgetFrequency } from "@prisma/client";
+import {
+  MAX_TRANSACTION_AMOUNT,
+  MAX_TRANSACTION_AMOUNT_MILLIUNITS,
+  MIN_TRANSACTION_AMOUNT,
+  MIN_TRANSACTION_AMOUNT_MILLIUNITS,
+} from "@/constants";
 
 // Define a schema for the user's sign-in data
 export const signInSchema = z.object({
@@ -78,6 +84,11 @@ export const categorySchema = z.object({
     .optional(),
 });
 
+export const upsertCategoryMappingSchema = z.object({
+  sourceCategoryId: z.string().min(1),
+  targetCategoryId: z.string().min(1),
+});
+
 export const getTransactionsSchema = z.object({
   start: z.string().regex(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/, {
     message: "Start date must be in yyyy-mm-dd format",
@@ -92,6 +103,31 @@ export const getTransactionsSchema = z.object({
   pageSize: z.string().optional(),
   accountId: z.string().uuid().optional(),
 });
+
+// Amounts travel in milliunits (currency units * 1000), so the limits are
+// checked in milliunits while the messages speak in currency units: the
+// biggest transaction we take is 999,999.99, the smallest -999,999.99.
+// Validating here keeps an oversized amount a 400 instead of a Postgres
+// "value out of range for type integer" 500.
+const formatAmountLimit = (amount: number) =>
+  amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const transactionAmountSchema = z
+  .number()
+  .int({ message: "Amount must be a whole number of milliunits" })
+  .min(MIN_TRANSACTION_AMOUNT_MILLIUNITS, {
+    message: `Amount cannot be less than ${formatAmountLimit(
+      MIN_TRANSACTION_AMOUNT
+    )}`,
+  })
+  .max(MAX_TRANSACTION_AMOUNT_MILLIUNITS, {
+    message: `Amount cannot be greater than ${formatAmountLimit(
+      MAX_TRANSACTION_AMOUNT
+    )}`,
+  });
 
 export const updateTransactionSchema = z.object({
   id: z.string(),
@@ -110,7 +146,7 @@ export const updateTransactionSchema = z.object({
       }
     ),
   payee: z.string().optional(),
-  amount: z.number(),
+  amount: transactionAmountSchema,
   notes: z.string().optional(),
 });
 
@@ -139,8 +175,7 @@ export const createTransactionSchema = z.object({
       }
     ),
   payee: z.string().optional().describe("payee name"),
-  amount: z
-    .number()
+  amount: transactionAmountSchema
     .refine((val) => val !== 0, {
       message: "Amount must be a non-zero number",
     })
