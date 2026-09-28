@@ -12,6 +12,7 @@ export async function getAllCurrencies(): Promise<Currency[]> {
       id: true,
       symbol: true,
       name: true,
+      code: true,
       exchangeRate: true,
     },
   });
