@@ -289,6 +289,7 @@ export const featureRequestSchema = z.object({
     .optional()
     .transform((val) => val || undefined),
   lang: z.string().max(5).optional(),
-  // Honeypot: hidden from people, so anything here came from a bot
-  website: z.string().max(0).optional(),
+  // Honeypot: hidden from people, so anything here likely came from a bot.
+  // Checked in the route rather than rejected here, so bots get no signal.
+  trap: z.string().max(500).optional(),
 });
