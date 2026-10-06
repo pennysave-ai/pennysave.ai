@@ -109,3 +109,36 @@ export const sendBudgetExceedNotification = async (
     throw error;
   }
 };
+
+/**
+ * Forwards a feature request from the landing page to the support inbox.
+ * @param request - The idea, plus the sender's email when they left one
+ */
+export const sendFeatureRequestEmail = async ({
+  message,
+  email,
+  lang,
+}: {
+  message: string;
+  email?: string;
+  lang?: string;
+}) => {
+  const escape = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const { error } = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL as string,
+    to: process.env.FEATURE_REQUEST_EMAIL || "support@pennysave.ai",
+    replyTo: email,
+    subject: `Feature request: ${message.slice(0, 60).replace(/\s+/g, " ")}`,
+    html: `<p style="white-space:pre-wrap">${escape(message)}</p><hr /><p>From: ${
+      email ? escape(email) : "anonymous"
+    }<br />Language: ${escape(lang ?? "unknown")}</p>`,
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+};
