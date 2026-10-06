@@ -65,7 +65,7 @@ export function CommunitySection({ t, lang }: { t: Copy; lang: Lang }) {
 function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
-  const [website, setWebsite] = useState("");
+  const [trap, setTrap] = useState("");
   const [status, setStatus] = useState<Status>("idle");
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -75,7 +75,7 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
       const res = await fetch("/api/feature-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, email, lang, website }),
+        body: JSON.stringify({ message, email, lang, trap }),
       });
       if (res.ok) {
         setStatus("sent");
@@ -145,15 +145,19 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
         />
         <span className="text-xs text-[#9A9AAC]">{c.emailNote}</span>
       </label>
-      {/* Honeypot: people never see this field, bots fill it in */}
+      {/* Honeypot: people never see this field, bots fill it in. The name and
+          data attributes keep browser and password-manager autofill out. */}
       <input
         type="text"
-        name="website"
+        name="ps_trap"
         tabIndex={-1}
         autoComplete="off"
         aria-hidden="true"
-        value={website}
-        onChange={(e) => setWebsite(e.target.value)}
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
+        value={trap}
+        onChange={(e) => setTrap(e.target.value)}
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
       {(status === "error" || status === "limit") && (

@@ -46,7 +46,7 @@ describe("POST /api/feature-request", () => {
         message: "  Please add recurring payments  ",
         email: "a@b.co",
         lang: "en",
-        website: "",
+        trap: "",
       }),
     );
 
@@ -76,12 +76,34 @@ describe("POST /api/feature-request", () => {
   it.each([
     ["too short", { message: "hi" }],
     ["invalid email", { message: "Please add dark mode", email: "nope" }],
-    ["honeypot filled", { message: "Please add dark mode", website: "spam" }],
   ])("returns 400 when %s", async (_, body) => {
     const response = await POST(makeReq(body));
 
     expect(response.status).toBe(400);
     expect(sendFeatureRequestEmail).not.toHaveBeenCalled();
+  });
+
+  it("pretends to succeed but sends nothing when the honeypot is filled", async () => {
+    const response = await POST(
+      makeReq({ message: "Please add dark mode", trap: "http://spam.example" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendFeatureRequestEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends when autofill copied the visitor's email into the honeypot", async () => {
+    const response = await POST(
+      makeReq({
+        message: "test ghhhhhh gg",
+        email: "a@b.co",
+        lang: "en",
+        trap: "a@b.co",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendFeatureRequestEmail).toHaveBeenCalled();
   });
 
   it("returns 429 when the IP is over the limit", async () => {

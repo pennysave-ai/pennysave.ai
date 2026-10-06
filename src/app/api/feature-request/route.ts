@@ -44,7 +44,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { message, email, lang } = validationResult.data;
+    const { message, email, lang, trap } = validationResult.data;
+
+    // A filled honeypot means a bot: pretend it worked and send nothing.
+    // Autofill copying the visitor's own email into it is not a bot.
+    if (trap && trap.trim() !== email) {
+      return NextResponse.json({ status: "success" }, { status: 200 });
+    }
+
     await sendFeatureRequestEmail({ message, email, lang });
 
     return NextResponse.json({ status: "success" }, { status: 200 });
