@@ -5,6 +5,7 @@ import Image from "next/image";
 import NextLink from "next/link";
 import logo from "@/app/public/pennysave_logo.png";
 import { I18N, LANGS, type Copy, type Lang } from "./i18n";
+import { InstagramIcon } from "./icons";
 
 export const APP_STORE_URL =
   "https://apps.apple.com/app/apple-store/id6754218614?pt=125612247&ct=Landing%20Site&mt=8";
@@ -21,6 +22,16 @@ export const CARD = "border border-[#2A2A48] bg-[#151533]";
 /** Page background shared by every page in the (landing) route group. */
 export const PAGE =
   "relative min-h-screen overflow-x-clip bg-[#0E0E24] text-white antialiased";
+
+/** Add more networks here; the footer and the landing page pick them up. */
+export const SOCIAL_LINKS = [
+  {
+    name: "Instagram",
+    handle: "@pennysave.ai",
+    href: "https://www.instagram.com/pennysave.ai",
+    Icon: InstagramIcon,
+  },
+];
 
 const FOOTER_LINK = "text-[#B9B9CC] transition-colors hover:text-white";
 
@@ -190,6 +201,21 @@ export function SiteFooter({ t }: { t: Copy }) {
         <a href="mailto:support@pennysave.ai" className={FOOTER_LINK}>
           support@pennysave.ai
         </a>
+        <div className="flex items-center gap-2">
+          {SOCIAL_LINKS.map(({ name, href, Icon }) => (
+            <a
+              key={name}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={name}
+              title={name}
+              className="flex size-9 items-center justify-center rounded-full border border-white/12 text-[#B9B9CC] transition-colors hover:border-white/30 hover:text-white"
+            >
+              <Icon width={18} height={18} />
+            </a>
+          ))}
+        </div>
       </div>
     </footer>
   );

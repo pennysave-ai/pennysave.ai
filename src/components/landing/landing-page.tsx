@@ -6,6 +6,7 @@ import logo from "@/app/public/pennysave_logo.png";
 import { I18N } from "./i18n";
 import { mockData } from "./mock-data";
 import { AddMockup, PhoneMockup, SeeMockup, ShareMockup } from "./mockups";
+import { CommunitySection } from "./community";
 import { CardIcon, CurrencyIcon, ReportIcon, TeamIcon } from "./icons";
 import {
   CARD,
@@ -326,6 +327,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <CommunitySection t={t} lang={lang} />
 
         {/* Final CTA */}
         <section className="px-6 pt-6 pb-[104px]">
