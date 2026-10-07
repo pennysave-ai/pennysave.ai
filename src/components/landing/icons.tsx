@@ -99,3 +99,21 @@ export const InstagramIcon = (props: SVGProps<SVGSVGElement>) => (
     <circle cx="17.25" cy="6.75" r="1" fill="currentColor" />
   </svg>
 );
+
+export const TikTokIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path
+      d="M14.5 3v11.25a3.75 3.75 0 1 1-3.75-3.75"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M14.5 3c.3 2.7 2.2 4.6 5 4.8"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
