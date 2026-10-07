@@ -5,7 +5,7 @@ import Image from "next/image";
 import NextLink from "next/link";
 import logo from "@/app/public/pennysave_logo.png";
 import { I18N, LANGS, type Copy, type Lang } from "./i18n";
-import { InstagramIcon } from "./icons";
+import { InstagramIcon, TikTokIcon } from "./icons";
 
 export const APP_STORE_URL =
   "https://apps.apple.com/app/apple-store/id6754218614?pt=125612247&ct=Landing%20Site&mt=8";
@@ -30,6 +30,12 @@ export const SOCIAL_LINKS = [
     handle: "@pennysave.ai",
     href: "https://www.instagram.com/pennysave.ai",
     Icon: InstagramIcon,
+  },
+  {
+    name: "TikTok",
+    handle: "@pennysave.ai",
+    href: "https://www.tiktok.com/@pennysave.ai",
+    Icon: TikTokIcon,
   },
 ];
 
