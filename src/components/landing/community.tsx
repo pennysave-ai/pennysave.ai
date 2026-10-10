@@ -1,29 +1,30 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import type { Copy, Lang } from "./i18n";
 import {
-  CARD,
-  EYEBROW,
-  GHOST_BUTTON,
-  PRIMARY_BUTTON,
-  SOCIAL_LINKS,
-} from "./site-chrome";
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type InvalidEvent,
+} from "react";
+import type { Copy, Lang } from "./i18n";
+import { CheckIcon } from "./icons";
+import { CARD, EYEBROW, GHOST_BUTTON, PRIMARY_BUTTON } from "./styles";
 
 const FIELD =
-  "w-full rounded-2xl border border-white/12 bg-[#0E0E24] px-4 text-[15px] text-white placeholder:text-[#6E6E88] transition-colors outline-none focus:border-[#E155E0] focus:ring-2 focus:ring-[rgba(225,85,224,.25)]";
-const LABEL = "text-sm font-medium text-[#DCDCEB]";
+  "w-full rounded-2xl border border-white/35 bg-midnight px-4 text-[15px] text-white placeholder:text-ink-placeholder transition-colors outline-none focus:border-orchid focus:ring-2 focus:ring-orchid/25";
+const LABEL = "text-sm font-medium text-ink-label";
 
 type Status = "idle" | "sending" | "sent" | "error" | "limit";
 
-/** "Request a feature" form and the social links, below the roadmap. */
+/** "Request a feature" form, below the roadmap. Social links live in the footer. */
 export function CommunitySection({ t, lang }: { t: Copy; lang: Lang }) {
   const c = t.community;
 
   return (
     <section
       id="feedback"
-      className="scroll-mt-16 border-t border-white/6 bg-[#0B0B1E] px-6 py-[104px]"
+      className="scroll-mt-20 border-t border-white/6 bg-night px-6 py-[104px]"
     >
       <div className="mx-auto grid max-w-[1200px] grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] items-start gap-14">
         <div className="flex flex-col gap-5">
@@ -31,30 +32,9 @@ export function CommunitySection({ t, lang }: { t: Copy; lang: Lang }) {
           <h2 className="text-[clamp(32px,4.4vw,52px)] leading-[1.1] font-medium tracking-[-.03em] text-balance">
             {c.title}
           </h2>
-          <p className="max-w-[520px] text-[17px] leading-[1.7] text-pretty text-[#C9C9DA]">
+          <p className="max-w-[520px] text-lg leading-[1.7] text-pretty text-ink-lead">
             {c.sub}
           </p>
-          <div className="mt-4 flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-lg font-medium">{c.followTitle}</span>
-              <span className="text-[14px] text-[#9A9AAC]">{c.followSub}</span>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {SOCIAL_LINKS.map(({ name, handle, href, Icon }) => (
-                <a
-                  key={name}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`h-12 gap-2.5 px-5 text-[15px] ${GHOST_BUTTON}`}
-                >
-                  <Icon width={20} height={20} />
-                  <span>{name}</span>
-                  <span className="text-[#9A9AAC]">{handle}</span>
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
         <FeatureRequestForm c={c} lang={lang} />
       </div>
@@ -67,6 +47,27 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
   const [email, setEmail] = useState("");
   const [trap, setTrap] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const sentRef = useRef<HTMLDivElement>(null);
+  const ideaRef = useRef<HTMLTextAreaElement>(null);
+  const wasSent = useRef(false);
+
+  // Move focus with the swap, so keyboard and screen-reader users land on the
+  // confirmation, and back on the field after "Send another".
+  useEffect(() => {
+    if (status === "sent") {
+      sentRef.current?.focus();
+      wasSent.current = true;
+    } else if (status === "idle" && wasSent.current) {
+      ideaRef.current?.focus();
+      wasSent.current = false;
+    }
+  }, [status]);
+
+  // Browser validation bubbles speak the browser's language; use the site's.
+  const invalid =
+    (msg: string) =>
+    (e: InvalidEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      e.currentTarget.setCustomValidity(msg);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -92,11 +93,13 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
   if (status === "sent") {
     return (
       <div
+        ref={sentRef}
+        tabIndex={-1}
         role="status"
-        className={`flex min-h-[360px] flex-col items-center justify-center gap-5 rounded-[32px] p-[34px] text-center ${CARD}`}
+        className={`flex min-h-[360px] outline-none flex-col items-center justify-center gap-5 rounded-[32px] p-[34px] text-center ${CARD}`}
       >
-        <span className="flex size-14 items-center justify-center rounded-full bg-[rgba(79,209,165,.18)] text-2xl text-[#4FD1A5]">
-          ✓
+        <span className="flex size-14 items-center justify-center rounded-full bg-mint/18 text-mint">
+          <CheckIcon width={26} height={26} />
         </span>
         <p className="max-w-[340px] text-lg leading-[1.5] text-balance">
           {c.sent}
@@ -126,8 +129,13 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
           minLength={10}
           maxLength={2000}
           rows={6}
+          ref={ideaRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onInvalid={invalid(c.tooShort)}
+          onChange={(e) => {
+            e.currentTarget.setCustomValidity("");
+            setMessage(e.target.value);
+          }}
           placeholder={c.ideaPh}
           className={`${FIELD} resize-y py-3 leading-[1.6]`}
         />
@@ -136,14 +144,21 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
         <span className={LABEL}>{c.email}</span>
         <input
           type="email"
+          aria-describedby="feature-email-note"
           autoComplete="email"
           maxLength={254}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onInvalid={invalid(c.badEmail)}
+          onChange={(e) => {
+            e.currentTarget.setCustomValidity("");
+            setEmail(e.target.value);
+          }}
           placeholder={c.emailPh}
           className={`${FIELD} h-12`}
         />
-        <span className="text-xs text-[#9A9AAC]">{c.emailNote}</span>
+        <span id="feature-email-note" className="text-xs text-ink-quiet">
+          {c.emailNote}
+        </span>
       </label>
       {/* Honeypot: people never see this field, bots fill it in. The name and
           data attributes keep browser and password-manager autofill out. */}
@@ -161,7 +176,7 @@ function FeatureRequestForm({ c, lang }: { c: Copy["community"]; lang: Lang }) {
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
       {(status === "error" || status === "limit") && (
-        <p role="alert" className="text-sm text-[#F26A82]">
+        <p role="alert" className="text-sm text-orchid-mist">
           {status === "limit" ? c.limit : c.error}
         </p>
       )}

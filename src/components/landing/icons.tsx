@@ -8,22 +8,6 @@ const base = {
   "aria-hidden": true,
 } as const;
 
-export const CardIcon = (props: SVGProps<SVGSVGElement>) => (
-  <svg {...base} {...props}>
-    <path
-      d="M3.20258 8.70024H20.7974M2.88539 15.1513C2.37154 13.0819 2.37154 10.9181 2.88539 8.84875C3.55805 6.13983 5.70602 4.04534 8.43056 3.44162L8.88443 3.34105C10.9366 2.88632 13.0634 2.88632 15.1156 3.34105L15.5694 3.44162C18.294 4.04534 20.442 6.13984 21.1146 8.84875C21.6285 10.9182 21.6285 13.0819 21.1146 15.1512C20.442 17.8602 18.294 19.9547 15.5694 20.5584L15.1156 20.659C13.0634 21.1137 10.9366 21.1137 8.88443 20.659L8.43056 20.5584C5.70601 19.9547 3.55805 17.8602 2.88539 15.1513Z"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    />
-    <path
-      d="M7 12L11 12"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
 export const ReportIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...props}>
     <path
@@ -113,6 +97,46 @@ export const TikTokIcon = (props: SVGProps<SVGSVGElement>) => (
       d="M14.5 3c.3 2.7 2.2 4.6 5 4.8"
       stroke="currentColor"
       strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path
+      d="M5 3.75C5 3.33579 5.33579 3 5.75 3H18.25C18.6642 3 19 3.33579 19 3.75V20.25L16.6667 18.75L14.3333 20.25L12 18.75L9.66667 20.25L7.33333 18.75L5 20.25V3.75Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8.5 8H15.5M8.5 11.5H15.5M8.5 15H12.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const CheckIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} width={16} height={16} {...props}>
+    <path
+      d="M5 12.5L10 17.5L19 7"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const CrossIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} width={16} height={16} {...props}>
+    <path
+      d="M7 7L17 17M17 7L7 17"
+      stroke="currentColor"
+      strokeWidth="2"
       strokeLinecap="round"
     />
   </svg>

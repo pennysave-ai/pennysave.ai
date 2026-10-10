@@ -4,8 +4,218 @@
 @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant dark (&:is(.dark *));
 
-html {
-  scroll-behavior: smooth;
+/* Marketing-site palette, mirrored from DESIGN.md (one name per color). */
+@theme {
+  --animate-ripple: ripple 6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --color-orchid: #e155e0;
+  --color-rose: #e4829b;
+  --color-violet: #ae66e8;
+  --color-orchid-mist: #f0a8ef;
+  --color-midnight: #0e0e24;
+  --color-night: #0b0b1e;
+  --color-card: #151533;
+  --color-card-edge: #2a2a48;
+  --color-numeral: #3c3c62;
+  --color-ink-strong: #e6e6f0;
+  --color-ink-label: #dcdceb;
+  --color-ink-lead: #c9c9da;
+  --color-ink-muted: #b9b9cc;
+  --color-ink-quiet: #9a9aac;
+  --color-ink-faint: #8e8ea6;
+  --color-ink-placeholder: #6e6e88;
+  --color-mint: #4fd1a5;
+  --color-coral: #f26a82;
+  --color-notice-ink: #ede3c8;
+  --color-notice: #f0c464;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.45);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Marketing pages: one orchid focus ring for every control (fields draw their own). */
+.landing :focus-visible:not(input, textarea, select) {
+  outline: 2px solid #f0a8ef;
+  outline-offset: 3px;
+}
+.landing select:focus-visible {
+  outline: 2px solid #f0a8ef;
+  outline-offset: 2px;
+}
+.landing input,
+.landing textarea {
+  caret-color: #e155e0;
+}
+
+/* "Three taps" sequence in the landing page's add-a-payment mockup: amount,
+   category, save. The resting state is the finished entry, so with reduced
+   motion the mockup simply shows it. */
+@media (prefers-reduced-motion: no-preference) {
+  .tap-amount {
+    animation: tap-amount 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-key {
+    animation: tap-key 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-category {
+    animation: tap-category 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-save {
+    animation: tap-save 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-done {
+    animation: tap-done 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-dot-1,
+  .tap-dot-2,
+  .tap-dot-3 {
+    animation: 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+  .tap-dot-1 {
+    animation-name: tap-dot-1;
+  }
+  .tap-dot-2 {
+    animation-name: tap-dot-2;
+  }
+  .tap-dot-3 {
+    animation-name: tap-dot-3;
+  }
+}
+
+@keyframes tap-amount {
+  0%,
+  10% {
+    opacity: 0.2;
+    filter: blur(2px);
+  }
+  18%,
+  92% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0.2;
+    filter: blur(2px);
+  }
+}
+@keyframes tap-key {
+  0%,
+  9%,
+  20%,
+  100% {
+    background: rgba(255, 255, 255, 0.07);
+    transform: scale(1);
+  }
+  12% {
+    background: rgba(225, 85, 224, 0.55);
+    transform: scale(0.9);
+  }
+}
+@keyframes tap-category {
+  0%,
+  38% {
+    opacity: 0.35;
+    box-shadow: 0 0 0 0 rgba(225, 85, 224, 0);
+  }
+  42% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(225, 85, 224, 0.35);
+  }
+  56%,
+  92% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(225, 85, 224, 0);
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+@keyframes tap-save {
+  0%,
+  66% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+  76%,
+  92% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+@keyframes tap-done {
+  0%,
+  70% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  76%,
+  92% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes tap-dot-1 {
+  0%,
+  10%,
+  96%,
+  100% {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  14%,
+  92% {
+    background: #e155e0;
+  }
+}
+@keyframes tap-dot-2 {
+  0%,
+  38%,
+  96%,
+  100% {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  42%,
+  92% {
+    background: #e155e0;
+  }
+}
+@keyframes tap-dot-3 {
+  0%,
+  68%,
+  96%,
+  100% {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  72%,
+  92% {
+    background: #e155e0;
+  }
 }
 
 :root {

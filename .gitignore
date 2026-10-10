@@ -53,3 +53,6 @@ populate_db.ts
 # Docker files
 Dockerfile.postgres
 init.sql
+# impeccable: local cache and critique history (design.json is committed)
+.impeccable/hook.cache.json
+.impeccable/critique/

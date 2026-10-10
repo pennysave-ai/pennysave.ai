@@ -25,10 +25,12 @@ export function dailyBars(scale: number): CSSProperties[] {
   });
 }
 
-export function mockData(lang: Lang, t: Copy) {
+/** `currency`: the visitor's store currency, so sample amounts match the price. */
+export function mockData(lang: Lang, t: Copy, currency: string) {
   const nf = new Intl.NumberFormat(LOCALE[lang], {
     style: "currency",
-    currency: "EUR",
+    currency,
+    currencyDisplay: "narrowSymbol",
   });
   const money = (v: number, sign = false) =>
     (sign && v > 0 ? "+" : "") + nf.format(v);
