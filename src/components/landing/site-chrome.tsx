@@ -1,27 +1,16 @@
-"use client";
-
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+// Server-safe: shared styles and the header/footer of the marketing pages.
+// The one interactive piece, the language switcher, is its own client island.
+import type { ReactNode } from "react";
 import Image from "next/image";
 import NextLink from "next/link";
 import logo from "@/app/public/pennysave_logo.png";
-import { I18N, LANGS, type Copy, type Lang } from "./i18n";
+import type { Copy, Lang } from "./i18n";
+import { LanguageSwitcher } from "./language-switcher";
+import { PRIMARY_BUTTON_FLAT } from "./styles";
 import { InstagramIcon, TikTokIcon } from "./icons";
 
 export const APP_STORE_URL =
   "https://apps.apple.com/app/apple-store/id6754218614?pt=125612247&ct=Landing%20Site&mt=8";
-const LANG_STORAGE_KEY = "pennysave-landing-lang";
-
-export const GRADIENT = "bg-[linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)]";
-export const GRADIENT_TEXT =
-  "bg-[linear-gradient(90deg,#E4829B,#E155E0,#AE66E8)] bg-clip-text text-transparent";
-export const PRIMARY_BUTTON = `flex items-center rounded-full ${GRADIENT} font-medium text-white shadow-[0_10px_32px_rgba(225,85,224,.4)] transition-opacity hover:opacity-90`;
-export const GHOST_BUTTON =
-  "flex items-center rounded-full border border-white/22 bg-white/6 text-white transition-colors hover:bg-white/10";
-export const EYEBROW = "text-xs font-medium tracking-[.16em] text-[#E4829B]";
-export const CARD = "border border-[#2A2A48] bg-[#151533]";
-/** Page background shared by every page in the (landing) route group. */
-export const PAGE =
-  "relative min-h-screen overflow-x-clip bg-[#0E0E24] text-white antialiased";
 
 /** Add more networks here; the footer and the landing page pick them up. */
 export const SOCIAL_LINKS = [
@@ -39,12 +28,15 @@ export const SOCIAL_LINKS = [
   },
 ];
 
-const FOOTER_LINK = "text-[#B9B9CC] transition-colors hover:text-white";
+const FOOTER_LINK = "text-ink-muted transition-colors hover:text-white";
 
+/** Every download button: opens the App Store listing in a new tab and says so. */
 export function StoreLink({
+  t,
   className,
   children,
 }: {
+  t: Copy;
   className: string;
   children: ReactNode;
 }) {
@@ -56,6 +48,7 @@ export function StoreLink({
       className={className}
     >
       {children}
+      <span className="sr-only"> {t.nav.opensStore}</span>
     </a>
   );
 }
@@ -64,49 +57,9 @@ export function StoreLink({
 export function Wordmark() {
   return (
     <>
-      PennySave<span className="text-[#E155E0]">.ai</span>
+      PennySave<span className="text-orchid">.ai</span>
     </>
   );
-}
-
-// Language preference: explicit choice > saved choice > browser language > en.
-let chosenLang: Lang | null = null;
-const langListeners = new Set<() => void>();
-
-function readLang(): Lang {
-  let stored: string | null = null;
-  try {
-    stored = localStorage.getItem(LANG_STORAGE_KEY);
-  } catch {}
-  const browser = navigator.language?.slice(0, 2);
-  return (
-    chosenLang ??
-    [stored, browser].find((l): l is Lang => !!l && l in I18N) ??
-    "en"
-  );
-}
-
-function subscribeLang(listener: () => void) {
-  langListeners.add(listener);
-  return () => langListeners.delete(listener);
-}
-
-export function setLang(l: Lang) {
-  chosenLang = l;
-  try {
-    localStorage.setItem(LANG_STORAGE_KEY, l);
-  } catch {}
-  langListeners.forEach((listener) => listener());
-}
-
-export function useLanguage() {
-  const lang = useSyncExternalStore<Lang>(subscribeLang, readLang, () => "en");
-
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
-
-  return lang;
 }
 
 /**
@@ -126,75 +79,67 @@ export function SiteHeader({
   const home = onHome ? "" : "/";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/7 bg-[rgba(14,14,36,.72)] backdrop-blur-[18px]">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-6 px-6 py-3.5">
-        <NextLink
-          href={onHome ? "#top" : "/"}
-          className="flex items-center gap-2.5 text-white"
-        >
-          <Image
-            src={logo}
-            alt="PennySave.ai"
-            width={34}
-            height={34}
-            className="rounded-[10px]"
-            priority
-          />
-          <span className="text-[17px] font-medium tracking-[-.01em]">
-            <Wordmark />
-          </span>
-        </NextLink>
-        <nav className="hidden flex-1 flex-wrap gap-[26px] text-sm md:flex">
-          {(
-            [
-              ["#problem", t.nav.why],
-              ["#plan", t.nav.how],
-              ["#pricing", t.nav.plans],
-            ] as const
-          ).map(([hash, label]) => (
-            <NextLink
-              key={hash}
-              href={`${home}${hash}`}
-              className="text-[#B9B9CC] transition-colors hover:text-white"
-            >
-              {label}
-            </NextLink>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <div className="flex h-9 gap-0.5 rounded-full border border-white/14 bg-white/5 p-[3px]">
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                title={l.name}
-                aria-pressed={l.code === lang}
-                onClick={() => setLang(l.code)}
-                className={`h-7 min-w-[38px] cursor-pointer rounded-full px-2.5 text-xs font-medium uppercase transition-colors ${
-                  l.code === lang
-                    ? "bg-white text-[#151533]"
-                    : "bg-transparent text-[#B9B9CC] hover:text-white"
-                }`}
-              >
-                {l.code}
-              </button>
-            ))}
-          </div>
-          <StoreLink
-            className={`h-10 px-[18px] text-sm whitespace-nowrap shadow-[0_6px_22px_rgba(225,85,224,.35)] ${PRIMARY_BUTTON}`}
+    <>
+      <a
+        href="#main"
+        className="fixed top-3 left-3 z-30 -translate-y-20 rounded-full bg-white px-5 py-3 text-sm font-medium text-card transition-transform focus:translate-y-0"
+      >
+        {t.nav.skip}
+      </a>
+      <header className="sticky top-0 z-20 border-b border-white/7 bg-midnight/72 backdrop-blur-[18px]">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-6 px-6 py-3.5">
+          <NextLink
+            href={onHome ? "#top" : "/"}
+            className="flex items-center gap-2.5 text-white"
           >
-            {t.nav.getApp}
-          </StoreLink>
+            <Image
+              src={logo}
+              alt="PennySave.ai"
+              width={34}
+              height={34}
+              className="rounded-[10px]"
+              priority
+            />
+            <span className="hidden text-lg font-medium tracking-[-.01em] sm:inline">
+              <Wordmark />
+            </span>
+          </NextLink>
+          <nav className="hidden flex-1 flex-wrap gap-[26px] text-sm lg:flex">
+            {(
+              [
+                ["#problem", t.nav.why],
+                ["#plan", t.nav.how],
+                ["#pricing", t.nav.plans],
+              ] as const
+            ).map(([hash, label]) => (
+              <NextLink
+                key={hash}
+                href={`${home}${hash}`}
+                className="text-ink-muted transition-colors hover:text-white"
+              >
+                {label}
+              </NextLink>
+            ))}
+          </nav>
+          <div className="ml-auto flex items-center gap-3">
+            <LanguageSwitcher lang={lang} label={t.nav.language} />
+            <StoreLink
+              t={t}
+              className={`h-11 px-5 text-sm whitespace-nowrap shadow-[0_6px_22px_rgba(225,85,224,.35)] ${PRIMARY_BUTTON_FLAT}`}
+            >
+              {t.nav.getApp}
+            </StoreLink>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
 
 export function SiteFooter({ t }: { t: Copy }) {
   return (
     <footer className="border-t border-white/7 px-6 py-8">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-6 text-[13px] text-[#8E8EA6]">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-6 text-[13px] text-ink-faint">
         <span className="flex-1">
           © {new Date().getFullYear()} PennySave.ai
         </span>
@@ -216,7 +161,7 @@ export function SiteFooter({ t }: { t: Copy }) {
               rel="noopener noreferrer"
               aria-label={name}
               title={name}
-              className="flex size-9 items-center justify-center rounded-full border border-white/12 text-[#B9B9CC] transition-colors hover:border-white/30 hover:text-white"
+              className="flex size-11 items-center justify-center rounded-full border border-white/12 text-ink-muted transition-colors hover:border-white/30 hover:text-white"
             >
               <Icon width={18} height={18} />
             </a>

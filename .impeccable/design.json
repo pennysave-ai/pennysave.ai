@@ -1,0 +1,567 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T12:07:50.110064+00:00",
+  "title": "Design System: PennySave.ai",
+  "extensions": {
+    "colorMeta": {
+      "orchid-glow": {
+        "role": "primary",
+        "displayName": "Orchid Glow",
+        "canonical": "#E155E0",
+        "tonalRamp": [
+          "#190019",
+          "#400040",
+          "#6A046B",
+          "#980C98",
+          "#C436C4",
+          "#EA5EE9",
+          "#FDA2F9",
+          "#FEE5FD"
+        ]
+      },
+      "rose-blush": {
+        "role": "primary",
+        "displayName": "Rose Blush",
+        "canonical": "#E4829B",
+        "tonalRamp": [
+          "#1D0008",
+          "#48001E",
+          "#701938",
+          "#943A55",
+          "#BC5E77",
+          "#E17F98",
+          "#FDADC0",
+          "#FEE8EC"
+        ]
+      },
+      "violet-haze": {
+        "role": "primary",
+        "displayName": "Violet Haze",
+        "canonical": "#AE66E8",
+        "tonalRamp": [
+          "#140024",
+          "#350352",
+          "#590C86",
+          "#7B30B0",
+          "#A057D8",
+          "#C27AFE",
+          "#DAB5FE",
+          "#F4EAFE"
+        ]
+      },
+      "orchid-mist": {
+        "role": "primary",
+        "displayName": "Orchid Mist",
+        "canonical": "#F0A8EF",
+        "tonalRamp": [
+          "#19001A",
+          "#3E0340",
+          "#602161",
+          "#814181",
+          "#A764A7",
+          "#CA85CA",
+          "#F2AAF1",
+          "#FEE5FE"
+        ]
+      },
+      "midnight-indigo": {
+        "role": "neutral",
+        "displayName": "Midnight Indigo",
+        "canonical": "#0E0E24",
+        "tonalRamp": [
+          "#08081D",
+          "#202139",
+          "#3B3D57",
+          "#595B77",
+          "#7B7E9B",
+          "#9C9FBD",
+          "#C1C5E4",
+          "#EBEDFE"
+        ]
+      },
+      "deep-night": {
+        "role": "neutral",
+        "displayName": "Deep Night",
+        "canonical": "#0B0B1E",
+        "tonalRamp": [
+          "#09081B",
+          "#212237",
+          "#3C3D54",
+          "#595B74",
+          "#7C7E98",
+          "#9D9FBA",
+          "#C2C5E1",
+          "#EBEDFF"
+        ]
+      },
+      "card-indigo": {
+        "role": "neutral",
+        "displayName": "Card Indigo",
+        "canonical": "#151533",
+        "tonalRamp": [
+          "#080622",
+          "#1F203F",
+          "#3A3C5E",
+          "#575A7E",
+          "#797DA3",
+          "#9A9EC6",
+          "#C0C4ED",
+          "#EBEDFE"
+        ]
+      },
+      "card-edge": {
+        "role": "neutral",
+        "displayName": "Card Edge",
+        "canonical": "#2A2A48",
+        "tonalRamp": [
+          "#090721",
+          "#20203D",
+          "#3B3C5B",
+          "#595A7B",
+          "#7B7DA0",
+          "#9C9EC3",
+          "#C1C4EA",
+          "#ECEDFE"
+        ]
+      },
+      "numeral-indigo": {
+        "role": "neutral",
+        "displayName": "Numeral Indigo",
+        "canonical": "#3C3C62",
+        "tonalRamp": [
+          "#090525",
+          "#201F42",
+          "#3B3B61",
+          "#585981",
+          "#7A7CA6",
+          "#9B9DC9",
+          "#C1C3F1",
+          "#ECEDFF"
+        ]
+      },
+      "ink-white": {
+        "role": "neutral",
+        "displayName": "Ink White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#808080",
+          "#A1A1A1",
+          "#C7C7C7",
+          "#EEEEEE"
+        ]
+      },
+      "text-strong": {
+        "role": "neutral",
+        "displayName": "Text Strong",
+        "canonical": "#E6E6F0",
+        "tonalRamp": [
+          "#0B0A11",
+          "#23232A",
+          "#3F3F47",
+          "#5D5D65",
+          "#7F7F88",
+          "#A0A0AA",
+          "#C6C6D0",
+          "#EDEDF7"
+        ]
+      },
+      "text-label": {
+        "role": "neutral",
+        "displayName": "Text Label",
+        "canonical": "#DCDCEB",
+        "tonalRamp": [
+          "#0A0A13",
+          "#23232E",
+          "#3E3E4A",
+          "#5C5C69",
+          "#7F7F8C",
+          "#A0A0AE",
+          "#C6C6D4",
+          "#EDEDFC"
+        ]
+      },
+      "text-lead": {
+        "role": "neutral",
+        "displayName": "Text Lead",
+        "canonical": "#C9C9DA",
+        "tonalRamp": [
+          "#0A0A15",
+          "#23222F",
+          "#3E3E4C",
+          "#5C5C6B",
+          "#7F7E8E",
+          "#A0A0B0",
+          "#C5C5D6",
+          "#EDEDFE"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "#B9B9CC",
+        "tonalRamp": [
+          "#0A0916",
+          "#232231",
+          "#3E3E4E",
+          "#5C5C6C",
+          "#7E7E90",
+          "#9F9FB2",
+          "#C5C5D8",
+          "#ECEDFF"
+        ]
+      },
+      "text-quiet": {
+        "role": "neutral",
+        "displayName": "Text Quiet",
+        "canonical": "#9A9AAC",
+        "tonalRamp": [
+          "#0A0916",
+          "#232230",
+          "#3E3E4D",
+          "#5C5C6C",
+          "#7E7E90",
+          "#9FA0B2",
+          "#C5C5D8",
+          "#ECEDFF"
+        ]
+      },
+      "text-faint": {
+        "role": "neutral",
+        "displayName": "Text Faint",
+        "canonical": "#8E8EA6",
+        "tonalRamp": [
+          "#0A0819",
+          "#222235",
+          "#3E3D52",
+          "#5B5B71",
+          "#7E7E95",
+          "#9F9FB7",
+          "#C4C5DE",
+          "#ECEDFE"
+        ]
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Placeholder",
+        "canonical": "#6E6E88",
+        "tonalRamp": [
+          "#0A081B",
+          "#222137",
+          "#3D3D54",
+          "#5B5B74",
+          "#7D7D98",
+          "#9E9EBA",
+          "#C4C4E1",
+          "#ECEDFF"
+        ]
+      },
+      "mint-yes": {
+        "role": "signal",
+        "displayName": "Mint Yes",
+        "canonical": "#4FD1A5",
+        "tonalRamp": [
+          "#000F09",
+          "#012C1F",
+          "#054C38",
+          "#0E6E52",
+          "#0B9771",
+          "#33BB90",
+          "#63E2B6",
+          "#BFFFE4"
+        ]
+      },
+      "coral-no": {
+        "role": "signal",
+        "displayName": "Coral No",
+        "canonical": "#F26A82",
+        "tonalRamp": [
+          "#1D0106",
+          "#490117",
+          "#78072C",
+          "#A62144",
+          "#D04B66",
+          "#F76E86",
+          "#FEAEB7",
+          "#FFE8EA"
+        ]
+      },
+      "notice": {
+        "role": "signal",
+        "displayName": "Notice Amber",
+        "canonical": "#F0C464",
+        "tonalRamp": [
+          "#2A1F05",
+          "#45350E",
+          "#614B17",
+          "#7E6221",
+          "#9C7A2B",
+          "#BA9336",
+          "#D9AC41",
+          "#F0C464"
+        ]
+      },
+      "notice-ink": {
+        "role": "signal",
+        "displayName": "Notice Ink",
+        "canonical": "#EDE3C8",
+        "tonalRamp": [
+          "#25221A",
+          "#3D392C",
+          "#57513F",
+          "#716A53",
+          "#8C8468",
+          "#A89F7E",
+          "#C4BB95",
+          "#EDE3C8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and step titles."
+      },
+      "body-lead": {
+        "displayName": "Body Lead",
+        "purpose": "Paragraph under a headline."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Card body copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase eyebrows and step labels."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Subtitles, footnotes, footer, badges."
+      },
+      "chip": {
+        "displayName": "Chip",
+        "purpose": "Premium chip text."
+      },
+      "chip-lg": {
+        "displayName": "Chip Large",
+        "purpose": "\"Coming soon\" pill text."
+      }
+    },
+    "gradients": [
+      {
+        "name": "brand",
+        "value": "linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)",
+        "purpose": "Primary buttons (white labels, accepted contrast trade-off); 90deg variant for gradient text."
+      },
+      {
+        "name": "app",
+        "value": "linear-gradient(163deg,#B838B4 0%,#A93FC6 44%,#8A4BD0 100%)",
+        "purpose": "In-app header inside the phone mockup only."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "cta-glow",
+        "value": "0 10px 32px rgba(225,85,224,.4)",
+        "purpose": "Primary button."
+      },
+      {
+        "name": "cta-glow-sm",
+        "value": "0 6px 22px rgba(225,85,224,.35)",
+        "purpose": "Header CTA."
+      },
+      {
+        "name": "premium-halo",
+        "value": "0 10px 50px rgba(225,85,224,.25)",
+        "purpose": "The one featured card."
+      },
+      {
+        "name": "object",
+        "value": "0 40px 90px rgba(0,0,0,.6)",
+        "purpose": "Physical objects such as the phone frame."
+      },
+      {
+        "name": "logo-float",
+        "value": "0 30px 70px rgba(0,0,0,.55), 0 0 80px rgba(225,85,224,.25)",
+        "purpose": "Floating, glowing hero object."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px rgba(225,85,224,.25)",
+        "purpose": "Focus on fields (with orchid border)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "color-fast",
+        "value": "150ms cubic-bezier(.4,0,.2,1)",
+        "purpose": "Hover color/opacity changes."
+      },
+      {
+        "name": "toggle",
+        "value": "200–300ms",
+        "purpose": "Segmented toggles and the stakes panel swap."
+      },
+      {
+        "name": "ripple",
+        "value": "ripple 6s cubic-bezier(0,0,.2,1) infinite",
+        "purpose": "Concentric rings behind the final-CTA logo; motion-safe only."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Gradient pill for the one main action (App Store CTA).",
+      "html": "<button class=\"ds-btn-primary\">Start free</button>",
+      "css": ".ds-btn-primary{font-family:Poppins,system-ui,sans-serif;display:inline-flex;align-items:center;height:54px;padding:0 28px;border:none;border-radius:9999px;background:linear-gradient(180deg,#E4829B,#E155E0,#AE66E8);color:#fff;font-size:16px;font-weight:500;box-shadow:0 10px 32px rgba(225,85,224,.4);cursor:pointer;transition:opacity .15s}.ds-btn-primary:hover{opacity:.9}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 10px 32px rgba(225,85,224,.4),0 0 0 3px rgba(240,168,239,.6)}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Translucent pill for the secondary action.",
+      "html": "<button class=\"ds-btn-ghost\">See how it works</button>",
+      "css": ".ds-btn-ghost{font-family:Poppins,system-ui,sans-serif;display:inline-flex;align-items:center;height:54px;padding:0 24px;border:1px solid rgba(255,255,255,.22);border-radius:9999px;background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer;transition:background .15s}.ds-btn-ghost:hover{background:rgba(255,255,255,.1)}.ds-btn-ghost:focus-visible{outline:none;border-color:#E155E0;box-shadow:0 0 0 2px rgba(225,85,224,.25)}"
+    },
+    {
+      "name": "Segmented Toggle",
+      "kind": "nav",
+      "refersTo": "segmented-active",
+      "description": "Pill track with a white active segment; language switcher and stakes switch.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-item\">Without a plan</button><button class=\"ds-seg-item ds-seg-on\" aria-pressed=\"true\">With PennySave</button></div>",
+      "css": ".ds-seg{font-family:Poppins,system-ui,sans-serif;display:inline-flex;gap:4px;padding:4px;border:1px solid rgba(255,255,255,.12);border-radius:9999px;background:rgba(255,255,255,.05)}.ds-seg-item{height:44px;padding:0 22px;border:none;border-radius:9999px;background:transparent;color:#B9B9CC;font:inherit;font-size:14px;cursor:pointer;transition:color .2s,background .2s}.ds-seg-item:hover{color:#fff}.ds-seg-on{background:#fff;color:#151533}.ds-seg-on:hover{color:#151533}.ds-seg-item:focus-visible{outline:2px solid #E155E0;outline-offset:2px}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Solid indigo card for problems, steps and plans.",
+      "html": "<div class=\"ds-card\"><span class=\"ds-card-n\">01</span><h3 class=\"ds-card-h\">The money just… goes.</h3><p class=\"ds-card-p\">Coffees, subscriptions, a dinner split four ways.</p></div>",
+      "css": ".ds-card{font-family:Poppins,system-ui,sans-serif;display:flex;flex-direction:column;gap:14px;max-width:340px;padding:30px;border:1px solid #2A2A48;border-radius:28px;background:#151533;color:#fff}.ds-card-n{font-size:44px;line-height:1;font-weight:500;letter-spacing:-.03em;color:#3C3C62}.ds-card-h{margin:0;font-size:21px;line-height:1.3;font-weight:500}.ds-card-p{margin:0;font-size:15px;line-height:1.7;color:#B9B9CC}"
+    },
+    {
+      "name": "Premium Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The one featured card: orchid border, fading glow fill, halo and trial badge.",
+      "html": "<div class=\"ds-premium\"><span class=\"ds-premium-badge\">30 days free</span><span class=\"ds-premium-name\">Premium</span><span class=\"ds-premium-sub\">Try it free for 30 days.</span></div>",
+      "css": ".ds-premium{font-family:Poppins,system-ui,sans-serif;position:relative;display:flex;flex-direction:column;gap:6px;max-width:340px;padding:34px;border:1px solid #F0A8EF;border-radius:32px;background:linear-gradient(180deg,rgba(225,85,224,.14),#151533 60%);box-shadow:0 10px 50px rgba(225,85,224,.25);color:#fff}.ds-premium-badge{position:absolute;top:-13px;right:28px;display:flex;align-items:center;height:26px;padding:0 12px;border-radius:9999px;background:#E155E0;color:#fff;font-size:12px;font-weight:500}.ds-premium-name{font-size:36px;font-weight:500;letter-spacing:-.03em}.ds-premium-sub{font-size:13.5px;color:#9A9AAC}"
+    },
+    {
+      "name": "Premium Chip",
+      "kind": "chip",
+      "refersTo": "chip-premium",
+      "description": "Small orchid pill marking Premium-only features.",
+      "html": "<span class=\"ds-chip\">Premium</span>",
+      "css": ".ds-chip{font-family:Poppins,system-ui,sans-serif;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:9999px;background:rgba(225,85,224,.18);color:#F0A8EF;font-size:10.5px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Field cut into a card: darker fill, orchid focus ring.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-l\">Your idea</span><input class=\"ds-input\" placeholder=\"I’d love it if PennySave could…\"></label>",
+      "css": ".ds-field{font-family:Poppins,system-ui,sans-serif;display:flex;flex-direction:column;gap:8px;max-width:420px}.ds-field-l{font-size:14px;font-weight:500;color:#DCDCEB}.ds-input{height:48px;padding:0 16px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#0E0E24;color:#fff;font:inherit;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}.ds-input::placeholder{color:#6E6E88}.ds-input:focus{border-color:#E155E0;box-shadow:0 0 0 2px rgba(225,85,224,.25)}"
+    },
+    {
+      "name": "Eyebrow + Headline",
+      "kind": "custom",
+      "description": "Section header: tracked rose label over a tight medium headline with a gradient payoff.",
+      "html": "<div class=\"ds-head\"><span class=\"ds-eyebrow\">SOUND FAMILIAR?</span><h2 class=\"ds-h2\">Know where every penny goes. <span class=\"ds-grad\">Without the spreadsheet.</span></h2></div>",
+      "css": ".ds-head{font-family:Poppins,system-ui,sans-serif;display:flex;flex-direction:column;gap:16px;color:#fff}.ds-eyebrow{font-size:12px;font-weight:500;letter-spacing:.16em;color:#E4829B}.ds-h2{margin:0;font-size:clamp(32px,4.4vw,52px);line-height:1.1;font-weight:500;letter-spacing:-.03em;text-wrap:balance}.ds-grad{background:linear-gradient(90deg,#E4829B,#E155E0,#AE66E8);-webkit-background-clip:text;background-clip:text;color:transparent}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Glow in the Dark",
+    "overview": "**Creative North Star: \"Glow in the Dark\"**\n\nPennySave's marketing site is a dark, restful room where the things that matter light up. The surfaces are deep midnight indigo, close to black but never neutral gray, and almost everything on them is quiet: soft lavender-gray text, hairline borders, flat cards. Against that calm, one rose → orchid → violet gradient carries all the energy. It fills the primary button, colors the second half of the hero headline, and spills behind sections as soft radial light. When something glows, it is because the visitor should look there.\n\nThe mood is premium, sleek and confident: a polished fintech feel without the coldness. Shapes are generous and soft (pill buttons, cards rounded at 28–40px), the type is a single geometric sans at only two weights, and the copy does the talking at large sizes with tight tracking. Density is low: sections breathe with 104px of vertical space, and every block keeps to a 1200px column.\n\nThe page alternates two near-black tones in bands (midnight indigo and a slightly deeper night) instead of using dividers or color blocks. Light comes from the gradient glows, not from lighter surfaces.",
+    "keyCharacteristics": [
+      "Dark-only: midnight indigo base, deeper bands for rhythm, no light theme.",
+      "One gradient (rose → orchid → violet) carries all brand color and every primary action.",
+      "Depth through colored glow first, soft neutral shadow second.",
+      "Pill-shaped controls, big soft cards, hairline borders.",
+      "Poppins at 400 and 500 only; big headlines with tight negative tracking."
+    ],
+    "rules": [
+      {
+        "name": "The One Light Source Rule",
+        "body": "Brand color comes only from the rose → orchid → violet family. No blues, greens or oranges as decoration; mint and coral are signals, not accents.",
+        "section": "colors"
+      },
+      {
+        "name": "The Glow Means Look Here Rule",
+        "body": "Gradient fills and orchid glows are reserved for the primary action, the featured plan, and the hero headline's payoff phrase. If two things on screen glow equally, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Translucent White Rule",
+        "body": "Secondary surfaces and borders are white at low opacity (4–6% fill, 7–22% border), never a new gray hex, so they stay tinted by whatever glow sits behind them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Weights Rule",
+        "body": "Only 400 and 500 exist. Nothing bolder: emphasis comes from size, tracking, and the gradient, never from weight 600+.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tight Big, Loose Small Rule",
+        "body": "The larger the type, the tighter the tracking (-0.035em at display); small labels open up (+0.16em). Body text stays at normal tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Colored Glow First Rule",
+        "body": "Reach for an orchid glow before a shadow. Neutral shadows are for objects that physically sit above the page (a phone, a floating logo), not for ordinary cards.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Glow Budget Rule",
+        "body": "One glowing element per viewport besides the persistent header CTA.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Bright Label Trade-off",
+        "body": "White labels on the brand gradient measure 2.6–3.6:1, under WCAG AA's 4.5:1, by deliberate brand decision. Keep labels short, 500 weight and at least 14px; never put long or small text on the gradient.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "**Do** keep every page on Midnight Indigo (#0E0E24) and alternate Deep Night (#0B0B1E) bands for section rhythm.",
+      "**Do** use the rose → orchid → violet gradient for the primary CTA and one payoff phrase per headline.",
+      "**Do** build secondary surfaces and borders from translucent white (4–6% fill, 7–22% border).",
+      "**Do** make controls pills and cards large-radius (24–40px), with 1px hairline borders.",
+      "**Do** use orchid glows (`rgba(225,85,224,.25–.4)`) for emphasis, and diffuse dark shadows only for floating objects.",
+      "**Do** set headlines in Poppins 500 with negative tracking (-0.03 to -0.035em) and `text-wrap: balance`.",
+      "**Do** gate any looping motion behind `prefers-reduced-motion: no-preference`."
+    ],
+    "donts": [
+      "**Don't** introduce a light theme, gray surfaces, or a second brand hue.",
+      "**Don't** use font weights above 500.",
+      "**Don't** put gray drop shadows on ordinary cards. Use tone and hairlines instead.",
+      "**Don't** let more than one element glow at full strength in a viewport, besides the header CTA.",
+      "**Don't** use Coral No (#F26A82) for alarm-style warnings. It contrasts outcomes; it never scares.",
+      "**Don't** use sharp corners on interactive elements.",
+      "**Don't** put white text on the brand gradient; it fails contrast. Use Card Indigo.",
+      "**Don't** use Unicode glyphs (✓ ✕) as icons. Use the drawn SVG icons in `icons.tsx`.",
+      "Don't put anything but short button and badge labels on the brand gradient or Orchid Glow; white text there is under AA (see The Bright Label Trade-off)."
+    ]
+  }
+}

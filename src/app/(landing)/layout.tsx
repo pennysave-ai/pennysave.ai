@@ -12,5 +12,12 @@ export default function LandingLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <div className={poppins.className}>{children}</div>;
+  return (
+    <div className={poppins.className}>
+      {/* The app's theme provider isn't mounted here, so give the document
+          itself the page colour (overscroll and rubber-banding stay dark). */}
+      <style>{"html{background:#0e0e24;color-scheme:dark}"}</style>
+      {children}
+    </div>
+  );
 }

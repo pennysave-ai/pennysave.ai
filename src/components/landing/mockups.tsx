@@ -1,5 +1,6 @@
 import type { Copy } from "./i18n";
 import { dailyBars, type MockData } from "./mock-data";
+import { CheckIcon } from "./icons";
 
 const APP_GRADIENT =
   "bg-[linear-gradient(163deg,#B838B4_0%,#A93FC6_44%,#8A4BD0_100%)]";
@@ -13,10 +14,15 @@ type Props = { t: Copy; m: MockData };
 /** iPhone frame showing the app's monthly dashboard. */
 export function PhoneMockup({ t, m }: Props) {
   return (
-    <div className="relative flex justify-center py-2.5">
+    // Sample content only, so screen readers skip it. Below 400px the whole
+    // device zooms down to fit the column instead of clipping.
+    <div
+      aria-hidden
+      className="relative flex justify-center py-2.5 max-[400px]:[zoom:.85]"
+    >
       <div className="relative h-[686px] w-[328px] flex-none rounded-[54px] border border-[#3A3A5C] bg-[#26264A] p-[11px] shadow-[0_40px_90px_rgba(0,0,0,.6)]">
-        <div className="relative h-[664px] w-[306px] overflow-hidden rounded-[44px] bg-[#151533]">
-          <div className="absolute top-0 left-0 h-[852px] w-[393px] origin-top-left scale-[.7786] bg-[#151533] text-white">
+        <div className="relative h-[664px] w-[306px] overflow-hidden rounded-[44px] bg-card">
+          <div className="absolute top-0 left-0 h-[852px] w-[393px] origin-top-left scale-[.7786] bg-card text-white">
             <div
               className={`absolute inset-x-0 top-0 h-[520px] ${APP_GRADIENT}`}
             />
@@ -132,8 +138,8 @@ export function PhoneMockup({ t, m }: Props) {
                 <span className="text-[11px] text-[#7E7E8F]">{t.ph.hold}</span>
               </div>
               <div className="flex items-center px-[18px] pt-2.5 pb-1 text-[11.5px]">
-                <span className="flex-1 text-[#DCDCEB]">{t.ph.today}</span>
-                <span className="text-[#8E8EA6]">{m.money.today}</span>
+                <span className="flex-1 text-ink-label">{t.ph.today}</span>
+                <span className="text-ink-faint">{m.money.today}</span>
               </div>
               {m.transactions.map((r) => (
                 <div
@@ -143,7 +149,7 @@ export function PhoneMockup({ t, m }: Props) {
                   <span className="relative flex size-[42px] flex-none items-center justify-center rounded-[14px] border border-white/12 bg-white/7 text-[17px]">
                     {r.e}
                     {r.other && (
-                      <span className="absolute -right-[5px] -bottom-[5px] flex size-5 items-center justify-center rounded-full border-2 border-[#1B1B33] bg-[#E4829B] text-[7.5px] font-medium text-[#151533]">
+                      <span className="absolute -right-[5px] -bottom-[5px] flex size-5 items-center justify-center rounded-full border-2 border-[#1B1B33] bg-rose text-[7.5px] font-medium text-card">
                         AK
                       </span>
                     )}
@@ -198,29 +204,51 @@ function Stat({
   );
 }
 
-/** Step 1: amount entry with keypad. */
+/**
+ * Step 1: amount entry with keypad. On a loop it plays the three taps the copy
+ * promises (amount, category, save); the dots count them. Without motion it
+ * rests on the finished entry.
+ */
 export function AddMockup({ t, m }: Props) {
   return (
-    <div className="flex w-[230px] flex-col gap-2.5 rounded-[20px] border border-white/14 bg-[#1B1B33] p-3.5">
+    <div
+      role="img"
+      aria-label={t.plan.taps}
+      className="flex w-[230px] flex-col gap-2 rounded-[20px] border border-white/14 bg-[#1B1B33] p-3.5"
+    >
       <div className="flex items-center gap-1">
-        <span className="text-[28px] leading-none font-medium tracking-[-.02em]">
+        <span className="tap-amount text-[28px] leading-none font-medium tracking-[-.02em]">
           {m.money.coffee}
         </span>
-        <span className="ml-0.5 h-6 w-0.5 bg-[#E155E0]" />
+        <span className="ml-0.5 h-6 w-0.5 bg-orchid" />
+        <span className="ml-auto flex gap-1">
+          {[1, 2, 3].map((n) => (
+            <span
+              key={n}
+              className={`tap-dot-${n} size-1.5 rounded-full bg-orchid`}
+            />
+          ))}
+        </span>
       </div>
-      <span className="flex h-6 items-center self-start rounded-full bg-[rgba(225,85,224,.18)] px-2.5 text-[11px] whitespace-nowrap text-[#F0A8EF]">
+      <span className="tap-category flex h-6 items-center self-start rounded-full bg-[rgba(225,85,224,.18)] px-2.5 text-[11px] whitespace-nowrap text-orchid-mist">
         ☕ {t.cat.eat}
       </span>
-      <div className="grid grid-cols-3 gap-[5px]">
+      <div className="grid grid-cols-3 gap-1">
         {m.keys.map((k) => (
           <span
             key={k}
-            className="flex h-[26px] items-center justify-center rounded-[9px] bg-white/7 text-xs text-[#DCDCEB]"
+            className={`flex h-[22px] items-center justify-center rounded-[8px] bg-white/7 text-xs text-ink-label ${
+              k === "4" ? "tap-key" : ""
+            }`}
           >
             {k}
           </span>
         ))}
       </div>
+      <span className="tap-save flex h-7 items-center justify-center gap-1.5 rounded-full bg-[linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)] text-xs font-medium text-white">
+        <CheckIcon width={12} height={12} className="tap-done" />
+        {t.ph.save}
+      </span>
     </div>
   );
 }
@@ -228,7 +256,7 @@ export function AddMockup({ t, m }: Props) {
 /** Step 2: monthly summary card with an AI report note. */
 export function SeeMockup({ t, m }: Props) {
   return (
-    <div className="flex w-[250px] flex-col gap-2.5">
+    <div aria-hidden className="flex w-[250px] flex-col gap-2.5">
       <div
         className={`flex flex-col gap-2 rounded-[20px] px-4 py-3.5 shadow-[0_14px_34px_rgba(0,0,0,.35)] ${APP_GRADIENT}`}
       >
@@ -245,10 +273,10 @@ export function SeeMockup({ t, m }: Props) {
         </div>
       </div>
       <div className="flex flex-col gap-1 rounded-[14px] border border-[rgba(240,168,239,.45)] bg-[#1B1B33] px-3 py-[9px] shadow-[0_12px_30px_rgba(0,0,0,.45)]">
-        <span className="flex items-center gap-1.5 text-[10px] font-medium text-[#F0A8EF]">
+        <span className="flex items-center gap-1.5 text-[10px] font-medium text-orchid-mist">
           ✦ {t.plan.aiLabel}
         </span>
-        <span className="text-[10.5px] leading-normal text-pretty text-[#DCDCEB]">
+        <span className="text-[10.5px] leading-normal text-pretty text-ink-label">
           {t.plan.aiText}
         </span>
       </div>
@@ -257,23 +285,26 @@ export function SeeMockup({ t, m }: Props) {
 }
 
 const MEMBERS = [
-  { i: "AK", bg: "bg-[#E4829B]" },
-  { i: "LP", bg: "bg-[#E155E0]" },
-  { i: "ME", bg: "bg-[#AE66E8]" },
+  { i: "AK", bg: "bg-rose" },
+  { i: "LP", bg: "bg-orchid" },
+  { i: "ME", bg: "bg-violet" },
 ];
 
 /** Step 3: shared account with members. */
 export function ShareMockup({ t, m }: Props) {
   return (
-    <div className="flex w-[250px] flex-col gap-2.5 rounded-[20px] border border-white/14 bg-[#1B1B33] p-3.5">
+    <div
+      aria-hidden
+      className="flex w-[250px] flex-col gap-2.5 rounded-[20px] border border-white/14 bg-[#1B1B33] p-3.5"
+    >
       <div className="flex items-center gap-2.5">
-        <span className="size-2 rounded-full bg-[#E4829B]" />
+        <span className="size-2 rounded-full bg-rose" />
         <span className="flex-1 text-[13px]">{t.cat.family}</span>
         <span className="flex pl-1.5">
           {MEMBERS.map((p) => (
             <span
               key={p.i}
-              className={`-ml-1.5 flex size-6 items-center justify-center rounded-full border-2 border-[#1B1B33] text-[8.5px] text-[#151533] ${p.bg}`}
+              className={`-ml-1.5 flex size-6 items-center justify-center rounded-full border-2 border-[#1B1B33] text-[8.5px] text-card ${p.bg}`}
             >
               {p.i}
             </span>
@@ -285,7 +316,7 @@ export function ShareMockup({ t, m }: Props) {
           <span className="relative flex size-8 flex-none items-center justify-center rounded-[11px] border border-white/12 bg-white/7 text-[13px]">
             {s.e}
             <span
-              className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border-2 border-[#1B1B33] text-[6px] font-medium text-[#151533]"
+              className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border-2 border-[#1B1B33] text-[6px] font-medium text-card"
               style={{ background: s.bg }}
             >
               {s.i}
