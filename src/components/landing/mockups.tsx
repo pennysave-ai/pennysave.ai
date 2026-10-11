@@ -20,7 +20,7 @@ export function PhoneMockup({ t, m }: Props) {
       aria-hidden
       className="relative flex justify-center py-2.5 max-[400px]:[zoom:.85]"
     >
-      <div className="relative h-[686px] w-[328px] flex-none rounded-[54px] border border-[#3A3A5C] bg-[#26264A] p-[11px] shadow-[0_40px_90px_rgba(0,0,0,.6)]">
+      <div className="dash-frame relative h-[686px] w-[328px] flex-none rounded-[54px] border border-[#3A3A5C] bg-[#26264A] p-[11px] shadow-[0_40px_90px_rgba(0,0,0,.6)]">
         <div className="relative h-[664px] w-[306px] overflow-hidden rounded-[44px] bg-card">
           <div className="absolute top-0 left-0 h-[852px] w-[393px] origin-top-left scale-[.7786] bg-card text-white">
             <div
@@ -91,7 +91,7 @@ export function PhoneMockup({ t, m }: Props) {
                     {t.ph.partial}
                   </span>
                 </div>
-                <span className="text-[40px] leading-none font-medium tracking-[-.025em] tabular-nums">
+                <span className="dash-amount text-[40px] leading-none font-medium tracking-[-.025em] tabular-nums">
                   {m.money.spent}
                 </span>
                 <div className="flex h-14 items-end gap-[1.5px]">
@@ -101,8 +101,8 @@ export function PhoneMockup({ t, m }: Props) {
                       className="flex h-14 min-w-0 flex-1 items-end"
                     >
                       <span
-                        className="block w-full rounded-t-[2px]"
-                        style={style}
+                        className="dash-bar block w-full rounded-t-[2px]"
+                        style={{ ...style, ["--i" as string]: i }}
                       />
                     </span>
                   ))}
@@ -126,7 +126,7 @@ export function PhoneMockup({ t, m }: Props) {
               </div>
             </div>
 
-            <div className="absolute inset-x-0 top-[418px] bottom-0 flex flex-col overflow-hidden rounded-t-[32px] border-t border-white/14 bg-[#1B1B33] shadow-[0_-18px_44px_rgba(0,0,0,.45)]">
+            <div className="dash-sheet absolute inset-x-0 top-[418px] bottom-0 flex flex-col overflow-hidden rounded-t-[32px] border-t border-white/14 bg-[#1B1B33] shadow-[0_-18px_44px_rgba(0,0,0,.45)]">
               <div className="flex justify-center pt-2.5 pb-1.5">
                 <span className="h-1 w-10 rounded-full bg-white/30" />
               </div>
@@ -173,7 +173,7 @@ export function PhoneMockup({ t, m }: Props) {
               ))}
             </div>
 
-            <div className="absolute right-[18px] bottom-[26px] flex size-[70px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)] text-[34px] leading-none shadow-[0_14px_30px_rgba(225,85,224,.42)]">
+            <div className="dash-fab absolute right-[18px] bottom-[26px] flex size-[70px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)] text-[34px] leading-none shadow-[0_14px_30px_rgba(225,85,224,.42)]">
               +
             </div>
           </div>

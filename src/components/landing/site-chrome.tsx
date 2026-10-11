@@ -7,7 +7,7 @@ import logo from "@/app/public/pennysave_logo.png";
 import type { Copy, Lang } from "./i18n";
 import { LanguageSwitcher } from "./language-switcher";
 import { PRIMARY_BUTTON_FLAT } from "./styles";
-import { InstagramIcon, TikTokIcon } from "./icons";
+import { InstagramIcon, PinterestIcon, TikTokIcon, YouTubeIcon } from "./icons";
 
 export const APP_STORE_URL =
   "https://apps.apple.com/app/apple-store/id6754218614?pt=125612247&ct=Landing%20Site&mt=8";
@@ -25,6 +25,18 @@ export const SOCIAL_LINKS = [
     handle: "@pennysave.ai",
     href: "https://www.tiktok.com/@pennysave.ai",
     Icon: TikTokIcon,
+  },
+  {
+    name: "YouTube",
+    handle: "@pennysave",
+    href: "https://www.youtube.com/@pennysave",
+    Icon: YouTubeIcon,
+  },
+  {
+    name: "Pinterest",
+    handle: "@pennysave",
+    href: "https://www.pinterest.com/pennysave",
+    Icon: PinterestIcon,
   },
 ];
 

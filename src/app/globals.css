@@ -63,6 +63,85 @@
   caret-color: #e155e0;
 }
 
+/* Hero phone: the month builds itself once on load. The frame rises, the
+   spent amount resolves out of a blur (as in the three-tap card), the daily
+   bars grow in day order, the transactions sheet slides up like an iOS sheet
+   and the add button lands last. Pure CSS from the finished state, so with
+   reduced motion (or no CSS) the dashboard is simply there. */
+@media (prefers-reduced-motion: no-preference) {
+  .dash-frame {
+    animation: dash-frame 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dash-amount {
+    animation: dash-amount 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+  }
+  .dash-bar {
+    transform-origin: bottom;
+    animation: dash-bar 0.55s cubic-bezier(0.16, 1, 0.3, 1)
+      calc(0.35s + var(--i) * 16ms) both;
+  }
+  .dash-sheet {
+    animation: dash-sheet 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+  }
+  .dash-fab {
+    animation: dash-fab 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.05s both;
+  }
+}
+
+@keyframes dash-frame {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+@keyframes dash-amount {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+@keyframes dash-bar {
+  from {
+    transform: scaleY(0);
+  }
+}
+/* The sheet overlaps the header gradient by about 100px; travelling less
+   than that keeps the empty card colour from showing between them. */
+@keyframes dash-sheet {
+  from {
+    transform: translateY(88px);
+  }
+}
+@keyframes dash-fab {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* Stakes list: after a switch the new side's lines arrive in reading order.
+   Reduced motion keeps the crossfade and drops the travel. */
+.stakes-in {
+  animation: stakes-in 0.32s cubic-bezier(0.16, 1, 0.3, 1)
+    calc(var(--i) * 45ms) both;
+}
+@keyframes stakes-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stakes-in {
+    animation-name: stakes-fade;
+  }
+}
+@keyframes stakes-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 /* "Three taps" sequence in the landing page's add-a-payment mockup: amount,
    category, save. The resting state is the finished entry, so with reduced
    motion the mockup simply shows it. */

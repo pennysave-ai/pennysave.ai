@@ -102,6 +102,39 @@ export const TikTokIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const YouTubeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <rect
+      x="2.5"
+      y="5"
+      width="19"
+      height="14"
+      rx="4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M10 9.25v5.5L14.75 12 10 9.25Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const PinterestIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+    <path
+      d="M10.5 20.5 12.25 13m-1.5-1.5c-.6-2.2.9-4 2.75-4 1.9 0 2.9 1.4 2.75 3.25-.15 1.9-1.25 3.5-2.75 3.5-.9 0-1.6-.55-1.25-1.75"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...props}>
     <path

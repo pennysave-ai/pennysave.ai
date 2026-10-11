@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     "best personal finance software",
     "personal budget software",
   ],
+  other: {
+    "p:domain_verify": "c250db12fc0908e19c54b7465dc4de2a",
+  },
 };
 
 export const viewport: Viewport = {
