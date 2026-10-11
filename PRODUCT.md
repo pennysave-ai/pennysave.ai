@@ -22,7 +22,7 @@ Budgeting without the homework, and without the guilt. The core claim is low eff
 
 ## Operating Context
 
-- Visitors reach the site from search, social media (Instagram and TikTok, both `@pennysave.ai`) and links. Every main call to action goes to the App Store listing (`apps.apple.com/app/id6754218614`).
+- Visitors reach the site from search, social media (Instagram and TikTok, both `@pennysave.ai`, and YouTube and Pinterest, both `@pennysave`) and links. Every main call to action goes to the App Store listing (`apps.apple.com/app/id6754218614`).
 - The site's language is picked automatically from the browser and can be changed by hand: English, German, French, Spanish.
 - Visitors can send feature requests through the site's form, with an optional email for a reply. Support address: support@pennysave.ai.
 

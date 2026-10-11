@@ -278,8 +278,13 @@ Everything is soft and generous. Interactive controls are full pills: buttons, s
 ### Phone Mockup (signature)
 An iPhone frame (54px outer radius, #26264A bezel, object shadow) showing the real app's monthly dashboard. Its header is a diagonal app gradient (`#B838B4 → #A93FC6 → #8A4BD0`) with glass pills (48% white border, dark translucent fill). It is the main product proof on the page, so keep it pixel-faithful to the iOS app. It is hidden from screen readers (sample content) and zooms to 85% below 400px.
 
+It is also the page's one load moment: once, in about 1.5s, the frame rises, the spent amount resolves out of a blur, the 30 daily bars grow in day order, the transactions sheet slides up (less than its 100px overlap with the header, so no gap shows) and the add button lands last. Expo ease-out, transform/opacity/blur only, and with reduced motion the finished dashboard is simply there.
+
 ### Three-Tap Mockup (signature)
 The step-one keypad card plays the product's core promise on a 6s loop: the amount resolves out of a blur, the category chip lights with an orchid ring, the Save pill presses, and three orchid dots count the taps. Expo ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`). With reduced motion it rests on the finished entry.
+
+### Stakes Toggle
+A two-option pill with one white thumb that slides to the chosen side (300ms, expo ease-out); both options share a width so the thumb only travels. After a switch the new side's lines arrive in reading order (45ms apart); with reduced motion the thumb jumps and the lines only fade.
 
 ### Trust Row
 Three short facts with mint checks under the single pricing CTA (iPhone only · no bank login · cancel in the App Store). It stands in for social proof the product doesn't have yet; never replace it with invented numbers or quotes.

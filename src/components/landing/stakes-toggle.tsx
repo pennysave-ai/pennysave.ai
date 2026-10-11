@@ -10,14 +10,24 @@ import { CheckIcon, CrossIcon } from "./icons";
  */
 export function StakesToggle({ stakes }: { stakes: Copy["stakes"] }) {
   const [withPlan, setWithPlan] = useState(true);
+  // The list animates only after a switch, never on first paint.
+  const [switched, setSwitched] = useState(false);
 
   return (
     <>
       <div
         role="group"
         aria-label={stakes.title}
-        className="flex gap-1 rounded-full border border-white/12 bg-white/5 p-1"
+        className="relative grid auto-cols-fr grid-flow-col gap-1 rounded-full border border-white/12 bg-white/5 p-1"
       >
+        {/* One white thumb slides to the chosen side; both buttons share a
+            width so it only has to travel, never resize. */}
+        <span
+          aria-hidden
+          className={`absolute inset-y-1 left-1 w-[calc(50%-6px)] rounded-full bg-white motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            withPlan ? "translate-x-[calc(100%+4px)]" : "translate-x-0"
+          }`}
+        />
         {[
           { active: !withPlan, label: stakes.without, value: false },
           { active: withPlan, label: stakes.with, value: true },
@@ -26,11 +36,13 @@ export function StakesToggle({ stakes }: { stakes: Copy["stakes"] }) {
             key={o.label}
             type="button"
             aria-pressed={o.active}
-            onClick={() => setWithPlan(o.value)}
-            className={`h-11 cursor-pointer rounded-full px-[22px] text-sm transition-colors duration-200 ${
-              o.active
-                ? "bg-white text-card"
-                : "bg-transparent text-ink-muted hover:text-white"
+            onClick={() => {
+              if (o.value === withPlan) return;
+              setWithPlan(o.value);
+              setSwitched(true);
+            }}
+            className={`relative h-11 cursor-pointer rounded-full px-[22px] text-sm whitespace-nowrap transition-colors duration-200 ${
+              o.active ? "text-card" : "text-ink-muted hover:text-white"
             }`}
           >
             {o.label}
@@ -48,8 +60,12 @@ export function StakesToggle({ stakes }: { stakes: Copy["stakes"] }) {
             : "border-white/10 bg-white/3"
         }`}
       >
-        {(withPlan ? stakes.good : stakes.bad).map((s) => (
-          <li key={s} className="flex items-start gap-3.5">
+        {(withPlan ? stakes.good : stakes.bad).map((s, i) => (
+          <li
+            key={s}
+            className={`flex items-start gap-3.5 ${switched ? "stakes-in" : ""}`}
+            style={{ ["--i" as string]: i }}
+          >
             <span
               className={`flex size-7 flex-none items-center justify-center rounded-full ${
                 withPlan ? "bg-mint/18 text-mint" : "bg-coral/16 text-coral"

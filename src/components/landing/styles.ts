@@ -11,10 +11,10 @@ export const GRADIENT = "bg-[linear-gradient(180deg,#E4829B,#E155E0,#AE66E8)]";
 export const GRADIENT_TEXT =
   "bg-[linear-gradient(90deg,#E4829B,#E155E0,#AE66E8)] bg-clip-text text-transparent";
 /** Gradient pill with a white label. */
-export const PRIMARY_BUTTON_FLAT = `flex items-center rounded-full ${GRADIENT} font-medium text-white transition-opacity hover:opacity-90`;
+export const PRIMARY_BUTTON_FLAT = `flex items-center rounded-full ${GRADIENT} font-medium text-white transition-[opacity,scale] duration-150 hover:opacity-90 motion-safe:active:scale-[.97]`;
 export const PRIMARY_BUTTON = `${PRIMARY_BUTTON_FLAT} shadow-[0_10px_32px_rgba(225,85,224,.4)]`;
 export const GHOST_BUTTON =
-  "flex items-center rounded-full border border-white/22 bg-white/6 text-white transition-colors hover:bg-white/10";
+  "flex items-center rounded-full border border-white/22 bg-white/6 text-white transition-[background-color,scale] duration-150 hover:bg-white/10 motion-safe:active:scale-[.97]";
 export const EYEBROW = "text-xs font-medium tracking-[.16em] text-rose";
 export const CARD = "border border-card-edge bg-card";
 /** Page background shared by every page in the (landing) route group. */
