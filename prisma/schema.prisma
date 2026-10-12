@@ -97,6 +97,7 @@ model User {
   sessions      Session[]
   category      Category[]
   budgets       Budget[]
+  budgetMutes   BudgetMute[]
   feedbacks    Feedback[]
   password      String?
   role          UserRole @default(USER)
@@ -316,10 +317,32 @@ model Budget {
   currencyId    String
   currency      Currency  @relation(fields: [currencyId], references: [id])
   frequency     BudgetFrequency
+  /// Only the owner sees it, even when everyone on its accounts could.
+  isPrivate     Boolean   @default(false)
+  /// Every payment on its accounts counts, whatever its category; allocations then only carry limits.
+  allCategories Boolean   @default(false)
+  /// Each allocation is a limit of its own, together at most totalAmount.
+  splitByCategory Boolean @default(false)
+  /// What enableNotifications sends: 80% of the total, the total going over, a category going over.
+  alertAtPace   Boolean   @default(false)
+  alertWhenOver Boolean   @default(true)
+  alertCategoryOver Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   budgetAllocations BudgetAllocation[]
   accounts      BudgetAccount[]
+  mutes         BudgetMute[]
+}
+
+// Someone who sees a budget and doesn't want its alerts. Only their own.
+model BudgetMute {
+  budgetId  String
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([budgetId, userId])
+  @@index([userId])
 }
 
 // New model for Budget Allocations
