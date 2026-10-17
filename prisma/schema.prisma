@@ -327,6 +327,10 @@ model Budget {
   alertAtPace   Boolean   @default(false)
   alertWhenOver Boolean   @default(true)
   alertCategoryOver Boolean @default(false)
+  /// The last account the owner stopped being on (left, or was taken off), named as it was then —
+  /// they can't read it any more. Cleared by the owner's next save of the budget.
+  lostAccountName String?
+  lostAccountAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   budgetAllocations BudgetAllocation[]
