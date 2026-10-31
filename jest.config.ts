@@ -16,7 +16,7 @@ const config: Config = {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }],
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!(@auth/core|next-auth|jose|@panva|oauth|preact|@babel/runtime)/.*)",
+    "/node_modules/(?!(@babel/runtime)/.*)",
   ],
   moduleFileExtensions: ["js", "jsx", "ts", "tsx"],
   testEnvironmentOptions: {
