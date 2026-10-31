@@ -1,19 +1,11 @@
-import {
-  getAccountMembers,
-  notifyAccountRemoved,
-  notifyAccountUpdated,
-} from "@/lib/accountEvents";
+import { notifyAccountUpdated } from "@/lib/accountEvents";
 import { getAccountAsSeenByMembers } from "@/data/accounts";
-import { getUsersWithAccessToAccount } from "@/data/userAccounts";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
 
 jest.mock("@/db", () => ({ db: {} }));
 jest.mock("@/data/accounts", () => ({
   getAccountAsSeenByMembers: jest.fn(),
-}));
-jest.mock("@/data/userAccounts", () => ({
-  getUsersWithAccessToAccount: jest.fn(),
 }));
 jest.mock("@/lib/websocket", () => ({
   sendWebSocketMessage: jest.fn(),
@@ -23,17 +15,6 @@ describe("account events", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (sendWebSocketMessage as jest.Mock).mockResolvedValue(undefined);
-  });
-
-  it("lists everyone on the accounts once", async () => {
-    (getUsersWithAccessToAccount as jest.Mock).mockImplementation(
-      async (id: string) => (id === "a" ? ["mike", "anna"] : ["mike", "bob"])
-    );
-
-    const members = await getAccountMembers(["a", "b", "a"]);
-
-    expect(members.sort()).toEqual(["anna", "bob", "mike"]);
-    expect(getUsersWithAccessToAccount).toHaveBeenCalledTimes(2);
   });
 
   it("sends each person the account as their own list shows it", async () => {
@@ -87,27 +68,10 @@ describe("account events", () => {
     );
   });
 
-  it("tells whoever lost the account its id", async () => {
-    await notifyAccountRemoved("acc", ["anna"], "mike");
-
-    expect(sendWebSocketMessage).toHaveBeenCalledWith(
-      { type: BroadcastType.ACCOUNT_REMOVED, recipients: ["anna"], data: { id: "acc" } },
-      "mike"
-    );
-  });
-
-  it("sends nothing to nobody, and never throws", async () => {
-    await notifyAccountRemoved("acc", [], "mike");
-    expect(sendWebSocketMessage).not.toHaveBeenCalled();
-
+  it("never throws", async () => {
     (getAccountAsSeenByMembers as jest.Mock).mockRejectedValue(new Error("db"));
     const error = jest.spyOn(console, "error").mockImplementation(() => {});
     await expect(notifyAccountUpdated("acc", "mike")).resolves.toBeUndefined();
     error.mockRestore();
-
-    (sendWebSocketMessage as jest.Mock).mockRejectedValue(new Error("down"));
-    await expect(
-      notifyAccountRemoved("acc", ["anna"], "mike")
-    ).resolves.toBeUndefined();
   });
 });

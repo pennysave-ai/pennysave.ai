@@ -1,32 +1,11 @@
 import { db } from "@/db";
 import { getAccountAsSeenByMembers } from "@/data/accounts";
-import { getUsersWithAccessToAccount } from "@/data/userAccounts";
 import { sendWebSocketMessage } from "@/lib/websocket";
 import { BroadcastType } from "@/wstypes";
 
 // Every sender here is sent from `after()`, so a serverless host doesn't stop
 // it once the response is out, and none throws: a missed event is caught up
 // by the app's refresh on wake.
-
-/**
- * Everyone currently on these accounts. Read before a change that takes
- * people off, since afterwards they are no longer listed.
- */
-export async function getAccountMembers(accountIds: string[]) {
-  const members = await Promise.all(
-    [...new Set(accountIds)].map(getUsersWithAccessToAccount),
-  );
-  return [...new Set(members.flat())];
-}
-
-/** The ones among `accountIds` that `userId` owns — all a delete removes. */
-export async function getOwnedAccountIds(accountIds: string[], userId: string) {
-  const owned = await db.userAccountAccess.findMany({
-    where: { userAccountId: { in: accountIds }, userId, role: "owner" },
-    select: { userAccountId: true },
-  });
-  return owned.map(({ userAccountId }) => userAccountId);
-}
 
 /**
  * Sends each person on the account the account as their own list shows it,
@@ -78,26 +57,5 @@ export async function notifyOwnedAccountsUpdated(ownerId: string) {
     );
   } catch (error) {
     console.error("Error sending owned account updates:", error);
-  }
-}
-
-/** Tells `recipients` the account is gone for them. */
-export async function notifyAccountRemoved(
-  accountId: string,
-  recipients: string[],
-  actorId: string,
-) {
-  if (!recipients.length) return;
-  try {
-    await sendWebSocketMessage(
-      {
-        type: BroadcastType.ACCOUNT_REMOVED,
-        recipients,
-        data: { id: accountId },
-      },
-      actorId,
-    );
-  } catch {
-    // Logged by sendWebSocketMessage.
   }
 }

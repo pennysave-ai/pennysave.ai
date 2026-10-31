@@ -70,11 +70,6 @@ export function getLegalDocument(
   };
 }
 
-/** Whether the given language's text has been through legal review. */
-export function isReviewed(language?: string | null): boolean {
-  return CATALOG[normalizeLanguage(language)].reviewed;
-}
-
 const DOCUMENT_ORDER: LegalDocumentId[] = ["terms", "privacy"];
 
 /**
