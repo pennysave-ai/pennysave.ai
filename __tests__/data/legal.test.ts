@@ -11,6 +11,9 @@ import {
 } from "@/data/legal";
 
 const TRANSLATIONS = LANGUAGES.filter((l) => l !== SOURCE_LANGUAGE);
+/** Translations still waiting for legal review; flip as each one passes. */
+const UNREVIEWED: LegalLanguage[] = ["it"];
+const REVIEWED = TRANSLATIONS.filter((l) => !UNREVIEWED.includes(l));
 
 describe("legal documents", () => {
   describe("normalizeLanguage", () => {
@@ -20,6 +23,7 @@ describe("legal documents", () => {
       ["es-ES", "es"],
       ["de_DE", "de"],
       ["fr-CA,fr;q=0.9", "fr"],
+      ["it-IT", "it"],
     ])("resolves %s to %s", (input, expected) => {
       expect(normalizeLanguage(input)).toBe(expected);
     });
@@ -47,11 +51,17 @@ describe("legal documents", () => {
       expect(result.sourceLanguage).toBe(SOURCE_LANGUAGE);
     });
 
-    it.each(TRANSLATIONS)(
-      "marks the %s translation as reviewed",
+    it.each(REVIEWED)("marks the %s translation as reviewed", (language) => {
+      const result = getLegalDocuments(language);
+      expect(result.reviewed).toBe(true);
+      expect(result.isSourceLanguage).toBe(false);
+    });
+
+    it.each(UNREVIEWED)(
+      "flags the %s translation as not yet reviewed",
       (language) => {
         const result = getLegalDocuments(language);
-        expect(result.reviewed).toBe(true);
+        expect(result.reviewed).toBe(false);
         expect(result.isSourceLanguage).toBe(false);
       },
     );

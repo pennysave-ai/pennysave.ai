@@ -1,7 +1,7 @@
 /**
  * Shared shape of the legal documents.
  *
- * One document, one structure, four languages: each language file under this
+ * One document, one structure, five languages: each language file under this
  * directory exports the same sections in the same order, so a client can switch
  * language without the document changing shape underneath it.
  */
@@ -9,9 +9,9 @@
 export type LegalDocumentId = "terms" | "privacy";
 
 /** The languages the mobile app ships. */
-export type LegalLanguage = "en" | "es" | "de" | "fr";
+export type LegalLanguage = "en" | "es" | "de" | "fr" | "it";
 
-export const LANGUAGES: LegalLanguage[] = ["en", "es", "de", "fr"];
+export const LANGUAGES: LegalLanguage[] = ["en", "es", "de", "fr", "it"];
 
 /** The language the documents are written and reviewed in; everything else is a translation of it. */
 export const SOURCE_LANGUAGE: LegalLanguage = "en";

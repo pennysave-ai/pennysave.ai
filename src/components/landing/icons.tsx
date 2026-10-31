@@ -8,6 +8,55 @@ const base = {
   "aria-hidden": true,
 } as const;
 
+export const BudgetIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path
+      d="M10.5 4.5C6.63401 4.5 3.5 7.63401 3.5 11.5C3.5 15.366 6.63401 18.5 10.5 18.5C14.366 18.5 17.5 15.366 17.5 11.5H10.5V4.5Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M13.5 2.5C17.366 2.5 20.5 5.63401 20.5 9.5H13.5V2.5Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const WidgetIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <rect
+      x="3.5"
+      y="3.5"
+      width="7"
+      height="7"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="13.5"
+      y="3.5"
+      width="7"
+      height="7"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="3.5"
+      y="13.5"
+      width="17"
+      height="7"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
 export const ReportIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...props}>
     <path

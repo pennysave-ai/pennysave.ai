@@ -34,7 +34,7 @@ function useSwitchLanguage() {
   return { switchTo, pending: isPending ? target : null };
 }
 
-/** Header language control: four pills, or a native picker on phones. */
+/** Header language control: one pill per language, or a native picker on phones. */
 export function LanguageSwitcher({
   lang,
   label,
@@ -91,7 +91,7 @@ export function LanguageSwitcher({
           </button>
         ))}
       </div>
-      {/* Phones: a native picker instead of four pills, so the header stays one row. */}
+      {/* Phones: a native picker instead of the pills, so the header stays one row. */}
       <label className="relative flex h-11 items-center sm:hidden">
         <span className="sr-only">{label}</span>
         <select
