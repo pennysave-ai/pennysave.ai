@@ -95,8 +95,12 @@ model Transaction {
   createdByUser User    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   placements  TransactionPlacement[]
+  /// Last writer's database transaction, set by a trigger; the `/sync` feed's cursor. See the
+  /// offline_sync migration.
+  syncTxid    Unsupported("xid8")? @default(dbgenerated("pg_current_xact_id()"))
   @@unique([id])
   @@index([createdBy])
+  @@index([accountId, syncTxid])
 }
 
 model Category {
@@ -121,7 +125,11 @@ model Category {
   mappedFrom  CategoryMapping[] @relation("CategoryMappingSource")
   mappedTo    CategoryMapping[] @relation("CategoryMappingTarget")
   placements  TransactionPlacement[]
+  /// Last writer's database transaction, set by a trigger; the `/sync` feed's cursor. See the
+  /// offline_sync migration.
+  syncTxid    Unsupported("xid8")? @default(dbgenerated("pg_current_xact_id()"))
   @@unique([id])
+  @@index([userId, syncTxid])
 }
 
 /// A per-viewer rule "count partner category `source` under my category `target`".
@@ -136,6 +144,7 @@ model CategoryMapping {
   targetCategoryId String?
   targetCategory   Category? @relation("CategoryMappingTarget", fields: [targetCategoryId], references: [id], onDelete: Cascade)
   createdAt        DateTime @default(now())
+  syncTxid         Unsupported("xid8")? @default(dbgenerated("pg_current_xact_id()"))
 
   @@id([viewerId, sourceCategoryId])
   @@index([targetCategoryId])
@@ -153,6 +162,7 @@ model TransactionPlacement {
   categoryId    String
   category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   createdAt     DateTime    @default(now())
+  syncTxid      Unsupported("xid8")? @default(dbgenerated("pg_current_xact_id()"))
 
   @@id([viewerId, transactionId])
   @@index([transactionId])
@@ -398,4 +408,29 @@ model ReportRecurringCandidate {
 
   @@index([reportId])
   @@index([payee])
+}
+
+/// A synced row that is gone for someone: deleted, or (for a transaction) moved to
+/// another account. Written by triggers, read by `GET /sync`, pruned by
+/// `sync_prune_tombstones`. `accountId` is the account it left; `userId` is the
+/// author for a row, the owner for a category, the viewer for a mapping or pick.
+model SyncTombstone {
+  id        BigInt   @id @default(autoincrement())
+  /// transaction, category, categoryMapping or placement.
+  entity    String
+  entityId  String
+  accountId String?
+  userId    String?
+  syncTxid  Unsupported("xid8")? @default(dbgenerated("pg_current_xact_id()"))
+  deletedAt DateTime @default(now())
+
+  @@index([syncTxid])
+  @@index([entity, entityId])
+}
+
+/// One row. Tombstones up to `prunedThrough` have been dropped, so a cursor at or
+/// below it is answered with a reset.
+model SyncHorizon {
+  id            Int  @id @default(1)
+  prunedThrough Unsupported("xid8")?
 }
