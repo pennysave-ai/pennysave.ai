@@ -23,15 +23,15 @@ Budgeting without the homework, and without the guilt. The core claim is low eff
 ## Operating Context
 
 - Visitors reach the site from search, social media (Instagram and TikTok, both `@pennysave.ai`, and YouTube and Pinterest, both `@pennysave`) and links. Every main call to action goes to the App Store listing (`apps.apple.com/app/id6754218614`).
-- The site's language is picked automatically from the browser and can be changed by hand: English, German, French, Spanish.
+- The site's language is picked automatically from the browser and can be changed by hand: English, German, French, Spanish, Italian.
 - Visitors can send feature requests through the site's form, with an optional email for a reply. Support address: support@pennysave.ai.
 
 ## Capabilities and Constraints
 
-- **Free, forever, no card needed:** unlimited transactions, accounts and categories, and a monthly dashboard (spent, in, out, net).
-- **Premium (30-day free trial, started inside the app, billed through the App Store, cancel any time):** everything in Free plus receipt recognition, shared accounts, and AI monthly reports.
-- **Currencies mentioned:** euro, pound, dollar, HK dollar. **App languages:** English, German, French, Spanish.
-- **Roadmap (shown as "Coming soon", not shipped):** budgets and alerts, a Siri assistant, bank card linking through Apple FinanceKit (Premium, US only).
+- **Free, forever, no card needed:** unlimited transactions, accounts and categories, a monthly dashboard (spent, in, out, net), budgets (weekly, monthly, quarterly or yearly; overall or per category), and Home Screen and Lock Screen widgets (the month, budget left, quick add).
+- **Premium (30-day free trial, started inside the app, billed through the App Store, cancel any time):** everything in Free plus receipt recognition, shared accounts, AI monthly reports, and budget alerts (notifications before a budget goes over).
+- **Currencies mentioned:** euro, pound, dollar, HK dollar. **App languages:** English, German, French, Spanish, Italian.
+- **Roadmap (shown as "Coming soon", not shipped):** a Siri assistant, bank card linking through Apple FinanceKit (Premium, US only).
 - iPhone only; there is no Android app and no usable web app.
 - Translated legal pages are not legally reviewed; the English version is the binding one.
 - **Undecided:** Premium price (the site doesn't show one).
@@ -52,4 +52,4 @@ Budgeting without the homework, and without the guilt. The core claim is low eff
 2. **Calm over alarm.** Reassure people about money; never use fear, shame or urgency tricks.
 3. **Honest by default.** Only claim shipped features, label roadmap items as coming, and show no proof that doesn't exist.
 4. **Free is real.** The free plan is a complete product, not a bait. Premium is an upgrade "when it clicks".
-5. **Local everywhere.** Every visitor-facing string ships in all four languages, and layouts must hold up when German or French text runs longer.
+5. **Local everywhere.** Every visitor-facing string ships in all five languages, and layouts must hold up when German or French text runs longer.

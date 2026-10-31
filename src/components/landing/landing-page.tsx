@@ -15,11 +15,13 @@ import { AddMockup, PhoneMockup, SeeMockup, ShareMockup } from "./mockups";
 import { CommunitySection } from "./community";
 import { StakesToggle } from "./stakes-toggle";
 import {
+  BudgetIcon,
   CheckIcon,
   CurrencyIcon,
   ReceiptIcon,
   ReportIcon,
   TeamIcon,
+  WidgetIcon,
 } from "./icons";
 import { SiteFooter, SiteHeader, StoreLink } from "./site-chrome";
 import {
@@ -38,8 +40,15 @@ const LEAD = "text-lg leading-[1.7] text-pretty text-ink-lead";
 const PREMIUM_BADGE =
   "flex h-5 items-center rounded-full bg-orchid/18 px-2 text-[10.5px] font-normal text-orchid-mist";
 
-// Order matches t.guide.cards; the first three are Premium features.
-const GUIDE_ICONS = [ReceiptIcon, ReportIcon, TeamIcon, CurrencyIcon];
+// Order matches t.guide.cards.
+const GUIDE_CARDS = [
+  { Icon: BudgetIcon, premium: false },
+  { Icon: WidgetIcon, premium: false },
+  { Icon: ReceiptIcon, premium: true },
+  { Icon: ReportIcon, premium: true },
+  { Icon: TeamIcon, premium: true },
+  { Icon: CurrencyIcon, premium: false },
+];
 
 /**
  * The landing page, rendered on the server in the visitor's language. Only the
@@ -143,9 +152,10 @@ export default function LandingPage({
               <h2 className={H2}>{t.guide.title}</h2>
               <p className={`max-w-[540px] ${LEAD}`}>{t.guide.body}</p>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,230px),1fr))] gap-3.5">
+            {/* An odd card out spans the row instead of sitting alone in it */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,230px),1fr))] gap-3.5 [&>:last-child:nth-child(odd)]:col-span-full">
               {t.guide.cards.map(([h, p], i) => {
-                const Icon = GUIDE_ICONS[i];
+                const { Icon, premium } = GUIDE_CARDS[i] ?? {};
                 return (
                   <div
                     key={h}
@@ -154,7 +164,9 @@ export default function LandingPage({
                     {Icon && <Icon className="text-white" />}
                     <h3 className="flex flex-wrap items-center gap-2 text-base font-medium">
                       {h}
-                      {i < 3 && <span className={PREMIUM_BADGE}>Premium</span>}
+                      {premium && (
+                        <span className={PREMIUM_BADGE}>Premium</span>
+                      )}
                     </h3>
                     <p className="text-[13.5px] leading-[1.6] text-pretty text-ink-muted">
                       {p}

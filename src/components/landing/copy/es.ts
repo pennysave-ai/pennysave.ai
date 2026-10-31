@@ -46,6 +46,14 @@ const es: Copy = {
     body: "Creamos PennySave porque estábamos cansados de apps que nos hacían sentir peor. Así que quitamos el trabajo: un gasto son tres toques, y la imagen de tu mes siempre está a un vistazo.",
     cards: [
       [
+        "Presupuestos a tu ritmo",
+        "Un límite semanal, mensual o anual, total o por categoría, con lo que te queda siempre a la vista. Con Premium, un aviso antes de pasarte.",
+      ],
+      [
+        "Widgets",
+        "Tu mes y lo que queda en tus presupuestos, en la pantalla de inicio o de bloqueo, con un botón para añadir un gasto sin abrir la app.",
+      ],
+      [
         "Lectura de tickets",
         "Haz una foto: importe, tienda y categoría se rellenan solos.",
       ],
@@ -59,7 +67,7 @@ const es: Copy = {
       ],
       [
         "Tu dinero, tu idioma",
-        "Euro, libra, dólar, dólar de Hong Kong, en inglés, alemán, francés o español.",
+        "Euro, libra, dólar, dólar de Hong Kong, en inglés, alemán, francés, español o italiano.",
       ],
     ],
   },
@@ -68,9 +76,9 @@ const es: Copy = {
     title: "Tres pasos hacia un mes más tranquilo",
     step: "PASO",
     s1h: "Añádelo en segundos",
-    s1p: "Escribe el importe, elige una categoría y listo: gratis, para siempre. Con Premium, fotografía el ticket y se rellena solo.",
+    s1p: "Escribe el importe, elige una categoría y listo: gratis, para siempre. O añádelo directamente desde un widget en tu pantalla de inicio. Con Premium, fotografía el ticket y se rellena solo.",
     s2h: "Visualízalo",
-    s2p: "Tu mes en una imagen: gasto diario, lo que entró, lo que salió. Con Premium, la IA te escribe un informe al final de cada mes.",
+    s2p: "Tu mes en una imagen: gasto diario, lo que entró, lo que salió y lo que queda en cada presupuesto. Con Premium, la IA te escribe un informe al final de cada mes.",
     aiLabel: "Informe IA · Premium",
     taps: "Tres toques: importe, categoría, guardar",
     aiText:
@@ -90,7 +98,7 @@ const es: Copy = {
       "Esa preocupación de fondo cada vez que pagas con tarjeta.",
     ],
     good: [
-      "Sabes exactamente a dónde fue el dinero este mes.",
+      "Sabes exactamente a dónde fue el dinero este mes, y lo que te queda del presupuesto.",
       "Las suscripciones ya no te pillan por sorpresa: están ahí, en tu mes.",
       "Los gastos compartidos los ve todo el mundo, sin perseguir a nadie.",
       "El dinero se siente como un avance. Empiezas a ahorrar a propósito.",
@@ -105,6 +113,8 @@ const es: Copy = {
       "Transacciones ilimitadas",
       "Cuentas y categorías",
       "Panel mensual: gastado, entradas, salidas, neto",
+      "Presupuestos semanales, mensuales, trimestrales o anuales",
+      "Widgets para la pantalla de inicio y de bloqueo",
     ],
     premiumSub: `Pruébalo gratis durante ${FREE_TRIAL_DAYS} días.`,
     premiumList: [
@@ -112,6 +122,7 @@ const es: Copy = {
       "Lectura de tickets",
       "Cuentas compartidas",
       "Informes mensuales con IA",
+      "Avisos de presupuesto antes de pasarte",
     ],
     cta: "Descarga gratis y prueba Premium en la app",
     trust: [
@@ -128,10 +139,6 @@ const es: Copy = {
     sub: "PennySave sigue creciendo. Esto es lo que estamos construyendo.",
     soon: "Muy pronto",
     items: [
-      {
-        h: "Presupuestos y alertas",
-        p: "Pon un límite por categoría y recibe un aviso antes de pasarte.",
-      },
       {
         h: "Habla con Siri",
         p: "Un asistente con IA al que preguntar por tus presupuestos y gastos, directamente con Siri.",

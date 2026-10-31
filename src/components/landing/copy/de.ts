@@ -46,6 +46,14 @@ const de: Copy = {
     body: "Wir haben PennySave gemacht, weil wir Apps satt hatten, nach denen wir uns schlechter fühlten. Also haben wir die Arbeit rausgenommen: eine Ausgabe in drei Taps, und das Bild deines Monats ist immer nur einen Blick entfernt.",
     cards: [
       [
+        "Budgets, die mitdenken",
+        "Ein Limit pro Woche, Monat oder Jahr – gesamt oder pro Kategorie –, und du siehst immer, was übrig ist. Mit Premium warnt dich die App, bevor du es überschreitest.",
+      ],
+      [
+        "Widgets",
+        "Dein Monat und was in deinen Budgets übrig ist – auf dem Home- oder Sperrbildschirm, dazu ein Button, mit dem du eine Zahlung hinzufügst, ohne die App zu öffnen.",
+      ],
+      [
         "Belege scannen",
         "Foto machen – Betrag, Geschäft und Kategorie füllen sich selbst aus.",
       ],
@@ -59,7 +67,7 @@ const de: Copy = {
       ],
       [
         "Dein Geld, deine Sprache",
-        "Euro, Pfund, Dollar, HK-Dollar – auf Englisch, Deutsch, Französisch oder Spanisch.",
+        "Euro, Pfund, Dollar, HK-Dollar – auf Englisch, Deutsch, Französisch, Spanisch oder Italienisch.",
       ],
     ],
   },
@@ -68,9 +76,9 @@ const de: Copy = {
     title: "Drei Schritte zu einem entspannteren Monat",
     step: "SCHRITT",
     s1h: "In Sekunden erfasst",
-    s1p: "Betrag eintippen, Kategorie wählen, fertig – kostenlos, für immer. Mit Premium fotografierst du einfach den Beleg.",
+    s1p: "Betrag eintippen, Kategorie wählen, fertig – kostenlos, für immer. Oder direkt über ein Widget auf deinem Homebildschirm. Mit Premium fotografierst du einfach den Beleg.",
     s2h: "Überblick behalten",
-    s2p: "Dein Monat in einem Bild: tägliche Ausgaben, Einnahmen, Ausgaben. Mit Premium schreibt dir die KI am Monatsende einen Bericht.",
+    s2p: "Dein Monat in einem Bild: tägliche Ausgaben, Einnahmen, Ausgaben und was in jedem Budget übrig ist. Mit Premium schreibt dir die KI am Monatsende einen Bericht.",
     aiLabel: "KI-Bericht · Premium",
     taps: "Drei Taps: Betrag, Kategorie, Speichern",
     aiText:
@@ -90,7 +98,7 @@ const de: Copy = {
       "Dieses leise Unbehagen bei jeder Kartenzahlung.",
     ],
     good: [
-      "Du weißt genau, wohin das Geld diesen Monat ging.",
+      "Du weißt genau, wohin das Geld diesen Monat ging – und was im Budget übrig ist.",
       "Abos überraschen dich nicht mehr – sie stehen klar in deinem Monat.",
       "Geteilte Kosten sieht jeder, niemand muss hinterherlaufen.",
       "Geld fühlt sich wie Fortschritt an. Du sparst mit Absicht.",
@@ -105,6 +113,8 @@ const de: Copy = {
       "Unbegrenzte Transaktionen",
       "Konten & Kategorien",
       "Monats-Dashboard: ausgegeben, rein, raus, netto",
+      "Budgets: pro Woche, Monat, Quartal oder Jahr",
+      "Widgets für Home- und Sperrbildschirm",
     ],
     premiumSub: `${FREE_TRIAL_DAYS} Tage kostenlos testen.`,
     premiumList: [
@@ -112,6 +122,7 @@ const de: Copy = {
       "Belege scannen",
       "Geteilte Konten",
       "KI-Monatsberichte",
+      "Budget-Warnungen, bevor du drüber bist",
     ],
     cta: "Kostenlos laden – Premium in der App testen",
     trust: [
@@ -128,10 +139,6 @@ const de: Copy = {
     sub: "PennySave wächst weiter. Daran arbeiten wir gerade.",
     soon: "Bald verfügbar",
     items: [
-      {
-        h: "Budgets & Warnungen",
-        p: "Setze ein Limit pro Kategorie und werde benachrichtigt, bevor du es überschreitest.",
-      },
       {
         h: "Frag Siri",
         p: "Ein KI-Assistent, mit dem du per Siri über deine Budgets und Ausgaben sprichst.",

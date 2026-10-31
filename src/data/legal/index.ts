@@ -11,6 +11,7 @@ import en from "./en";
 import es from "./es";
 import de from "./de";
 import fr from "./fr";
+import it from "./it";
 
 export * from "./types";
 
@@ -22,7 +23,13 @@ export * from "./types";
  * cannot drift between web and app: edit the language file, and every surface
  * changes with it.
  */
-const CATALOG: Record<LegalLanguage, LegalCatalogEntry> = { en, es, de, fr };
+const CATALOG: Record<LegalLanguage, LegalCatalogEntry> = {
+  en,
+  es,
+  de,
+  fr,
+  it,
+};
 
 /** Average adult reading speed, rounded up to whole minutes. */
 const WORDS_PER_MINUTE = 200;

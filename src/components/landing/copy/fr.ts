@@ -45,6 +45,14 @@ const fr: Copy = {
     body: "Nous avons créé PennySave parce que nous en avions assez des applis qui nous faisaient culpabiliser. Alors nous avons supprimé la corvée : une dépense en trois touches, et l’image de votre mois toujours à portée de regard.",
     cards: [
       [
+        "Des budgets qui suivent",
+        "Une limite par semaine, mois ou année, globale ou par catégorie, avec le reste toujours sous les yeux. Avec Premium, une alerte avant de la dépasser.",
+      ],
+      [
+        "Widgets",
+        "Votre mois et ce qu’il reste dans vos budgets, sur l’écran d’accueil ou l’écran verrouillé, avec un bouton pour ajouter une dépense sans ouvrir l’appli.",
+      ],
+      [
         "Lecture des tickets",
         "Prenez une photo — montant, magasin et catégorie se remplissent tout seuls.",
       ],
@@ -58,7 +66,7 @@ const fr: Copy = {
       ],
       [
         "Votre argent, votre langue",
-        "Euro, livre, dollar, dollar de Hong Kong — en anglais, allemand, français ou espagnol.",
+        "Euro, livre, dollar, dollar de Hong Kong — en anglais, allemand, français, espagnol ou italien.",
       ],
     ],
   },
@@ -67,9 +75,9 @@ const fr: Copy = {
     title: "Trois étapes vers un mois plus serein",
     step: "ÉTAPE",
     s1h: "Ajoutez en quelques secondes",
-    s1p: "Tapez le montant, choisissez une catégorie, c’est fait — gratuit, pour toujours. Avec Premium, photographiez le ticket et tout se remplit.",
+    s1p: "Tapez le montant, choisissez une catégorie, c’est fait — gratuit, pour toujours. Ou ajoutez-la directement depuis un widget sur l’écran d’accueil. Avec Premium, photographiez le ticket et tout se remplit.",
     s2h: "Visualisez",
-    s2p: "Votre mois en une image : dépenses quotidiennes, entrées, sorties. Avec Premium, l’IA vous rédige un rapport à la fin de chaque mois.",
+    s2p: "Votre mois en une image : dépenses quotidiennes, entrées, sorties, et ce qu’il reste dans chaque budget. Avec Premium, l’IA vous rédige un rapport à la fin de chaque mois.",
     aiLabel: "Rapport IA · Premium",
     taps: "Trois touches : montant, catégorie, enregistrer",
     aiText:
@@ -89,7 +97,7 @@ const fr: Copy = {
       "Cette petite angoisse à chaque paiement par carte.",
     ],
     good: [
-      "Vous savez exactement où est passé l’argent ce mois-ci.",
+      "Vous savez exactement où est passé l’argent ce mois-ci — et ce qu’il reste dans votre budget.",
       "Les abonnements ne vous prennent plus par surprise : ils sont là, dans votre mois.",
       "Les dépenses partagées sont visibles par tous, sans relances.",
       "L’argent devient un progrès. Vous épargnez volontairement.",
@@ -104,6 +112,8 @@ const fr: Copy = {
       "Transactions illimitées",
       "Comptes et catégories",
       "Tableau de bord mensuel : dépensé, entrées, sorties, net",
+      "Budgets à la semaine, au mois, au trimestre ou à l’année",
+      "Widgets pour l’écran d’accueil et l’écran verrouillé",
     ],
     premiumSub: `Essayez-le gratuitement pendant ${FREE_TRIAL_DAYS} jours.`,
     premiumList: [
@@ -111,6 +121,7 @@ const fr: Copy = {
       "Lecture des tickets",
       "Comptes partagés",
       "Rapports mensuels par IA",
+      "Alertes de budget avant le dépassement",
     ],
     cta: "Télécharger gratuitement — essayer Premium dans l’appli",
     trust: [
@@ -127,10 +138,6 @@ const fr: Copy = {
     sub: "PennySave continue de grandir. Voici ce que nous préparons.",
     soon: "Bientôt disponible",
     items: [
-      {
-        h: "Budgets et alertes",
-        p: "Fixez une limite par catégorie et soyez prévenu avant de la dépasser.",
-      },
       {
         h: "Parlez à Siri",
         p: "Un assistant IA avec qui parler de vos budgets et dépenses, directement via Siri.",

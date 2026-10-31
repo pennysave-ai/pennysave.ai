@@ -47,6 +47,14 @@ const en = {
     body: "We made PennySave because we were tired of apps that made us feel worse. So we took the work out: a payment takes three taps, and the picture of your month is always one glance away.",
     cards: [
       [
+        "Budgets that keep up",
+        "A weekly, monthly or yearly limit, overall or per category, with what’s left always in view. On Premium, an alert before you go over.",
+      ],
+      [
+        "Widgets",
+        "Your month and what’s left in your budgets on the Home Screen or Lock Screen, plus a button to add a payment without opening the app.",
+      ],
+      [
         "Receipt recognition",
         "Snap a photo — amount, shop and category fill themselves in.",
       ],
@@ -60,7 +68,7 @@ const en = {
       ],
       [
         "Your money, your language",
-        "Euro, pound, dollar, HK dollar — in English, German, French or Spanish.",
+        "Euro, pound, dollar, HK dollar — in English, German, French, Spanish or Italian.",
       ],
     ],
   },
@@ -69,9 +77,9 @@ const en = {
     title: "Three steps to a calmer month",
     step: "STEP",
     s1h: "Add it in seconds",
-    s1p: "Type the amount, pick a category, done — free, forever. On Premium, snap the receipt and it fills itself in.",
+    s1p: "Type the amount, pick a category, done — free, forever. Or add it straight from a widget on your Home Screen. On Premium, snap the receipt and it fills itself in.",
     s2h: "See it",
-    s2p: "Your month in one picture: daily spending, what came in, what went out. On Premium, AI writes you a report at the end of every month.",
+    s2p: "Your month in one picture: daily spending, what came in, what went out, and what’s left in each budget. On Premium, AI writes you a report at the end of every month.",
     aiLabel: "AI report · Premium",
     taps: "Three taps: amount, category, save",
     aiText:
@@ -91,7 +99,7 @@ const en = {
       "That low-level worry every time you tap your card.",
     ],
     good: [
-      "You know exactly where this month’s money went.",
+      "You know exactly where this month’s money went — and what’s left in your budget.",
       "Subscriptions stop sneaking up on you — they’re right there in your month.",
       "Shared costs are visible to everyone, no chasing.",
       "Money feels like progress. You start saving on purpose.",
@@ -106,6 +114,8 @@ const en = {
       "Unlimited transactions",
       "Accounts & categories",
       "Monthly dashboard: spent, in, out, net",
+      "Budgets: weekly, monthly, quarterly or yearly",
+      "Home Screen and Lock Screen widgets",
     ],
     premiumSub: `Try it free for ${FREE_TRIAL_DAYS} days.`,
     premiumList: [
@@ -113,6 +123,7 @@ const en = {
       "Receipt recognition",
       "Shared accounts",
       "AI-generated monthly reports",
+      "Budget alerts before you go over",
     ],
     cta: "Download free — try Premium in the app",
     trust: [
@@ -129,10 +140,6 @@ const en = {
     sub: "PennySave keeps growing. Here’s what we’re building now.",
     soon: "Coming soon",
     items: [
-      {
-        h: "Budgets & alerts",
-        p: "Set a limit per category and get a notification before you go over.",
-      },
       {
         h: "Talk to Siri",
         p: "An AI assistant you can ask about your budgets and spending, right through Siri.",

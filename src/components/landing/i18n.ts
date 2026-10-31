@@ -1,7 +1,7 @@
 import type { SubscriptionPeriod } from "@/lib/appStorePrice";
 import type en from "./copy/en";
 
-export type Lang = "en" | "de" | "fr" | "es";
+export type Lang = "en" | "de" | "fr" | "es" | "it";
 export type Copy = typeof en;
 
 /**
@@ -13,6 +13,7 @@ const COPY_LOADERS: Record<Lang, () => Promise<{ default: Copy }>> = {
   de: () => import("./copy/de"),
   fr: () => import("./copy/fr"),
   es: () => import("./copy/es"),
+  it: () => import("./copy/it"),
 };
 
 export const loadCopy = (lang: Lang): Promise<Copy> =>
@@ -23,6 +24,7 @@ export const LANGS: { code: Lang; name: string }[] = [
   { code: "de", name: "Deutsch" },
   { code: "fr", name: "Français" },
   { code: "es", name: "Español" },
+  { code: "it", name: "Italiano" },
 ];
 
 export const LOCALE: Record<Lang, string> = {
@@ -30,6 +32,7 @@ export const LOCALE: Record<Lang, string> = {
   de: "de-DE",
   fr: "fr-FR",
   es: "es-ES",
+  it: "it-IT",
 };
 
 /** App Store territory whose Premium price is shown for each language. */
@@ -38,6 +41,7 @@ export const STORE_TERRITORY: Record<Lang, string> = {
   de: "DEU",
   fr: "FRA",
   es: "ESP",
+  it: "ITA",
 };
 
 /** Suffix after the Premium price, keyed by App Store subscription period. */
@@ -73,6 +77,14 @@ export const PRICE_PERIOD: Record<Lang, Record<SubscriptionPeriod, string>> = {
     THREE_MONTHS: "/ 3 meses",
     SIX_MONTHS: "/ 6 meses",
     ONE_YEAR: "/ año",
+  },
+  it: {
+    ONE_WEEK: "/ settimana",
+    ONE_MONTH: "/ mese",
+    TWO_MONTHS: "/ 2 mesi",
+    THREE_MONTHS: "/ 3 mesi",
+    SIX_MONTHS: "/ 6 mesi",
+    ONE_YEAR: "/ anno",
   },
 };
 
@@ -112,6 +124,14 @@ export const PRICE_PERIOD_SPOKEN: Record<
     THREE_MONTHS: "cada 3 meses",
     SIX_MONTHS: "cada 6 meses",
     ONE_YEAR: "al año",
+  },
+  it: {
+    ONE_WEEK: "a settimana",
+    ONE_MONTH: "al mese",
+    TWO_MONTHS: "ogni 2 mesi",
+    THREE_MONTHS: "ogni 3 mesi",
+    SIX_MONTHS: "ogni 6 mesi",
+    ONE_YEAR: "all’anno",
   },
 };
 
@@ -188,5 +208,19 @@ export const LEGAL_COPY: Record<
     unreviewed:
       "Esta traducción aún no ha pasado una revisión legal. La versión en inglés es la vinculante.",
     readEnglish: "Leer en inglés",
+  },
+  it: {
+    eyebrow: "NOTE LEGALI",
+    tabs: "Documenti legali",
+    effective: "In vigore dal",
+    minRead: "min di lettura",
+    sections: "sezioni",
+    plain: "IN PAROLE SEMPLICI",
+    plainNote:
+      "Un riassunto, non l’accordo. Fa fede solo il testo completo qui sotto.",
+    questions: "Domande? Scrivi a",
+    unreviewed:
+      "Questa traduzione non è ancora stata verificata legalmente. Fa fede la versione inglese.",
+    readEnglish: "Leggi in inglese",
   },
 };

@@ -33,7 +33,7 @@ describe("getVisitorLocale", () => {
 
   it("ignores a saved value that isn't a language the site ships", async () => {
     await expect(
-      visit("it", { "accept-language": "es" }),
+      visit("pt", { "accept-language": "es" }),
     ).resolves.toMatchObject({ lang: "es" });
   });
 
@@ -43,6 +43,12 @@ describe("getVisitorLocale", () => {
         "accept-language": "it-IT;q=0.9,de;q=0.8,fr;q=0.95",
       }),
     ).resolves.toMatchObject({ lang: "fr" });
+  });
+
+  it("picks Italian from the browser", async () => {
+    await expect(
+      visit(undefined, { "accept-language": "it-CH,it;q=0.9,en;q=0.8" }),
+    ).resolves.toMatchObject({ lang: "it" });
   });
 
   it("skips languages the browser rules out with q=0", async () => {
@@ -74,7 +80,7 @@ describe("getVisitorLocale", () => {
 
 describe("PRICE_TERRITORIES", () => {
   it("covers every language's default store once", () => {
-    for (const t of ["USA", "DEU", "FRA", "ESP", "GBR", "IRL"]) {
+    for (const t of ["USA", "DEU", "FRA", "ESP", "ITA", "GBR", "IRL"]) {
       expect(PRICE_TERRITORIES).toContain(t);
     }
     expect(new Set(PRICE_TERRITORIES).size).toBe(PRICE_TERRITORIES.length);
