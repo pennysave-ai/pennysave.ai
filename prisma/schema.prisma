@@ -80,6 +80,13 @@ model User {
   createdInvites AccountInvite[]
   categoryMappings CategoryMapping[]
   transactionPlacements TransactionPlacement[]
+  /// The app build last seen calling the API ("1.17 (42)"), from `X-App-Version`. Null for a
+  /// build that predates the header.
+  appVersion    String?
+  /// The `X-Sync-Protocol` that build spoke; 0 for one that sent none.
+  syncProtocol  Int?
+  /// When the API last recorded the two above. Refreshed at most twice a day.
+  appSeenAt     DateTime?
 }
 
 model Transaction {
