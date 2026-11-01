@@ -11,6 +11,10 @@
     {
       "path": "/api/webhooks/cron/send-reports",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/webhooks/cron/prune-sync-tombstones",
+      "schedule": "30 0 * * *"
     }
   ]
 }
