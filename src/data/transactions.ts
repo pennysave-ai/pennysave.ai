@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import { Prisma } from "@prisma/client";
 import {
   convertCurrency,
   convertAmountFromMilliunits,
@@ -35,7 +36,7 @@ export const transactionSelect = {
       image: true,
     },
   },
-};
+} satisfies Prisma.TransactionSelect;
 
 type TransactionAggregates = {
   expenseByCategory: Array<{ category: string; spend: number; pct: number }>;
