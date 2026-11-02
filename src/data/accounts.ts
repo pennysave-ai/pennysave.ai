@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import { Prisma } from "@prisma/client";
 import { hasActiveAppleSubscription } from "@/data/user";
 import { Account } from "@/types";
 
@@ -22,7 +23,7 @@ export const accountSelect = {
       },
     },
   },
-};
+} satisfies Prisma.UserAccountSelect;
 /**
  * Get user accounts
  * @param {String} userId - User ID
